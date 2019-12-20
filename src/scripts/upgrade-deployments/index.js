@@ -7,7 +7,6 @@ import log from "logger";
 import { prisma } from "generated/client";
 import commander from "commander";
 import { generateHelmValues } from "deployments/config";
-import semver from "semver";
 import config from "config";
 import { DEPLOYMENT_AIRFLOW } from "constants";
 
@@ -45,13 +44,7 @@ async function upgradeDeployments() {
     // Pull out some deployment fields.
     const { version, releaseName } = deployment;
 
-    // Skip upgrade if this deployment is greater than or equal to the desired version.
-    if (semver.gte(version, desiredVersion)) {
-      log.info(`Skipping upgrade to ${releaseName}, already on ${version}`);
-      continue;
-    }
-
-    // Update the database.
+    // Update the database with our desired version.
     const updatedDeployment = await prisma
       .updateDeployment({
         where: { releaseName },
@@ -60,7 +53,7 @@ async function upgradeDeployments() {
       .$fragment(`{ id releaseName extraAu workspace { id } }`);
 
     log.info(
-      `Updating deployment ${releaseName} from ${version} to ${desiredVersion}`
+      `Applying helm upgrade on ${releaseName}, version ${version} to ${desiredVersion}`
     );
 
     // Fire the update to commander.
