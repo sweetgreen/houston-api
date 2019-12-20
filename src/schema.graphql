@@ -57,6 +57,11 @@ type AuthUser {
   token: Token
   permissions: JSON
   isAdmin: Boolean
+  authUserCapabilities: AuthUserCapabilities
+}
+
+type AuthUserCapabilities {
+  canSysAdmin: Boolean
 }
 
 type Token {
@@ -158,6 +163,15 @@ type AirflowImage {
 type WorkspaceCapabilities {
   canUpdateBilling: Boolean
   canUpdateIAM: Boolean
+  canUpdateWorkspace: Boolean
+  canDeleteWorkspace: Boolean
+  canCreateDeployment: Boolean
+  canInviteUser: Boolean
+  canUpdateUser: Boolean
+  canDeleteUser: Boolean
+  canCreateServiceAccount: Boolean
+  canUpdateServiceAccount: Boolean
+  canDeleteServiceAccount: Boolean
 }
 
 type AstroUnit {
@@ -207,6 +221,11 @@ type Deployment {
 
 type DeploymentCapabilities {
   canDeploy: Boolean
+  canUpdateDeployment: Boolean
+  canDeleteDeployment: Boolean
+  canCreateServiceAccount: Boolean
+  canUpdateServiceAccount: Boolean
+  canDeleteServiceAccount: Boolean
 }
 
 type ServiceAccount {

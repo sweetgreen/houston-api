@@ -119,15 +119,44 @@ export async function deployInfo(parent, args, ctx) {
  * @return {DeploymentCapabilities} Map of boolean capabilities.
  */
 export function deploymentCapabilities(parent, args, ctx) {
-  // Check to see if user has permission to deploy
-  const canDeploy = hasPermission(
-    ctx.user,
-    "deployment.images.push",
-    ENTITY_DEPLOYMENT.toLowerCase(),
-    parent.id
-  );
+  const permissions = [
+    {
+      key: "canDeploy",
+      value: "deployment.images.push"
+    },
+    {
+      key: "canUpdateDeployment",
+      value: "deployment.config.update"
+    },
+    {
+      key: "canDeleteDeployment",
+      value: "deployment.config.delete"
+    },
+    {
+      key: "canCreateServiceAccount",
+      value: "deployment.serviceAccounts.create"
+    },
+    {
+      key: "canUpdateServiceAccount",
+      value: "deployment.serviceAccounts.update"
+    },
+    {
+      key: "canDeleteServiceAccount",
+      value: "deployment.serviceAccounts.delete"
+    }
+  ];
 
-  return { canDeploy };
+  const capabilities = [];
+  permissions.map(p => {
+    capabilities[p.key] = hasPermission(
+      ctx.user,
+      p.value,
+      ENTITY_DEPLOYMENT.toLowerCase(),
+      parent.id
+    );
+  });
+
+  return capabilities;
 }
 
 export default {

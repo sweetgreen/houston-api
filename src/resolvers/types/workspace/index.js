@@ -38,23 +38,64 @@ export function deploymentCount(parent) {
  * @return {WorkspaceCapabilities} Map of boolean capabilities.
  */
 export function workspaceCapabilities(parent, args, ctx) {
-  // Check to see if user has permission to view and update billing
-  const canUpdateBilling = hasPermission(
-    ctx.user,
-    "workspace.billing.update",
-    ENTITY_WORKSPACE.toLowerCase(),
-    parent.id
-  );
+  const permissions = [
+    {
+      key: "canUpdateBilling",
+      value: "workspace.billing.update"
+    },
+    {
+      key: "canUpdateIAM",
+      value: "workspace.iam.update"
+    },
+    {
+      key: "canUpdateWorkspace",
+      value: "workspace.config.update"
+    },
+    {
+      key: "canDeleteWorkspace",
+      value: "workspace.config.delete"
+    },
+    {
+      key: "canCreateDeployment",
+      value: "workspace.deployments.create"
+    },
+    {
+      key: "canInviteUser",
+      value: "workspace.invites.get"
+    },
+    {
+      key: "canUpdateUser",
+      value: "workspace.iam.update"
+    },
+    {
+      key: "canDeleteUser",
+      value: "workspace.iam.update"
+    },
+    {
+      key: "canCreateServiceAccount",
+      value: "workspace.serviceAccounts.create"
+    },
+    {
+      key: "canUpdateServiceAccount",
+      value: "workspace.serviceAccounts.update"
+    },
+    {
+      key: "canDeleteServiceAccount",
+      value: "workspace.serviceAccounts.delete"
+    }
+  ];
 
-  // Check to see if user has permission to update roles
-  const canUpdateIAM = hasPermission(
-    ctx.user,
-    "workspace.iam.update",
-    ENTITY_WORKSPACE.toLowerCase(),
-    parent.id
-  );
+  const capabilities = [];
+  permissions.map(p => {
+    capabilities[p.key] = hasPermission(
+      ctx.user,
+      p.value,
+      ENTITY_WORKSPACE.toLowerCase(),
+      parent.id
+    );
+  });
 
-  return { canUpdateIAM, canUpdateBilling };
+  return capabilities;
 }
 
 // Check the config to see if stripe is enabled (Cloud mode)
