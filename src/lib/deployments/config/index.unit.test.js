@@ -181,6 +181,30 @@ describe("mapResources", () => {
     expect(res).toHaveProperty("webserver.replicas");
     expect(res.webserver.replicas).toBe(1);
   });
+
+  test("mapResources correctly maps requests if specified", () => {
+    const au = {
+      cpu: 100,
+      memory: 384
+    };
+
+    const auType = "default";
+
+    const comp = {
+      name: "webserver",
+      au: {
+        default: 5,
+        limit: 10,
+        request: 0.1
+      }
+    };
+
+    const res = mapResources(au, auType, true, comp);
+    expect(res.webserver.resources.requests.cpu).toBe("10m");
+    expect(res.webserver.resources.requests.memory).toBe("39Mi");
+    expect(res.webserver.resources.limits.cpu).toBe("500m");
+    expect(res.webserver.resources.limits.memory).toBe("1920Mi");
+  });
 });
 
 describe("arrayOfKeyValueToObject", () => {

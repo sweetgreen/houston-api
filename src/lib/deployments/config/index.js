@@ -344,11 +344,14 @@ export function platform(deployment) {
  * @return {Object} Resources for single component.
  */
 export function mapResources(au, auType, includeUnits, comp) {
-  const requests = auToResources(au, comp.au[auType], includeUnits);
+  const limits = auToResources(au, comp.au[auType], includeUnits);
+  const requests = comp.au.request
+    ? auToResources(au, comp.au.request, includeUnits)
+    : limits;
 
   const resources = {
     requests,
-    limits: requests
+    limits
   };
 
   const extras = comp.extra
@@ -371,10 +374,12 @@ export function mapResources(au, auType, includeUnits, comp) {
  * @return {Object} The resources object.
  */
 export function auToResources(au, size, includeUnits = true) {
+  const cpu = Math.ceil(au.cpu * size);
+  const memory = Math.ceil(au.memory * size);
   if (includeUnits) {
-    return { cpu: `${au.cpu * size}m`, memory: `${au.memory * size}Mi` };
+    return { cpu: `${cpu}m`, memory: `${memory}Mi` };
   }
-  return { cpu: au.cpu * size, memory: au.memory * size };
+  return { cpu, memory };
 }
 
 /*

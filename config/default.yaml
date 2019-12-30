@@ -416,30 +416,37 @@ deployments:
       au:
         default: 5
         limit: 30
+        request: ~
     - name: webserver
       au:
         default: 5
         limit: 30
+        request: ~
     - name: statsd
       au:
         default: 2
         limit: 30
+        request: ~
     - name: pgbouncer
       au:
         default: 2
         limit: 2
+        request: ~
     - name: flower
       au:
         default: 2
         limit: 2
+        request: ~
     - name: redis
       au:
         default: 2
         limit: 2
+        request: ~
     - name: workers
       au:
         default: 10
         limit: 30
+        request: ~
       extra:
         - name: terminationGracePeriodSeconds
           default: 600
