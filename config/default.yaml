@@ -187,6 +187,15 @@ jwt:
     baseImages:
       - base-images/airflow
 
+# Service Account configuration.
+serviceAccounts:
+  # When a new service account is created, return the full apiKey for
+  # this many minutes. After this amount of time, return a partially obfuscated version.
+  showFor: 10
+
+  # Display this many characters of the real apiKey after showFor has been exceeded.
+  showFirstChars: 6
+
 # Allow public signups.
 publicSignups: false
 
