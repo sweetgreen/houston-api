@@ -3,7 +3,10 @@
  */
 import "dotenv/config";
 import log from "logger";
+import commander from "commander";
 import { prisma } from "generated/client";
+import { generateNamespace } from "deployments/naming";
+import config from "config";
 
 /*
  * Soft deletion of expired deployments
@@ -22,11 +25,10 @@ async function expireDeployments() {
     })
     .$fragment(`{ id releaseName workspace { id trialEndsAt } }`);
 
+  log.info(`Found ${deployments.length} deployments to expire.`);
+
   // Return early if we have no deployments.
-  if (deployments.length === 0) {
-    log.info("There are no deployments to expire");
-    return;
-  }
+  if (deployments.length === 0) return;
 
   for (const deployment of deployments) {
     // Pull out some deployment fields.
@@ -38,6 +40,13 @@ async function expireDeployments() {
     await prisma.updateDeployment({
       where: { id },
       data: { deletedAt: new Date() }
+    });
+
+    // Delete deployment from helm.
+    await commander.request("deleteDeployment", {
+      releaseName: deployment.releaseName,
+      namespace: generateNamespace(deployment.releaseName),
+      deleteNamespace: !config.get("helm.singleNamespace")
     });
   }
 

@@ -158,11 +158,10 @@ async function cleanupDeployments() {
     `{ releaseName }`
   );
 
+  log.info(`Found ${deployments.length} deployments to cleanup.`);
+
   // Return early if there are no deployments
-  if (deployments.length === 0) {
-    log.info("There are no deployments to delete");
-    return;
-  }
+  if (deployments.length === 0) return;
 
   // Loop through the deployments and cleanup.
   for (const deployment of deployments) {

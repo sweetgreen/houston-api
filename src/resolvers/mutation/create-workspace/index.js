@@ -16,6 +16,7 @@ export default async function createWorkspace(parent, args, ctx, info) {
   const trialEndsAt = moment()
     .add(trialDuration, "d")
     .format();
+
   return ctx.db.mutation.createWorkspace(
     {
       data: {

@@ -20,7 +20,7 @@ async function upgradeDeployments() {
   log.info(`Starting automatic deployment upgrade to ${desiredVersion}`);
 
   // Find all deployments.
-  let deployments;
+  let deployments = [];
   try {
     deployments = await prisma
       .deployments({ where: { deletedAt: null } })
@@ -33,11 +33,10 @@ async function upgradeDeployments() {
       .$fragment(`{ id releaseName version workspace { id } }`);
   }
 
+  log.info(`Found ${deployments.length} deployments to upgrade.`);
+
   // Return early if we have no deployments.
-  if (deployments.length === 0) {
-    log.info("There are no deployments to delete");
-    return;
-  }
+  if (deployments.length === 0) return;
 
   // Loop through and upgrade all deployments.
   for (const deployment of deployments) {

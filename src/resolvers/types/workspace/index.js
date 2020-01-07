@@ -100,8 +100,7 @@ export function workspaceCapabilities(parent, args, ctx) {
 
 // Check the config to see if stripe is enabled (Cloud mode)
 export function billingEnabled() {
-  const billingEnabled = config.get("stripe.enabled");
-  return billingEnabled;
+  return config.get("stripe.enabled");
 }
 
 // Function to determine if the user should be blocked from viewing their workspace
