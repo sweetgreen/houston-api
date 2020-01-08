@@ -302,6 +302,7 @@ type Query {
 
   # New ServiceAccount (singlton) scoped query
   deploymentServiceAccount(
+    deploymentUuid: Uuid!
     serviceAccountUuid: Uuid!
   ): ServiceAccount @auth(permissions: ["deployment.serviceAccounts.get", "system.serviceAccounts.get"], op: OR)
 
@@ -324,6 +325,7 @@ type Query {
 
   # New ServiceAccount (singleton) scoped query
   workspaceServiceAccount(
+    workspaceUuid: Uuid!
     serviceAccountUuid: Uuid!
   ): ServiceAccount @auth(permissions: ["workspace.serviceAccounts.get", "system.serviceAccounts.get"], op: OR)
 

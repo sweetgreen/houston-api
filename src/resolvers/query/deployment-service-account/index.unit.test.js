@@ -14,9 +14,11 @@ const schema = makeExecutableSchema({
 // Define our mutation
 const query = `
   query deploymentServiceAccount(
+    $deploymentUuid: Uuid!
     $serviceAccountUuid: Uuid!
   ) {
     deploymentServiceAccount(
+      deploymentUuid: $deploymentUuid
       serviceAccountUuid: $serviceAccountUuid
     ) {
       id
@@ -47,6 +49,7 @@ describe("deploymentServiceAccount", () => {
     };
 
     const vars = {
+      deploymentUuid: user.roleBindings[0].deployment.id,
       serviceAccountUuid: casual.uuid
     };
 
@@ -59,7 +62,7 @@ describe("deploymentServiceAccount", () => {
   test("request fails if missing an argument", async () => {
     // Run the graphql mutation.
     const res = await graphql(schema, query, null, {}, {});
-    expect(res.errors).toHaveLength(1);
+    expect(res.errors).toHaveLength(2);
   });
 
   test("request fails if user does not have access to deploymentUuid", async () => {
@@ -76,6 +79,7 @@ describe("deploymentServiceAccount", () => {
     };
 
     const vars = {
+      deploymentUuid: user.roleBindings[0].deployment.id,
       serviceAccountUuid: casual.uuid
     };
 
