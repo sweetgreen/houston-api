@@ -4,6 +4,7 @@ import log from "logger";
 import createPoller from "pubsub/poller";
 import config from "config";
 import request from "request-promise-native";
+import moment from "moment";
 
 // Use sample data if prom is not enabled
 const useSample = !config.get("prometheus.enabled");
@@ -15,9 +16,12 @@ const samplePromise = new Promise(resolve => {
 
 // Build the Prometheus request URL
 export function buildURI(query) {
+  const now = moment().unix() - (moment().unix() % 15);
   const host = config.get("prometheus.host");
   const port = config.get("prometheus.port");
-  return `http://${host}:${port}/api/v1/${query}`;
+  return `http://${host}:${port}/api/v1/query?query=${encodeURI(
+    query
+  )}&time=${now}`;
 }
 
 export async function getMetric(releaseName) {
@@ -45,7 +49,7 @@ export async function subscribe(parent, args, { pubsub }) {
   // Return promQL data if in production
   return createPoller(async publish => {
     const res = await Promise.resolve(getMetric(releaseName));
-    publish({ deploymentStatus: res });
+    publish({ deploymentStatus: { result: res.result[0].value[1] } });
   }, pubsub);
 }
 
