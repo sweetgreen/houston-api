@@ -9,6 +9,7 @@ import { generateNamespace } from "deployments/naming";
 import config from "config";
 import yargs from "yargs";
 import { map, size } from "lodash";
+import moment from "moment";
 
 /*
  * Soft deletion of expired deployments
@@ -16,7 +17,8 @@ import { map, size } from "lodash";
 async function expireDeployments() {
   log.info("Starting soft deletion of expired deployments");
 
-  const expireDate = new Date();
+  const modifier = argv["date-modifier"];
+  const expireDate = moment().add(modifier, "days");
 
   log.info(`Searching for deployments that expired before ${expireDate}`);
 
@@ -83,6 +85,13 @@ const argv = yargs
     description:
       "Skip actual deletion and only print the deployments that would be deleted",
     type: "boolean"
+  })
+  .option("date-modifier", {
+    alias: "m",
+    default: 0,
+    description:
+      "Add or subtract days from the expiration date, which defaults to now",
+    type: "number"
   })
   .help()
   .alias("help", "h").argv;
