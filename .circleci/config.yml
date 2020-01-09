@@ -16,6 +16,12 @@ jobs:
       - push:
           comma_separated_tags: "master,latest"
           image_name: ap-houston-api
+  publish-release-branch:
+    executor: docker-executor
+    steps:
+      - push:
+          comma_separated_tags: "$CIRCLE_BRANCH"
+          image_name: ap-houston-api
   release:
     executor: docker-executor
     steps:
@@ -42,6 +48,12 @@ workflows:
           filters:
             branches:
               only: master
+      - publish-release-branch:
+          requires:
+            - scan
+          filters:
+            branches:
+              only: '/release-.*/'
       - approve-release:
           type: approval
           requires:
