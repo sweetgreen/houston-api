@@ -251,6 +251,7 @@ roles:
       ? system.user.delete
       ? system.user.verifyEmail
       ? system.workspace.addCustomerId
+      ? system.workspace.delete
       ? system.workspace.suspend
       ? system.workspace.extendTrial
       ? system.airflow.admin
