@@ -36,15 +36,15 @@ pipeline:
       event: push
       branch: [ master ]
 
-  trigger:
-    image: plugins/downstream
-    server: https://drone.astronomer.io
-    fork: true
-    secrets: [ downstream_token ]
-    repositories:
-      - astronomer/astronomer
-    when:
-      branch: [ master ]
+  # trigger:
+  #   image: plugins/downstream
+  #   server: https://drone.astronomer.io
+  #   fork: true
+  #   secrets: [ downstream_token ]
+  #   repositories:
+  #     - astronomer/astronomer
+  #   when:
+  #     branch: [ master ]
 
   notify:
     image: plugins/slack
