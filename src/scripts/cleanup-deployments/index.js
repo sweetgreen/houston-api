@@ -11,7 +11,7 @@ import request from "request-promise-native";
 import config from "config";
 import yargs from "yargs";
 import moment from "moment";
-import { size } from "lodash";
+import { map, size } from "lodash";
 import { DEPLOYMENT_AIRFLOW, MEDIATYPE_DOCKER_MANIFEST_V2 } from "constants";
 
 /*
@@ -150,7 +150,7 @@ async function cleanupDeployments() {
     .subtract(argv["olderThan"], "days")
     .toDate();
 
-  log.info(`Searching for deployments deleted before ${olderThan}`);
+  log.info(`Searching for deployments soft-deleted before ${olderThan}`);
 
   // Find the deployments that are older than cleanup
   const deployments = await prisma.deployments(
@@ -158,10 +158,23 @@ async function cleanupDeployments() {
     `{ releaseName }`
   );
 
-  log.info(`Found ${deployments.length} deployments to cleanup.`);
+  const deploymentCount = size(deployments);
 
-  // Return early if there are no deployments
-  if (deployments.length === 0) return;
+  // Log deployment info if we have some to expire
+  if (deploymentCount > 0) {
+    const names = map(deployments, "releaseName").join(", ");
+    log.info(`Found ${size(deployments)} deployments to cleanup: ${names}`);
+  } else {
+    // Return early if we have no deployments.
+    log.info("No deployments to cleanup, exiting now");
+    return;
+  }
+
+  // Exit now if dry-run.
+  if (argv["dry-run"]) {
+    log.info("This is a dry-run, skipping deployment cleanup and exiting now");
+    return;
+  }
 
   // Loop through the deployments and cleanup.
   for (const deployment of deployments) {
@@ -180,6 +193,13 @@ const argv = yargs
     default: 14,
     description: "Filter soft deleted deployments older than",
     type: "number"
+  })
+  .option("dry-run", {
+    alias: "d",
+    default: false,
+    description:
+      "Skip actual cleanup and only print the deployments that would be cleaned up",
+    type: "boolean"
   })
   .help()
   .alias("help", "h").argv;
