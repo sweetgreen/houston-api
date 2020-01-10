@@ -342,9 +342,12 @@ export function platform(deployment) {
  * @return {Object} Helm values.
  */
 export function defaultAirflowTag({ airflowVersion }) {
-  return {
-    defaultAirflowTag: airflowImageForVersion(airflowVersion).tag
-  };
+  const versionedTag = (airflowImageForVersion(airflowVersion) || {}).tag;
+  const defaultAirflowTag = versionedTag
+    ? versionedTag
+    : defaultAirflowImage().tag;
+
+  return { defaultAirflowTag };
 }
 
 /*
@@ -591,12 +594,10 @@ export function defaultAirflowImage() {
  * @reuturn {String} Default Airflow image.
  */
 export function airflowImageForVersion(version) {
-  return (
-    first(
-      filter(
-        airflowImages(),
-        i => i.channel === "stable" && i.version === version
-      )
-    ) || {}
+  return first(
+    filter(
+      airflowImages(),
+      i => i.channel === "stable" && i.version === version
+    )
   );
 }
