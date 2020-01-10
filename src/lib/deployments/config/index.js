@@ -51,7 +51,8 @@ export function generateHelmValues(deployment, values = {}) {
     limitRange(), // Apply the limit range.
     constraints(deployment), // Apply any constraints (quotas, pgbouncer, etc).
     registry(deployment), // Apply the registry connection details.
-    elasticsearch(deployment), // Apply the elasticsearch connection details
+    elasticsearch(deployment), // Apply the elasticsearch connection details.
+    defaultAirflowTag(deployment), // Apply the default airflow tag we want to deploy.
     platform(deployment), // Apply astronomer platform specific values.
     deploymentOverrides(deployment) // The deployment level config.
   );
@@ -336,6 +337,16 @@ export function platform(deployment) {
   return { labels, platform };
 }
 
+/* Return the default airflow tag to push to deployments.
+ * @param {Object} deployment A deployment object.
+ * @return {Object} Helm values.
+ */
+export function defaultAirflowTag({ airflowVersion }) {
+  return {
+    defaultAirflowTag: airflowImageForVersion(airflowVersion).tag
+  };
+}
+
 /*
  * HOF to help create mergeable resources
  * @param {Object} Astro unit config.
@@ -408,9 +419,12 @@ export function objectToArrayOfKeyValue(obj = {}) {
  */
 export function mapPropertiesToDeployment(obj = {}) {
   const mapped = {
-    extraAu: get(obj, DEPLOYMENT_PROPERTY_EXTRA_AU, 0),
-    airflowVersion: get(obj, DEPLOYMENT_PROPERTY_COMPONENT_VERSION, "")
+    extraAu: get(obj, DEPLOYMENT_PROPERTY_EXTRA_AU, 0)
   };
+
+  // Only set this if we have a value.
+  const airflowVersion = get(obj, DEPLOYMENT_PROPERTY_COMPONENT_VERSION);
+  if (airflowVersion) mapped.airflowVersion = airflowVersion;
 
   if (obj[DEPLOYMENT_PROPERTY_ALERT_EMAILS]) {
     mapped.alertEmails = {
@@ -577,10 +591,12 @@ export function defaultAirflowImage() {
  * @reuturn {String} Default Airflow image.
  */
 export function airflowImageForVersion(version) {
-  return first(
-    filter(
-      airflowImages(),
-      i => i.channel === "stable" && i.version === version
-    )
+  return (
+    first(
+      filter(
+        airflowImages(),
+        i => i.channel === "stable" && i.version === version
+      )
+    ) || {}
   );
 }

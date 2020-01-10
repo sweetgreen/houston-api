@@ -291,9 +291,7 @@ describe("mapPropertiesToDeployment", () => {
     const renamed = mapPropertiesToDeployment(obj);
 
     expect(renamed.extraAu).toEqual(obj[DEPLOYMENT_PROPERTY_EXTRA_AU]);
-    expect(renamed.airflowVersion).toEqual(
-      obj[DEPLOYMENT_PROPERTY_COMPONENT_VERSION]
-    );
+    expect(renamed.airflowVersion).toBeUndefined();
 
     expect(renamed.alertEmails).toHaveProperty("set");
     expect(renamed.alertEmails.set).toHaveLength(0);
