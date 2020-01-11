@@ -9,7 +9,7 @@ import {
   findLatestTag,
   generateNextTag
 } from "deployments/config";
-import { get, map } from "lodash";
+import { first, get, map } from "lodash";
 import config from "config";
 import {
   AIRFLOW_EXECUTOR_CELERY,
@@ -101,12 +101,13 @@ export async function deployInfo(parent, args, ctx) {
   const imagesCreated = await ctx.db.query.dockerImages(
     {
       where: { deployment: { id: parent.id } },
-      order: [["createdAt", "DESC"]],
-      limit: 1
+      orderBy: "createdAt_DESC",
+      first: 1
     },
     `{ tag }`
   );
-  const current = map(imagesCreated, "tag")[0];
+
+  const current = first(map(imagesCreated, "tag"));
   return { latest, nextCli, current };
 }
 
