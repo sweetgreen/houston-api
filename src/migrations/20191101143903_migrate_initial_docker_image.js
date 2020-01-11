@@ -57,15 +57,27 @@ export async function up() {
       const uri = `http://${registry}/v2/${repo}/tags/list`;
       log.debug(`Requesting docker tags for ${releaseName} at ${uri}`);
 
-      const { tags } = await request({
-        method: "GET",
-        uri,
-        json: true,
-        headers: { Authorization: `Bearer ${dockerJWT}` }
-      });
+      // Docker tags to delete.
+      let tags;
 
-      if (!tags) {
-        log.info(`There are no tags to delete for ${releaseName}`);
+      // Try to get all the tags from the registry.
+      // This could fail due to never being pushed to.
+      try {
+        const response = await request({
+          method: "GET",
+          uri,
+          json: true,
+          headers: { Authorization: `Bearer ${dockerJWT}` }
+        });
+
+        tags = response.tags;
+      } catch (e) {
+        log.error(e);
+      }
+
+      // Exit early if we have no tags.
+      if (size(tags) === 0) {
+        log.info(`There are no tags to migrate for ${releaseName}`);
         continue;
       }
 
@@ -78,7 +90,9 @@ export async function up() {
             mediaType: "application/vnd.docker.distribution.manifest.v2+json"
           }
         };
+
         const imageMetadata = await extractImageMetadata(ev);
+
         try {
           await prisma.createDockerImage({
             name: `${repo}:${tag}`,
