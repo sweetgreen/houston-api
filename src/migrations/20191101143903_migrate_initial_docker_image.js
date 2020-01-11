@@ -65,7 +65,7 @@ export async function up() {
       });
 
       if (!tags) {
-        log.info("There is no tags :(");
+        log.info(`There are no tags to delete for ${releaseName}`);
         continue;
       }
 
