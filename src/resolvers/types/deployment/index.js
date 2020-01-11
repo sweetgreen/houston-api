@@ -101,7 +101,7 @@ export async function deployInfo(parent, args, ctx) {
   const imagesCreated = await ctx.db.query.dockerImages(
     {
       where: { deployment: { id: parent.id } },
-      order: [["created", "DESC"]],
+      order: [["createdAt", "DESC"]],
       limit: 1
     },
     `{ tag }`
