@@ -18,16 +18,11 @@ export async function up() {
   const deployments = await prisma.deployments({}, `{ releaseName }`);
 
   // Grab some configuration.
-  const {
-    releaseNamespace: namespace,
-    releaseName: platformReleaseName
-  } = config.get("helm");
-
-  const registryPort = config.get("registry.port");
+  const { host, port } = config.get("registry");
 
   // Current deployment as we loop through them.
   if (!deployments) {
-    log.info("There is no deployments :(");
+    log.info("There are no deployments");
     return;
   }
 
@@ -37,7 +32,7 @@ export async function up() {
       log.debug(`Migrating ${deployment.releaseName}...`);
       const releaseName = deployment.releaseName;
       const repo = `${releaseName}/${DEPLOYMENT_AIRFLOW}`;
-      const registry = `${platformReleaseName}-registry.${namespace}:${registryPort}`;
+      const registry = `${host}:${port}`;
 
       // Create a JWT for the registry request.
       const dockerJWT = await createDockerJWT("houston", [

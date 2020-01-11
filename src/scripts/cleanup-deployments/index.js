@@ -64,14 +64,11 @@ async function deleteManifest(dockerJWT, registry, repo, digestHash) {
  * @param {String} deployment name of the deployment.
  */
 async function cleanupImagesForDeployment(deployment) {
-  const {
-    releaseNamespace: namespace,
-    releaseName: platformReleaseName
-  } = config.get("helm");
-  const registryPort = config.get("registry.port");
+  const { host, port } = config.get("registry");
+  const registry = `${host}:${port}`;
+
   const releaseName = deployment.releaseName;
   const repo = `${releaseName}/${DEPLOYMENT_AIRFLOW}`;
-  const registry = `${platformReleaseName}-registry.${namespace}:${registryPort}`;
 
   log.info(`Cleaning docker registry ${repo}`);
 

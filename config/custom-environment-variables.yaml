@@ -26,6 +26,10 @@ commander:
   host: "COMMANDER__HOST"
   port: "COMMANDER__PORT"
 
+registry:
+  host: "REGISTRY__HOST"
+  port: "REGISTRY__PORT"
+
 elasticsearch:
   enabled:
     __name: "ELASTICSEARCH__ENABLED"
@@ -86,7 +90,7 @@ auth:
       __format: "json"
 
   openidConnect:
-    clockTolerance: 
+    clockTolerance:
       __name: "AUTH__OPENID_CONNECT__CLOCK_TOLERANCE"
       __format: "json"
     # A single JSON string of all the OIDC providers to use. If this env var is
