@@ -4,10 +4,13 @@ import { prisma } from "generated/client";
 import { extractImageMetadata } from "routes/v1/registry/events/post";
 import request from "request-promise-native";
 import config from "config";
+import { map, size } from "lodash";
 import { DEPLOYMENT_AIRFLOW } from "constants";
 import { execSync } from "child_process";
 
 export async function up() {
+  log.info(`Migrating docker images from registry to database`);
+
   // Since we are using the prisma client library and we run `prisma generate`
   // before these migrations, the query below will fail, looking for new columns against
   // an unmigrated database.
@@ -20,9 +23,15 @@ export async function up() {
   // Grab some configuration.
   const { host, port } = config.get("registry");
 
-  // Current deployment as we loop through them.
-  if (!deployments) {
-    log.info("There are no deployments");
+  const deploymentCount = size(deployments);
+
+  // Log deployment info if we have some to expire
+  if (deploymentCount > 0) {
+    const names = map(deployments, "releaseName").join(", ");
+    log.info(`Found ${size(deployments)} deployments to migrate: ${names}`);
+  } else {
+    // Return early if we have no deployments.
+    log.info("No deployments to migrate, exiting now");
     return;
   }
 
