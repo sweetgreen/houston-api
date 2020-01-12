@@ -114,4 +114,6 @@ export async function up() {
   }
 }
 
-export async function down() {}
+export async function down() {
+  await prisma.deleteManyDockerImages({});
+}
