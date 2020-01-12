@@ -23,8 +23,10 @@ LABEL io.astronomer.docker.component="houston-api"
 
 WORKDIR /houston
 
-COPY . .
+# Copy in the package.json to install dependencies
+COPY package*.json ./
 
+# Install dependencies
 RUN apk add --no-cache --virtual .build-deps \
 		build-base \
 		git \
@@ -34,8 +36,11 @@ RUN apk add --no-cache --virtual .build-deps \
 		nodejs-npm \
 		openssl \
 	&& npm install \
-	&& npm run build \
 	&& apk del .build-deps
+
+# Copy in the source and build the application
+COPY . .
+RUN npm run build
 
 EXPOSE 8871
 
