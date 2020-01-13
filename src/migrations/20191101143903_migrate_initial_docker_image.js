@@ -102,7 +102,8 @@ export async function up() {
             labels: imageMetadata.labels,
             env: imageMetadata.env,
             tag: tag,
-            digest: imageMetadata.digest
+            digest: imageMetadata.digest,
+            createdAt: imageMetadata.created
           });
         } catch (error) {
           log.error(`Error during create docker image: ${error}`);

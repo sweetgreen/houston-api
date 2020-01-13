@@ -141,5 +141,7 @@ type DockerImage {
   tag: String!
   digest: String!
   deployment: Deployment! @relation(name: "DeploymentDockerImages" onDelete: CASCADE)
-  createdAt: DateTime! @createdAt
+  # we aren't using the @createdAt decorator, because of initial data migration from docker registry
+  # TODO: migrate to prisma 2 and replace to: createdAt DateTime! @default(now())
+  createdAt: DateTime!
 }
