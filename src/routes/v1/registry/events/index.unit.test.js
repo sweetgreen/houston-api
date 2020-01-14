@@ -89,8 +89,7 @@ describe("POST /registry-events", () => {
         env,
         digest,
         deployment: { connect: { releaseName: "cosmic-dust-1234" } },
-        tag: "cli-1",
-        createdAt: expect.any(Date)
+        tag: "cli-1"
       }
     });
     expect(res.statusCode).toBe(200);

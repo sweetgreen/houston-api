@@ -54,9 +54,7 @@ export default async function(req, res) {
             labels: imageMetadata.labels,
             env: imageMetadata.env,
             tag: tag,
-            digest: ev.target.digest,
-            // TODO: delegate it to prisma after migration to prisma 2
-            createdAt: new Date()
+            digest: ev.target.digest
           }
         });
       } catch (e) {
@@ -148,7 +146,6 @@ export async function extractImageMetadata(ev) {
   return {
     labels: imageMetadata.config.Labels,
     env: imageMetadata.config.Env,
-    digest: manifest.config.digest,
-    created: imageMetadata.created
+    digest: manifest.config.digest
   };
 }
