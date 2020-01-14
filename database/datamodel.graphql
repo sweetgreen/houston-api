@@ -128,7 +128,7 @@ type Deployment {
   createdAt: DateTime! @createdAt
   updatedAt: DateTime! @updatedAt
   deletedAt: DateTime
-  images: [DockerImage!] @relation(name: "DeploymentDockerImages" onDelete: CASCADE)
+  images: [DockerImage!] @relation(name: "DeploymentDockerImages", onDelete: CASCADE)
 }
 
 type DockerImage {
@@ -140,7 +140,7 @@ type DockerImage {
   env: Json!
   tag: String!
   digest: String!
-  deployment: Deployment! @relation(name: "DeploymentDockerImages" onDelete: CASCADE)
+  deployment: Deployment! @relation(name: "DeploymentDockerImages")
   # we aren't using the @createdAt decorator, because of initial data migration from docker registry
   # TODO: migrate to prisma 2 and replace to: createdAt DateTime! @default(now())
   createdAt: DateTime!
