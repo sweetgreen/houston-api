@@ -22,17 +22,27 @@ async function expireDeployments() {
 
   log.info(`Searching for deployments that expired before ${expireDate}`);
 
+  // Build the deployment query.
+  const query = {
+    where: {
+      deletedAt: null, // We want deployments that have not been soft-deleted yet
+      workspace: {
+        stripeCustomerId: null, // And where the workspace does not yet have a stripe customer id
+        trialEndsAt_lte: expireDate // And where the workpace trial end date has been exceeded
+      }
+    }
+  };
+
+  if (argv["canary"]) {
+    log.info(`Limiting search to canary deployments`);
+    query.where.canary = true;
+  }
+
+  log.debug(`Query: ${JSON.stringify(query)}`);
+
   // Find all suspended deployments.
   const deployments = await prisma
-    .deployments({
-      where: {
-        deletedAt: null, // We want deployments that have not been soft-deleted yet
-        workspace: {
-          stripeCustomerId: null, // And where the workspace does not yet have a stripe customer id
-          trialEndsAt_lte: expireDate // And where the workpace trial end date has been exceeded
-        }
-      }
-    })
+    .deployments(query)
     .$fragment(`{ id releaseName workspace { id trialEndsAt } }`);
 
   const deploymentCount = size(deployments);
@@ -92,6 +102,12 @@ const argv = yargs
     description:
       "Add or subtract days from the expiration date, which defaults to now",
     type: "number"
+  })
+  .option("canary", {
+    alias: "c",
+    default: false,
+    description: "Only run for deployments with canary flag set to true",
+    type: "boolean"
   })
   .help()
   .alias("help", "h").argv;

@@ -129,6 +129,7 @@ type Deployment {
   updatedAt: DateTime! @updatedAt
   deletedAt: DateTime
   images: [DockerImage!] @relation(name: "DeploymentDockerImages", onDelete: CASCADE)
+  canary: Boolean
 }
 
 type DockerImage {

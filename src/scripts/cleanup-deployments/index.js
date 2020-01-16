@@ -149,11 +149,20 @@ async function cleanupDeployments() {
 
   log.info(`Searching for deployments soft-deleted before ${olderThan}`);
 
+  // Build the deployment query.
+  const query = { where: { deletedAt_lte: olderThan } };
+
+  if (argv["canary"]) {
+    log.info(`Limiting search to canary deployments`);
+    query.where = { ...query.where, canary: true };
+  }
+
+  log.debug(`Query: ${JSON.stringify(query)}`);
+
   // Find the deployments that are older than cleanup
-  const deployments = await prisma.deployments(
-    { where: { deletedAt_lte: olderThan } },
-    `{ releaseName }`
-  );
+  const deployments = await prisma
+    .deployments(query)
+    .$fragment(`{ releaseName }`);
 
   const deploymentCount = size(deployments);
 
@@ -196,6 +205,12 @@ const argv = yargs
     default: false,
     description:
       "Skip actual cleanup and only print the deployments that would be cleaned up",
+    type: "boolean"
+  })
+  .option("canary", {
+    alias: "c",
+    default: false,
+    description: "Only run for deployments with canary flag set to true",
     type: "boolean"
   })
   .help()
