@@ -19,7 +19,7 @@ import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 import bcrypt from "bcryptjs";
 import { get, isNull, find, size } from "lodash";
-import crypto from "crypto";
+import { generate as generatePassword } from "generate-password";
 import {
   DEPLOYMENT_AIRFLOW,
   DEPLOYMENT_PROPERTY_EXTRA_AU,
@@ -78,15 +78,20 @@ export default async function createDeployment(parent, args, ctx, info) {
   const airflowVersion = get(args, "airflowVersion", defaultAirflowVersion);
 
   // Generate a unique registry password for this deployment.
-  const registryPassword = crypto.randomBytes(16).toString("hex");
+  const registryPassword = generatePassword({ length: 32, numbers: true });
   const hashedRegistryPassword = await bcrypt.hash(registryPassword, 10);
 
   // Generate a unique elasticsearch password for this deployment
-  const elasticsearchPassword = crypto.randomBytes(16).toString("hex");
+  const elasticsearchPassword = generatePassword({ length: 32, numbers: true });
   const hashedElasticsearchPassword = await bcrypt.hash(
     elasticsearchPassword,
     10
   );
+
+  // Generate a random fernetKey and base64 encode it for this deployment.
+  const fernetKey = new Buffer(
+    generatePassword({ length: 32, numbers: true })
+  ).toString("base64");
 
   // Generate a random space-themed release name.
   const releaseName = generateReleaseName();
@@ -154,7 +159,8 @@ export default async function createDeployment(parent, args, ctx, info) {
   const values = {
     data,
     registry,
-    elasticsearch
+    elasticsearch,
+    fernetKey
   };
 
   // Generate the helm input for the airflow chart (eg: values.yaml).

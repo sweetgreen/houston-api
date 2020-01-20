@@ -34,7 +34,7 @@
     "email-templates": "^5.0.3",
     "express": "^4.16.4",
     "express-prom-bundle": "^5.1.5",
-    "generate-password": "^1.4.1",
+    "generate-password": "^1.5.0",
     "global-agent": "1.13.1",
     "got": "^9.6.0",
     "graphql": "^14.0.2",
