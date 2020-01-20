@@ -47,13 +47,13 @@ describe("Deployoment", () => {
       query: {
         dockerImages: jest
           .fn()
-          .mockReturnValue([{ tag: "cli-1" }, { tag: "cli-2" }]),
+          .mockReturnValue([{ tag: "deploy-1" }, { tag: "deploy-2" }]),
         deployment: jest.fn()
       }
     };
     const { latest, nextCli } = await deployInfo(parent, {}, { db });
-    expect(latest).toEqual("cli-2");
-    expect(nextCli).toEqual("cli-3");
+    expect(latest).toEqual("deploy-2");
+    expect(nextCli).toEqual("deploy-3");
     expect(db.query.dockerImages.mock.calls).toHaveLength(2);
     expect(db.query.deployment.mock.calls).toHaveLength(0);
   });
@@ -64,13 +64,13 @@ describe("Deployoment", () => {
       query: {
         dockerImages: jest
           .fn()
-          .mockReturnValue([{ tag: "teamcity-r4ws4" }, { tag: "cli-1" }]),
+          .mockReturnValue([{ tag: "teamcity-r4ws4" }, { tag: "deploy-1" }]),
         deployment: jest.fn()
       }
     };
     const { latest, nextCli, current } = await deployInfo(parent, {}, { db });
-    expect(latest).toEqual("cli-1");
-    expect(nextCli).toEqual("cli-2");
+    expect(latest).toEqual("deploy-1");
+    expect(nextCli).toEqual("deploy-2");
     expect(current).toEqual("teamcity-r4ws4");
     expect(db.query.dockerImages.mock.calls).toHaveLength(2);
     expect(db.query.deployment.mock.calls).toHaveLength(0);
@@ -86,7 +86,7 @@ describe("Deployoment", () => {
     };
     const { latest, nextCli } = await deployInfo(parent, {}, { db });
     expect(latest).toBeUndefined();
-    expect(nextCli).toEqual("cli-1");
+    expect(nextCli).toEqual("deploy-1");
     expect(db.query.dockerImages.mock.calls).toHaveLength(2);
     expect(db.query.deployment.mock.calls).toHaveLength(0);
   });

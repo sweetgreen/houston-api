@@ -11,6 +11,7 @@ import {
   mapDeploymentToProperties,
   findLatestTag,
   generateNextTag,
+  generateDefaultTag,
   deploymentOverrides,
   mapCustomEnvironmentVariables,
   platform
@@ -22,8 +23,7 @@ import {
   AIRFLOW_EXECUTOR_LOCAL,
   DEPLOYMENT_PROPERTY_EXTRA_AU,
   DEPLOYMENT_PROPERTY_COMPONENT_VERSION,
-  DEPLOYMENT_PROPERTY_ALERT_EMAILS,
-  DEFAULT_NEXT_IMAGE_TAG
+  DEPLOYMENT_PROPERTY_ALERT_EMAILS
 } from "constants";
 
 describe("generateHelmValues", () => {
@@ -320,29 +320,29 @@ describe("mapDeploymentToProperties", () => {
 
 describe("findLatestTag", () => {
   test("correctly determines the latest tag from list", () => {
-    const tags = ["cli-1", "cli-3", "cli-2", "somethingelse"];
+    const tags = ["deploy-1", "deploy-3", "deploy-2", "somethingelse"];
     const latest = findLatestTag(tags);
-    expect(latest).toBe("cli-3");
+    expect(latest).toBe("deploy-3");
   });
 
   test("correctly sorts tags", () => {
-    const tags = ["cli-1", "cli-3", "cli-2", "cli-10", "cli-9"];
+    const tags = ["deploy-1", "deploy-3", "deploy-2", "deploy-10", "deploy-9"];
     const latest = findLatestTag(tags);
-    expect(latest).toBe("cli-10");
+    expect(latest).toBe("deploy-10");
   });
 });
 
 describe("generateNextTag", () => {
   test("correctly generates the next tag", () => {
-    const latest = "cli-3";
+    const latest = "deploy-3";
     const next = generateNextTag(latest);
-    expect(next).toBe("cli-4");
+    expect(next).toBe("deploy-4");
   });
 
   test("returns default value if latest is empty", () => {
     const latest = undefined;
     const next = generateNextTag(latest);
-    expect(next).toBe(DEFAULT_NEXT_IMAGE_TAG);
+    expect(next).toBe(generateDefaultTag());
   });
 });
 

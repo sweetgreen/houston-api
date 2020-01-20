@@ -358,6 +358,10 @@ deployments:
   # Log out final helm values whenever they are generated, before deployment.
   logHelmValues: false
 
+  # CLI image tag prefix
+  # This is the prefix to use for houston-generated tags.
+  tagPrefix: deploy
+
   # This is the database connection that we use to connect
   # and create other databases/schemas/users for each
   # individual airflow deployment.

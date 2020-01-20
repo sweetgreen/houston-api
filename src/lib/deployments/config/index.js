@@ -29,8 +29,7 @@ import {
   AIRFLOW_EXECUTOR_DEFAULT,
   AIRFLOW_COMPONENT_SCHEDULER,
   AIRFLOW_COMPONENT_WORKERS,
-  AIRFLOW_COMPONENT_PGBOUNCER,
-  DEFAULT_NEXT_IMAGE_TAG
+  AIRFLOW_COMPONENT_PGBOUNCER
 } from "constants";
 
 /*
@@ -466,7 +465,8 @@ export function mapDeploymentToProperties(dep = {}) {
  * Find the most recent tag in a list of image tags.
  */
 export function findLatestTag(tags = []) {
-  const filtered = tags.filter(t => t.startsWith("cli-"));
+  const prefix = config.get("deployments.tagPrefix");
+  const filtered = tags.filter(t => t.startsWith(`${prefix}-`));
   return maxBy(filtered, t => parseInt(last(split(t, "-"))));
 }
 
@@ -474,9 +474,18 @@ export function findLatestTag(tags = []) {
  * Generate the next tag name for a deployment image.
  */
 export function generateNextTag(latest) {
-  if (!latest) return DEFAULT_NEXT_IMAGE_TAG;
+  if (!latest) return generateDefaultTag();
+  const prefix = config.get("deployments.tagPrefix");
   const num = parseInt(last(split(latest, "-")));
-  return `cli-${num + 1}`;
+  return `${prefix}-${num + 1}`;
+}
+
+/*
+ * Generate the default tag for an airflow deployment.
+ */
+export function generateDefaultTag() {
+  const prefix = config.get("deployments.tagPrefix");
+  return `${prefix}-1`;
 }
 
 /*
