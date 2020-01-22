@@ -54,7 +54,87 @@ Houston is written in ES6 and beyond, and it's currently built with [Babel](http
 
 Houston is currently using [Jest](https://jestjs.io) for running tests. Typically test files will live near the unit being tested and be named similarly with `.unit.test.js` as its extension. Jest can be ran as a one-off or can be run in watch mode. Both modes allow you to specify a regex path to limit what tests are running. `npm run test` will run all tests once and report back. `npm run test -- src/resolvers/create-user --watch` will run in watch mode, and only for the tests for the `create-user` resolver.
 
-## Live testing in Kubernetes
+## Developing locally, in Kubernetes, with Telepresence
+
+[Telepresence](https://telepresence.io) is a tool which
+allows you to run a program locally, but as if it was in the cluster.
+[Installation instructions](https://www.telepresence.io/reference/install)
+are available with most systems having it in their package manager.
+(brew / apt install telepresence)
+
+
+Note, this will use the secrets and environment variables
+from the deployment in kubernetes.
+The config will be taken from the local filesystem.
+To use the cluster configs, see below.
+
+You will need to make some edits to make Houston work locally with telepresence.
+
+#### Edit the database conection string to remove the "svc.cluster.local"
+
+```bash
+kubectl get secret -n tester astronomer-bootstrap -o yaml
+
+echo -n "base64-string" | base64 -d   # or -D if on mac
+echo -n "postgres://postgres:<password>@<postgres-service>.<namespace>:5432" | base64
+
+kubectl edit secret -n tester astronomer-bootstrap
+```
+
+#### Edit the CORS policy in config/default.yaml
+
+Near the top of `config/default.yaml`
+edit
+
+```yaml
+cors:
+  allowedOrigins: ["https://app.<your-domain>"]
+```
+
+#### Run telepresence and houston
+
+With the edits in place and a deployed houston-api running in kubernetes
+
+```bash
+telepresence \
+  --namespace tester \
+  --swap-deployment tester-houston \
+  --run-shell
+
+# ... deploys proxy, prints output ...
+
+# once it comes online, you can get your normal shell by running...
+bash
+
+# mount secret volumes
+./bin/volumes.sh
+
+# start houston locally
+npm start
+```
+
+You will now have a locally running houston
+as if it was in kubernetes.
+
+#### Configuration files
+
+Running Houston under telepresence will take changes
+from your local filesystem.
+You can also use the configuration from within the cluster.
+In the previous section, add an argument to the volumes script:
+
+```bash
+./scripts/volumes.sh production
+```
+
+Any argument will cause the cluster config dir to be mounted.
+This will also set the NODE_ENV to the argument value.
+You can set the NODE_ENV yourself to select a different, local config value
+if you do not want to use the cluster versions.
+Additionally, both methods support ENV_VAR overrides in wither mode.
+
+
+## Testing Airflow Chart Upgrades in Kubernetes
 
 Sometimes it's useful to manually take over the role of commander, in order to test other components, like the airflow chart. Since commander requires the chart to live in a remote repository, it's difficult to quickly iterate on changes to the chart locally. One way to test this type of scenario is to disable commander and enable logging of the helm values instead. This can be done by setting configuration `commander.enabled: false` and `deployments.logHelmValues: true`. These can be overridden via environment variables.
 
