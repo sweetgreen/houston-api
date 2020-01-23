@@ -88,9 +88,10 @@ export function type() {
  * @return {Object} The deployment info.
  */
 export async function deployInfo(parent, args, ctx) {
+  const prefix = config.get("deployments.tagPrefix");
   const images = await ctx.db.query.dockerImages(
     {
-      where: { deployment: { id: parent.id }, tag_starts_with: "cli-" }
+      where: { deployment: { id: parent.id }, tag_starts_with: `${prefix}-` }
     },
     `{ tag }`
   );

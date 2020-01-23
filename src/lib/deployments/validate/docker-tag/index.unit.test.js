@@ -4,7 +4,7 @@ describe("isValidTaggedDeployment", () => {
   test("returns true for a valid tag", () => {
     const ev = {
       action: "push",
-      target: { tag: "cli-1", repository: "example-deployment-1234/airflow" }
+      target: { tag: "deploy-1", repository: "example-deployment-1234/airflow" }
     };
     const result = isValidTaggedDeployment(ev);
     expect(result).toBe(true);
@@ -14,7 +14,7 @@ describe("isValidTaggedDeployment", () => {
     let ev = {
       action: "push",
       target: {
-        tag: "cli-1",
+        tag: "deploy-1",
         repository: "example-deployment-1234/not-airflow"
       }
     };
@@ -23,7 +23,7 @@ describe("isValidTaggedDeployment", () => {
 
     ev = {
       action: "push",
-      target: { tag: "cli-1", repository: "base-images/airflow" }
+      target: { tag: "deploy-1", repository: "base-images/airflow" }
     };
     result = isValidTaggedDeployment(ev);
     expect(result).toBe(false);
@@ -42,7 +42,7 @@ describe("isValidTaggedDeployment", () => {
   });
 
   test("returns false for an invalid action", () => {
-    const ev = { action: "pull", target: { tag: "cli-1" } };
+    const ev = { action: "pull", target: { tag: "deploy-1" } };
     const result = isValidTaggedDeployment(ev);
     expect(result).toBe(false);
   });
