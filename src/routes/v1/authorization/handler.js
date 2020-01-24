@@ -62,7 +62,7 @@ export function airflowJWT(user, roles, hostname) {
     // A ServiceAccount
     //
     const baseDomain = config.get("helm.baseDomain");
-    email = `${user.id}@service-accounts.${baseDomain}`;
+    email = `${user.id}@sa.${baseDomain}`;
     name = `Service Account: ${user.label}`;
   } else {
     throw new Error(

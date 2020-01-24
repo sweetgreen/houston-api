@@ -209,10 +209,7 @@ describe("airflowJWT", () => {
         "full_name",
         `Service Account: ${sa.label}`
       );
-      expect(claims).toHaveProperty(
-        "email",
-        `${sa.id}@service-accounts.astronomer.io`
-      );
+      expect(claims).toHaveProperty("email", `${sa.id}@sa.astronomer.io`);
     });
   });
 });
