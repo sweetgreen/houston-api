@@ -30,7 +30,7 @@ export function urls(parent) {
   const urls = [
     {
       type: `airflow`,
-      url: `https://${releaseName}-airflow.${baseDomain}/`
+      url: `https://deployments.${baseDomain}/${releaseName}/airflow`
     }
   ];
 
@@ -38,7 +38,7 @@ export function urls(parent) {
   if (cfg.executor === AIRFLOW_EXECUTOR_CELERY) {
     urls.push({
       type: `flower`,
-      url: `https://${releaseName}-flower.${baseDomain}`
+      url: `https://deployments.${baseDomain}/${releaseName}/flower`
     });
   }
 

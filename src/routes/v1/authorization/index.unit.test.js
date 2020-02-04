@@ -36,7 +36,10 @@ const app = express()
   .use(router);
 const request = supertest
   .agent(app)
-  .set("x-original-url", "http://imploding-sun-1234-airflow.example.com/");
+  .set(
+    "x-original-url",
+    `http://deployments.example.com/imploding-sun-1234/airflow`
+  );
 
 describe("GET /authorization", () => {
   test("fails if no user token", async () => {

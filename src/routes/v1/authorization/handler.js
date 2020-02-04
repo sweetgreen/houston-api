@@ -17,7 +17,7 @@ export default async function(req, res) {
 
   // Parse out some variables.
   const originalUrl = req.get("x-original-url");
-  const { hostname } = url.parse(originalUrl);
+  const { hostname, path } = url.parse(originalUrl);
   const [subdomain] = hostname.split(".");
 
   // If we're accessing a monitoring service and we have permission, allow it.
@@ -28,19 +28,23 @@ export default async function(req, res) {
   }
 
   // Check if we're accessing a deployment level service.
-  const matches = subdomain.match(/^([\w]+-[\w]+-[\d]+)-(airflow|flower)$/);
-  if (matches) {
+  const matches = path.match(/^\/([\w]+-[\w]+-[\d]+)\/(airflow|flower)/);
+  if (matches && subdomain === "deployments") {
+    const releaseName = matches[1];
     // Get the deploymentId for the parsed releaseName.
     const deploymentId = await prisma
-      .deployment({ releaseName: matches[1] })
+      .deployment({ releaseName: releaseName })
       .id();
 
     // Check if we have deployment level access to it.
     const airflowRoles = mapLocalRolesToAirflow(user, deploymentId);
 
+    // Prepare audience based on https://tools.ietf.org/html/rfc7519#section-4.1.3
+    const audience = [hostname, releaseName].join("/");
+
     // If we have permission, authorize it.
     if (airflowRoles.length > 0) {
-      const jwt = exports.airflowJWT(user, airflowRoles, hostname);
+      const jwt = exports.airflowJWT(user, airflowRoles, audience);
       res.set("Authorization", "Bearer " + jwt);
       return res.sendStatus(200);
     }
@@ -53,7 +57,7 @@ export default async function(req, res) {
   return res.sendStatus(401);
 }
 
-export function airflowJWT(user, roles, hostname) {
+export function airflowJWT(user, roles, audience) {
   let email, name;
   if (user.username) {
     email = user.username.toLowerCase();
@@ -69,16 +73,15 @@ export function airflowJWT(user, roles, hostname) {
       "airflowJWT given something other than User or ServiceAccount"
     );
   }
-  const token = createJWT({
+  return createJWT({
     // Make sure that we can't use tokens from one deployment against
     // another somehow.
-    aud: hostname,
+    aud: audience,
     sub: user.id,
     roles: roles,
     email: email,
     full_name: name
   });
-  return token;
 }
 
 export function mapLocalRolesToAirflow(user, deploymentId) {
