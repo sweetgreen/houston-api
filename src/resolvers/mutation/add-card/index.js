@@ -9,14 +9,15 @@ import { createStripeCustomer } from "stripe";
  */
 export default async function addCard(parent, args, ctx) {
   const { company, billingEmail, token, workspaceUuid } = args;
+
   const response = await createStripeCustomer(
     company,
     billingEmail,
     token,
     workspaceUuid
   );
-  const stripeCustomerId = response.id || {};
 
+  const stripeCustomerId = response.id || {};
   const cardInfo = response.sources.data[0] || {};
 
   const data = {
@@ -39,7 +40,7 @@ export default async function addCard(parent, args, ctx) {
     name: cardInfo.name,
     brand: cardInfo.brand,
     billingEmail: cardInfo.email,
-    company: cardInfo.metadata.company
+    company: cardInfo.metadata.company || company
   };
 
   return card;

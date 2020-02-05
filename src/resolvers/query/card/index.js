@@ -18,7 +18,7 @@ export default async function card(parent, args) {
         name: cardInfo.name,
         brand: cardInfo.brand,
         billingEmail: customerInfo.email,
-        company: customerInfo.metadata.company
+        company: customerInfo.metadata.company || customerInfo.name
       }
     : null;
 }
