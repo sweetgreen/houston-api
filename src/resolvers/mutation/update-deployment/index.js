@@ -38,7 +38,7 @@ export default async function updateDeployment(parent, args, ctx, info) {
 
   // This should be directly defined in the schema, rather than nested
   // under payload as JSON. This is only here until we can migrate the
-  // schema of this mutation. Orbit should also not send non-updatable
+  // schema of this mutation. The UI should also not send non-updatable
   // properties up in the payload.
   // Until we fix these, pick out the args we allow updating on.
   const updatablePayload = pick(args.payload, [

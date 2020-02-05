@@ -1,4 +1,4 @@
-import { orbit } from "utilities";
+import { ui } from "utilities";
 import { sendEmail } from "emails";
 import shortid from "shortid";
 
@@ -55,7 +55,7 @@ export default async function forgotPassword(parent, args, ctx) {
   sendEmail(email.address, "forgot-password", {
     token: resetToken,
     strict: true,
-    orbitUrl: orbit()
+    UIUrl: ui()
   });
   return true;
 }

@@ -1,7 +1,7 @@
 import { prisma } from "generated/client";
 import { sendEmail } from "emails";
 import log from "logger";
-import { orbit } from "utilities";
+import { ui } from "utilities";
 import moment from "moment";
 
 /*
@@ -37,7 +37,7 @@ export default async function(req, res) {
       await Promise.all(
         emails.map(email =>
           sendEmail(email, "alert", {
-            orbitUrl: orbit(),
+            UIUrl: ui(),
             alert: modifiedAlert
           })
         )

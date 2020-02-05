@@ -1,5 +1,5 @@
 import { DuplicateEmailError, UserInviteExistsError } from "errors";
-import { orbit } from "utilities";
+import { ui } from "utilities";
 import { sendEmail } from "emails";
 import shortid from "shortid";
 
@@ -42,7 +42,7 @@ export default async function inviteUser(parent, args, ctx) {
 
   sendEmail(email, "user-invite", {
     strict: true,
-    orbitUrl: orbit(),
+    UIUrl: ui(),
     token
   });
 

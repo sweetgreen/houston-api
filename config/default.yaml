@@ -79,8 +79,8 @@ trial:
   # Cloud trial length in days
   length: 14
 
-# Orbit configuration.
-orbit:
+# UI configuration.
+ui:
   subdomain: app
   port: 5000
 

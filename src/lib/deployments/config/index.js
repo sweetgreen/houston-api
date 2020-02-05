@@ -500,7 +500,7 @@ export function generateDefaultDeploymentConfig() {
 /*
  * Generate the deployment specific overrides.
  * Specfically, this currently maps numeric resources
- * values that are sent by orbit to be valid for helm.
+ * values that are sent by the UI to be valid for helm.
  * @param {Object} deployment A deployment object.
  * @return {Object} Properly formatted config, pulled from deployment.
  */
@@ -525,7 +525,7 @@ export function deploymentOverrides(deployment) {
         })
       };
 
-      // Currently, orbit sends up limits, which are stored on the deployment
+      // Currently, the UI sends up limits, which are stored on the deployment
       // config. When we merge these in, we need to ensure that requests and limits match.
       // Typically the first condition here will be hit. Else condition provided as fallback.
       if (component.resources.limits) {

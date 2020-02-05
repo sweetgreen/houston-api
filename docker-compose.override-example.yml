@@ -9,7 +9,7 @@ services:
       PRISMA__ENDPOINT: "http://prisma:4466/houston"
       PRISMA__DEBUG: "false"
       PRISMA__SECRET: "secret"
-      ORBIT__PORT: "8080"
+      UI__PORT: "8080"
       DATABASE__CONNECTION: "postgres://postgres:postgres@postgres:5432/postgres"
       PUBLIC_SIGNUPS: "true"
       EMAIL_CONFIRMATION: "false"

@@ -1,6 +1,6 @@
 /*
  * This resolver is pretty much just for compatibility purposes.
- * It can be removed once orbit and the cli are up to date with the API.
+ * It can be removed once the UI and the cli are up to date with the API.
  * @param {Object} parent The result of the parent resolver.
  * @return {[]Object} Array of key/value profile values.
  */

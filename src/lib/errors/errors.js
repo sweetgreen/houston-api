@@ -18,8 +18,8 @@ export class InviteTokenNotFoundError extends UserInputError {
 export class InviteTokenEmailError extends ApolloError {
   name = "InviteTokenEmailError";
   constructor() {
-    // Orbit currently looks at the _text_ of the error message, so don't
-    // change this without updating Orbit to look at the code, not the message
+    // The UI currently looks at the _text_ of the error message, so don't
+    // change this without updating the UI to look at the code, not the message
     super(
       "This email is not associated with the specified invite token",
       "INVITE_EMAIL_NOT_MATCH"
@@ -39,8 +39,8 @@ export class CredentialsNotFoundError extends AuthenticationError {
 }
 
 export class InvalidCredentialsError extends ApolloError {
-  // Orbit currently looks at the _text_ of the error message, so don't
-  // change this without updating Orbit to look at the code, not the message
+  // The UI currently looks at the _text_ of the error message, so don't
+  // change this without updating the UI to look at the code, not the message
   message = this.message || "Invalid password and username combination";
 }
 
@@ -55,8 +55,8 @@ export class PermissionError extends ForbiddenError {
 
 export class EmailNotConfirmedError extends ApolloError {
   constructor() {
-    // Orbit currently looks at the _text_ of the error message, so don't
-    // change this without updating Orbit to look at the code, not the message
+    // The UI currently looks at the _text_ of the error message, so don't
+    // change this without updating the UI to look at the code, not the message
     super(
       "Your account is awaiting email confirmation",
       "ACCOUNT_NOT_CONFIRMED"

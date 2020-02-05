@@ -54,7 +54,7 @@ describe("inviteUser", () => {
 
     expect(sendEmail).toBeCalledWith(vars.email, "user-invite", {
       strict: true,
-      orbitUrl: "http://app.astronomer.io:5000",
+      UIUrl: "http://app.astronomer.io:5000",
       token: createInviteToken.mock.calls[0][0].data.token
     });
   });

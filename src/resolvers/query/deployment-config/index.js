@@ -37,7 +37,7 @@ export default async function deploymentConfig() {
   // or creating a new namespace for each deployment (false)
   const singleNamespace = config.get("helm.singleNamespace");
 
-  // Is elasticsearch logging enabled. This will control orbits UI components.
+  // Is elasticsearch logging enabled. This will control the UI components.
   const isDev = process.env.NODE_ENV !== "production";
   const { enabled, mockInDevelopment } = config.get("elasticsearch");
   const loggingEnabled = isDev && mockInDevelopment ? true : enabled;

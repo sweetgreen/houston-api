@@ -125,7 +125,7 @@ describe("createToken", () => {
     const res = await graphql(schema, mutation, null, { db }, vars);
     expect(res.errors).toHaveLength(1);
     expect(res.errors[0].message).toEqual(
-      // Orbit expects this to match to show the right message
+      // The UI expects this to match to show the right message
       expect.stringMatching(/invalid password/i)
     );
   });
@@ -145,7 +145,7 @@ describe("createToken", () => {
     const res = await graphql(schema, mutation, null, { db }, vars);
     expect(res.errors).toHaveLength(1);
     expect(res.errors[0].message).toEqual(
-      // Orbit expects this to match to show the right message
+      // The UI expects this to match to show the right message
       expect.stringMatching(/awaiting email confirmation/)
     );
     expect(res.errors[0].extensions.code).toBe("ACCOUNT_NOT_CONFIRMED");

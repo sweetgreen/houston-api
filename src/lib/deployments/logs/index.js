@@ -53,8 +53,8 @@ export function createLogQuery(release, component, gt, searchPhrase) {
   const query = {
     index: `fluentd.${release}.*`,
     sort: "@timestamp:desc",
-    // This matches a value in orbit.
-    // It's equal to the maximum records orbit will keep in its cache.
+    // This matches a value in the UI.
+    // It's equal to the maximum records the UI will keep in its cache.
     size: 800,
     body: {
       query: {

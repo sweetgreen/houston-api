@@ -1,4 +1,4 @@
-import { orbit } from "utilities";
+import { ui } from "utilities";
 import { sendEmail } from "emails";
 import shortid from "shortid";
 
@@ -36,7 +36,7 @@ export default async function resendConfirmation(parent, args, ctx) {
   sendEmail(email.address, "confirm-email", {
     token: email.token,
     strict: true,
-    orbitUrl: orbit()
+    UIUrl: ui()
   });
   return true;
 }

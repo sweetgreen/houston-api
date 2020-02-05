@@ -4,7 +4,7 @@ import {
   version,
   scheme,
   houston,
-  orbit
+  ui
 } from "./index";
 import config from "config";
 
@@ -54,8 +54,8 @@ describe("houston", () => {
   });
 });
 
-describe("orbit", () => {
-  test("orbit url is generated successfully", () => {
-    expect(orbit()).toContain("app.");
+describe("ui", () => {
+  test("ui url is generated successfully", () => {
+    expect(ui()).toContain("app.");
   });
 });

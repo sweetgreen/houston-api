@@ -71,7 +71,7 @@ describe("userExports.createUser", () => {
     expect(sendEmail).toHaveBeenCalledTimes(1);
     expect(sendEmail).toHaveBeenCalledWith(opts.email, "confirm-email", {
       token: expect.any(String),
-      orbitUrl: "http://app.astronomer.io:5000",
+      UIUrl: "http://app.astronomer.io:5000",
       strict: true
     });
   });

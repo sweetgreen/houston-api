@@ -91,7 +91,7 @@ describe("workspaceAddUser", () => {
     expect(res.errors).toHaveLength(1);
 
     expect(res.errors[0].message).toEqual(
-      // Orbit expects this to match to show the right message
+      // The UI expects this to match to show the right message
       expect.stringMatching(/already invited/i)
     );
     expect(res.errors[0].extensions.code).toBe("USER_ALREADY_INVITED");
@@ -141,7 +141,7 @@ describe("workspaceAddUser", () => {
 
     expect(sendEmail).toBeCalledWith(vars.email, "user-invite", {
       strict: true,
-      orbitUrl: "http://app.astronomer.io:5000",
+      UIUrl: "http://app.astronomer.io:5000",
       token: createInviteToken.mock.calls[0][0].data.token,
       workspaceLabel: "joe@example.com's Workspace"
     });

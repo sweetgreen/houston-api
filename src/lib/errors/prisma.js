@@ -3,7 +3,7 @@ import { some } from "lodash";
 
 /*
  * Take an error from prisma, and throw an error
- * that is compatible with orbit. This may be removed when
+ * that is compatible with the UI. This may be removed when
  * we refactor error handling.
  * @param {Object} error The prisma error.
  */

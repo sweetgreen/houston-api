@@ -69,7 +69,7 @@ describe("resendConfirmation", () => {
       expect(sendEmail).toHaveBeenCalledTimes(1);
       expect(sendEmail).toHaveBeenCalledWith(email, "confirm-email", {
         token: emailQueryRes.token,
-        orbitUrl: "http://app.astronomer.io:5000",
+        UIUrl: "http://app.astronomer.io:5000",
         strict: true
       });
     });

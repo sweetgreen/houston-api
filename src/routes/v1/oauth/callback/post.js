@@ -2,7 +2,7 @@ import fragment from "./fragment";
 import { createUser as _createUser, isFirst } from "users";
 import { getClient } from "oauth/config";
 import { PublicSignupsDisabledError } from "errors";
-import { orbit } from "utilities";
+import { ui } from "utilities";
 import { prisma } from "generated/client";
 import { createAuthJWT, setJWTCookie } from "jwt";
 import config from "config";
@@ -112,8 +112,8 @@ export default async function(req, res, next) {
     ["token", token]
   ]);
 
-  // Respond with redirect to orbit.
-  const url = `${orbit()}/${state.redirect || "oauth"}?${qs}`;
+  // Respond with redirect to the UI.
+  const url = `${ui()}/${state.redirect || "oauth"}?${qs}`;
   const cleanUrl = url.replace(/([^:]\/)\/+/g, "$1");
   res.redirect(cleanUrl);
 }

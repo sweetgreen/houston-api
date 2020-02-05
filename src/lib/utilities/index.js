@@ -43,13 +43,13 @@ export function scheme() {
 }
 
 /*
- * Return full orbit scheme/host.
- * @return {String} The orbit url.
+ * Return full UI scheme/host.
+ * @return {String} The UI url.
  */
-export function orbit() {
+export function ui() {
   const isProd = process.env.NODE_ENV === "production";
   const baseDomain = config.get("helm.baseDomain");
-  const { subdomain, port } = config.get("orbit");
+  const { subdomain, port } = config.get("ui");
   const url = `${scheme()}://${subdomain}.${baseDomain}`;
   return isProd ? url : `${url}:${port}`;
 }

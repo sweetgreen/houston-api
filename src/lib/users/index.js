@@ -1,4 +1,4 @@
-import { orbit } from "utilities";
+import { ui } from "utilities";
 import {
   PublicSignupsDisabledError,
   InviteTokenNotFoundError,
@@ -82,7 +82,7 @@ export async function createUser(opts) {
   if (emailToken != null) {
     sendEmail(email, "confirm-email", {
       token: emailToken,
-      orbitUrl: orbit(),
+      UIUrl: ui(),
       strict: true
     });
   }

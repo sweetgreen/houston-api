@@ -1,6 +1,6 @@
 import fragment from "./fragment";
 import { UserInviteExistsError } from "errors";
-import { orbit } from "utilities";
+import { ui } from "utilities";
 import { sendEmail } from "emails";
 import { UserInputError } from "apollo-server";
 import shortid from "shortid";
@@ -70,7 +70,7 @@ export default async function workspaceAddUser(parent, args, ctx, info) {
 
     sendEmail(email, "user-invite", {
       strict: true,
-      orbitUrl: orbit(),
+      UIUrl: ui(),
       token,
       workspaceLabel: res.workspace.label
     });

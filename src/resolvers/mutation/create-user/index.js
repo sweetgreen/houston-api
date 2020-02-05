@@ -17,8 +17,7 @@ export default async function createUser(parent, args, ctx) {
   // Hash password.
   const password = await bcrypt.hash(args.password, 10);
 
-  // Try to create the user,
-  // handling error in an orbit-compatible way.
+  // Try to create the user.
   try {
     // Create the user and nested relations.
     const userId = await _createUser({
@@ -38,8 +37,8 @@ export default async function createUser(parent, args, ctx) {
 
     return { userId };
   } catch (e) {
-    // This is mostly for compatibility with Orbit.
-    // Take a prisma error and throw an error that orbit expects.
+    // This is mostly for compatibility with the UI.
+    // Take a prisma error and throw an error that the UI expects.
     throwPrismaError(e);
   }
 }
