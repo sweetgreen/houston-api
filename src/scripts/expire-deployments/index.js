@@ -98,9 +98,9 @@ const argv = yargs
   })
   .option("date-modifier", {
     alias: "m",
-    default: 0,
+    default: 7,
     description:
-      "Add or subtract days from the expiration date, which defaults to now",
+      "Add or subtract days from the expiration date",
     type: "number"
   })
   .option("canary", {
