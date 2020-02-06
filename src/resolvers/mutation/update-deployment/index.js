@@ -1,4 +1,5 @@
 import { queryFragment, responseFragment } from "./fragments";
+import { track } from "analytics";
 import validate from "deployments/validate";
 import {
   arrayOfKeyValueToObject,
@@ -96,6 +97,14 @@ export default async function updateDeployment(parent, args, ctx, info) {
       rawConfig: JSON.stringify(generateHelmValues(updatedDeployment, envs))
     });
   }
+
+  // Run the analytics track event
+  track(ctx.user.id, "Updated Deployment", {
+    deploymentId: args.deploymentUuid,
+    config: args.config,
+    env: args.env,
+    payload: args.payload
+  });
 
   // Return the updated deployment object.
   return updatedDeployment;
