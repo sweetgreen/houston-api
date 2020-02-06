@@ -159,3 +159,9 @@ deployments:
       __name: "DEPLOYMENTS__DATABASE__ALLOW_ROOT_ACCESS"
       __format: "json"
     connection: "DEPLOYMENTS__DATABASE__CONNECTION"
+
+analytics:
+  enabled:
+    __name: "ANALYTICS__ENABLED"
+    __format: "json"
+  writeKey: "ANALYTICS__WRITE_KEY"

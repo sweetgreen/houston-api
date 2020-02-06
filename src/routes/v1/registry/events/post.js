@@ -5,6 +5,7 @@ import isValidTaggedDeployment from "deployments/validate/docker-tag";
 import log from "logger";
 import commander from "commander";
 import { version } from "utilities";
+import { track } from "analytics";
 import { merge } from "lodash";
 import got from "got";
 import { DEPLOYMENT_AIRFLOW, MEDIATYPE_DOCKER_MANIFEST_V2 } from "constants";
@@ -80,7 +81,7 @@ export default async function(req, res) {
           data: { config: updatedConfig }
         })
         .$fragment(
-          `{ id config releaseName extraAu version workspace { id } }`
+          `{ id config label releaseName extraAu version workspace { id } }`
         );
 
       // Fire the helm upgrade to commander.
@@ -91,6 +92,15 @@ export default async function(req, res) {
           version: updatedDeployment.version
         },
         rawConfig: JSON.stringify(generateHelmValues(updatedDeployment))
+      });
+
+      // Run the analytics track event
+      track(req.user.id, "Deployed Code", {
+        deploymentId: updatedDeployment.id,
+        label: updatedDeployment.label,
+        releaseName,
+        tag,
+        deployedAt: new Date()
       });
     })
   );

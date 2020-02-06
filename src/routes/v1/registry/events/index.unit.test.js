@@ -15,7 +15,13 @@ jest.mock("generated/client", () => {
 });
 
 // Create test application.
-const app = express().use(router);
+const app = express()
+  // Mock authentication middleware
+  .use(function(req, res, next) {
+    req.user = { id: casual.uuid };
+    next();
+  })
+  .use(router);
 
 describe("POST /registry-events", () => {
   afterEach(() => {
@@ -36,7 +42,11 @@ describe("POST /registry-events", () => {
       .mockName("updateDeployment")
       .mockReturnValue({
         $fragment: function() {
-          return { workspace: { id: casual.uuid } };
+          return {
+            workspace: { id: casual.uuid },
+            label: casual.word,
+            id: casual.uuid
+          };
         }
       });
 

@@ -6,6 +6,7 @@ import {
 } from "errors";
 import { prisma } from "generated/client";
 import { sendEmail } from "emails";
+import { identify } from "analytics";
 import config from "config";
 import shortid from "shortid";
 import {
@@ -78,6 +79,10 @@ export async function createUser(opts) {
 
   // Run the mutation and return id.
   const id = await prisma.createUser(mutation).id();
+
+  // Run the analytics.js identify call
+
+  identify(id, { fullName, email, signedUpAt: Date.now() });
 
   if (emailToken != null) {
     sendEmail(email, "confirm-email", {

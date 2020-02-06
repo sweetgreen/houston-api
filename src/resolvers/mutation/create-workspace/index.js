@@ -1,4 +1,5 @@
 import fragment from "./fragment";
+import { track } from "analytics";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 import moment from "moment";
@@ -17,7 +18,7 @@ export default async function createWorkspace(parent, args, ctx, info) {
     .add(trialDuration, "d")
     .format();
 
-  return ctx.db.mutation.createWorkspace(
+  const workspace = await ctx.db.mutation.createWorkspace(
     {
       data: {
         label: args.label,
@@ -38,4 +39,14 @@ export default async function createWorkspace(parent, args, ctx, info) {
     },
     addFragmentToInfo(info, fragment)
   );
+
+  // Run the analytics track event
+  track(ctx.user.id, "Created Workspace", {
+    workspaceId: workspace.id,
+    label: args.label,
+    description: args.description,
+    createdAt: workspace.createdAt
+  });
+
+  return workspace;
 }

@@ -42,13 +42,16 @@ describe("deleteWorkspace", () => {
       }
     };
 
+    // Mock up a user for context
+    const user = { id: casual.uuid };
+
     // Vars for the gql mutation.
     const vars = {
       workspaceUuid: id
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { db, user }, vars);
 
     expect(res.errors).toBeUndefined();
     expect(deployments.mock.calls.length).toBe(1);

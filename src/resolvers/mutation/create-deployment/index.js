@@ -14,6 +14,7 @@ import {
   generateDefaultDeploymentConfig
 } from "deployments/config";
 import validate from "deployments/validate";
+import { track } from "analytics";
 import { WorkspaceSuspendedError, TrialError } from "errors";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
@@ -127,6 +128,16 @@ export default async function createDeployment(parent, args, ctx, info) {
     mutation,
     addFragmentToInfo(info, deploymentFragment)
   );
+
+  // Run the analytics track event
+  track(ctx.user.id, "Created Deployment", {
+    deploymentId: deployment.id,
+    label: args.label,
+    description: args.description,
+    releaseName,
+    createdAt: deployment.createdAt,
+    config: args.config
+  });
 
   // Create the role binding for the user.
   // XXX: This was commented out temporarily while we are

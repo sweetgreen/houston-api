@@ -74,6 +74,11 @@ stripe:
   enabled: false
   secretKey: ~
 
+# Analytics configuration
+analytics:
+  enabled: false
+  writeKey: ~
+
 # Set the length of a Cloud Trial
 trial:
   # Cloud trial length in days

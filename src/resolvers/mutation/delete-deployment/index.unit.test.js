@@ -26,7 +26,7 @@ const mutation = `
 `;
 
 describe("deleteDeployment", () => {
-  let id, updateDeployment, db, commander, vars;
+  let id, updateDeployment, db, commander, vars, user;
 
   beforeEach(() => {
     // Create some deployment vars.
@@ -42,6 +42,9 @@ describe("deleteDeployment", () => {
     db = {
       mutation: { updateDeployment }
     };
+
+    // Mock up a user object for context
+    user = { id: casual.uuid };
 
     // Create mock commander client.
     commander = {
@@ -61,7 +64,7 @@ describe("deleteDeployment", () => {
         schema,
         mutation,
         null,
-        { db, commander },
+        { db, commander, user },
         vars
       );
 
@@ -89,7 +92,7 @@ describe("deleteDeployment", () => {
         schema,
         mutation,
         null,
-        { db, commander },
+        { db, commander, user },
         vars
       );
 

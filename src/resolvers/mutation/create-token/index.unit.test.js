@@ -51,6 +51,7 @@ describe("createToken", () => {
     user: jest.fn()
   };
   const db = { query };
+  const user = { id: casual.uuid };
 
   test("typical request is successful", async () => {
     const usr = {
@@ -69,7 +70,7 @@ describe("createToken", () => {
       schema,
       mutation,
       null,
-      { db, res: { cookie } },
+      { db, user, res: { cookie } },
       vars
     );
 

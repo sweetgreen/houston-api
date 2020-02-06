@@ -23,6 +23,7 @@
   "license": "Astronomer Enterprise License",
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
+    "analytics-node": "^3.4.0-beta.1",
     "apollo-server": "^2.2.2",
     "apollo-server-express": "^2.2.2",
     "bcryptjs": "^2.4.3",

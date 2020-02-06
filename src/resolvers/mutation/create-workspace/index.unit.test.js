@@ -33,7 +33,9 @@ describe("createWorkspace", () => {
     const user = { id: casual.uuid };
 
     // Mock up some db functions.
-    const createWorkspace = jest.fn();
+    const createWorkspace = jest
+      .fn()
+      .mockReturnValue({ id: casual.uuid, createdAt: casual.date });
 
     // Construct db object for context.
     const db = { mutation: { createWorkspace } };

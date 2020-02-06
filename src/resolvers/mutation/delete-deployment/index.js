@@ -1,4 +1,5 @@
 import fragment from "./fragment";
+import { track } from "analytics";
 import { generateNamespace } from "deployments/naming";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
@@ -19,6 +20,14 @@ export default async function deleteDeployment(parent, args, ctx, info) {
     },
     addFragmentToInfo(info, fragment)
   );
+
+  // Run the analytics track event
+  track(ctx.user.id, "Deleted Deployment", {
+    deploymentId: args.deploymentUuid,
+    label: deployment.label,
+    releaseName: deployment.releaseName,
+    deletedAt: new Date()
+  });
 
   // Delete deployment from helm.
   await ctx.commander.request("deleteDeployment", {

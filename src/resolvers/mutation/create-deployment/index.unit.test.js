@@ -105,7 +105,9 @@ describe("createDeployment", () => {
         id: casual.uuid
       });
 
-      workspace = jest.fn().mockReturnValue({ stripeCustomerId: casual.uuid });
+      workspace = jest
+        .fn()
+        .mockReturnValue({ label: casual.word, stripeCustomerId: casual.uuid });
 
       // Construct db object for context.
       db = {

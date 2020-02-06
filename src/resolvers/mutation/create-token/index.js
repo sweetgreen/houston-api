@@ -4,6 +4,7 @@ import {
   InvalidCredentialsError,
   EmailNotConfirmedError
 } from "errors";
+import { track } from "analytics";
 import bcrypt from "bcryptjs";
 import { first } from "lodash";
 import { USER_STATUS_ACTIVE, USER_STATUS_PENDING } from "constants";
@@ -64,6 +65,11 @@ export default async function createToken(parent, args, ctx) {
       // Banned, Inactive etc. Treat them all as "invalid password" to the user.
       throw new InvalidCredentialsError();
   }
+
+  // Run the analytics track event
+  track(ctx.user.id, "Logged In", {
+    email: args.identity
+  });
 
   // Return our user id, AuthUser resolver takes it from there.
   return { userId: user.id };

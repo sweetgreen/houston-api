@@ -1,5 +1,5 @@
-import protoPath from "commander-proto";
 import log from "logger";
+import protoPath from "commander-proto";
 import grpc from "grpc";
 import caller from "grpc-caller";
 import config from "config";

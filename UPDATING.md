@@ -30,7 +30,7 @@ auth:
 or for env vars:
 
 ```sh
-AUTH__AUTH0__ENABLED=ture
+AUTH__AUTH0__ENABLED=true
 AUTH__AUTH0__BASE_DOMAIN=org.auth0.com
 AUTH__AUTH0__CLIENT_ID=$ID
 ```

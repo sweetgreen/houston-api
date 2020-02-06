@@ -89,3 +89,8 @@ deployments:
 # Stripe configuration.
 stripe:
   enabled: true
+
+# Analytics configuration
+analytics:
+  enabled: false
+  writeKey: "test"

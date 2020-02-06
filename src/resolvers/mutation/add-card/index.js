@@ -1,4 +1,5 @@
 import { createStripeCustomer } from "stripe";
+import { track } from "analytics";
 
 /*
  * Add payment information to a workspace. Create a customer for the user and a subscription for the Workspace in Stripe.
@@ -28,9 +29,17 @@ export default async function addCard(parent, args, ctx) {
 
   const where = { id: workspaceUuid };
 
-  await ctx.db.mutation.updateWorkspace({
+  const workspace = await ctx.db.mutation.updateWorkspace({
     data,
     where
+  });
+
+  // Run the analytics track event
+  track(ctx.user.id, "Added Payment Method", {
+    workspaceId: workspaceUuid,
+    label: workspace.label,
+    stripeCustomerId: workspace.stripeCustomerId,
+    addedAt: new Date()
   });
 
   const card = {
