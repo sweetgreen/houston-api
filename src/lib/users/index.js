@@ -82,7 +82,7 @@ export async function createUser(opts) {
 
   // Run the analytics.js identify call
 
-  identify(id, { fullName, email, signedUpAt: Date.now() });
+  identify(id, { name: fullName, email, signedUpAt: Date.now() });
 
   if (emailToken != null) {
     sendEmail(email, "confirm-email", {
