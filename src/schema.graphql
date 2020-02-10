@@ -572,7 +572,7 @@ type Mutation {
   # use the workspaceAddUser mutation.
   inviteUser(
     email: String!
-  ): Boolean @auth(permissions: ["system.user.invite"])
+  ): Invite @auth(permissions: ["system.user.invite"])
 
   addCard(
     workspaceUuid: Uuid!

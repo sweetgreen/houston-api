@@ -102,6 +102,9 @@ describe("userExports.createUser", () => {
       const invite2 = casual.uuid;
       const workspace = casual.uuid;
       const workspace2 = casual.uuid;
+      jest
+        .spyOn(prismaExports.prisma, "inviteToken")
+        .mockReturnValue({ id: () => casual.uuid });
       const mockValidateInvite = jest
         .spyOn(userExports, "validateInviteToken")
         .mockImplementation(() => [
@@ -151,14 +154,13 @@ describe("userExports.createUser", () => {
 describe("userExports.validateInviteToken", () => {
   // Set by each test case
   let inviteRecords;
-  jest.spyOn(prismaExports.prisma, "inviteToken").mockReturnValue({
-    email: () => (inviteRecords[0] ? inviteRecords[0].email : null)
-  });
-  jest
-    .spyOn(prismaExports.prisma, "inviteTokens")
-    .mockReturnValue({ $fragment: () => inviteRecords });
 
-  beforeEach(() => (inviteRecords = []));
+  beforeEach(() => {
+    inviteRecords = [];
+    jest.spyOn(prismaExports.prisma, "inviteToken").mockReturnValue({
+      email: () => (inviteRecords[0] ? inviteRecords[0].email : null)
+    });
+  });
 
   test("return nothing if nothing passed", async () => {
     const res = await userExports.validateInviteToken(undefined, casual.email);
@@ -179,6 +181,9 @@ describe("userExports.validateInviteToken", () => {
   });
 
   test("returns all tokens when token found and email matches", async () => {
+    jest
+      .spyOn(prismaExports.prisma, "inviteTokens")
+      .mockReturnValue({ $fragment: () => inviteRecords });
     // Casual generates emails in TitleCase, be we store them in lowercase from
     // the inviteUser mutation.
     const email = casual.email.toLowerCase();

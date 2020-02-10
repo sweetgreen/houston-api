@@ -56,7 +56,8 @@ export async function createUser(opts) {
   // Generate the role bindings.
   const roleBindings = exports.generateRoleBindings(first, inviteTokens);
 
-  // Create our base mutation.
+  // Create our base mutation. Use the invite id if a user has an invite
+  // else, use the default random prisma id (for analytics tracking)
   const mutation = {
     username,
     status,
@@ -74,6 +75,9 @@ export async function createUser(opts) {
 
   // If we have an invite token, delete it.
   if (haveInvite) {
+    // Return the invite ID from the database to use in the
+    // user record if the user has an invite
+    mutation.id = await prisma.inviteToken({ token: inviteTokens }).id();
     await prisma.deleteManyInviteTokens({ id_in: inviteTokens.map(t => t.id) });
   }
 

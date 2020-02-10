@@ -18,7 +18,10 @@ const gql = `
   mutation inviteUser(
     $email: String!
   ) {
-    inviteUser(email: $email)
+    inviteUser(email: $email) {
+      id
+      token
+    }
   }
 `;
 

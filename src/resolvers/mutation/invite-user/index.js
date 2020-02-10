@@ -30,14 +30,14 @@ export default async function inviteUser(parent, args, ctx) {
   // Create the invite token if we didn't already have one.
   // Multi-column unique fields would be nice, but not supported yet
   // https://github.com/prisma/prisma/issues/3405
-  await ctx.db.mutation.createInviteToken(
+  const invite = await ctx.db.mutation.createInviteToken(
     {
       data: {
         email,
         token
       }
     },
-    `{ token }`
+    `{ id, token }`
   );
 
   sendEmail(email, "user-invite", {
@@ -46,5 +46,5 @@ export default async function inviteUser(parent, args, ctx) {
     token
   });
 
-  return true;
+  return invite;
 }
