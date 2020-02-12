@@ -26,7 +26,8 @@ helm:
   rbacEnabled: ~
   releaseName: astronomer
   releaseNamespace: ~
-  releaseVersion: ~
+  # need for testing src/resolvers/query/platform-releases/index.unit.test.js:41
+  releaseVersion: 0.0.1
 
 # Auth configuration.
 auth:

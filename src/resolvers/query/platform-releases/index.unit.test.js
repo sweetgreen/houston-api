@@ -1,6 +1,5 @@
 import resolvers from "resolvers";
 import { graphql } from "graphql";
-import config from "config";
 import { makeExecutableSchema } from "graphql-tools";
 import { importSchema } from "graphql-import";
 
@@ -59,14 +58,9 @@ describe("updateAvailable", () => {
       }
     };
 
-    config.get = jest
-      .fn()
-      .mockName("get")
-      .mockReturnValue("0.0.1");
     // Run the graphql query.
     const res = await graphql(schema, query, null, { db });
     expect(res.errors).toBeUndefined();
-    expect(config.get).toHaveBeenCalledWith("helm.releaseVersion");
     expect(res.data.updateAvailable).toEqual({ version: "0.0.2" });
   });
 });

@@ -233,7 +233,7 @@ type PlatformRelease {
   url: String
   level: String
   description: String
-  releaseDate: DateTime
+  releaseDate: DateTime!
 }
 
 type ServiceAccount {

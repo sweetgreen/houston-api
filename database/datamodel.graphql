@@ -151,7 +151,7 @@ type PlatformRelease {
   url: String
   description: String
   level: String
-  releaseDate: DateTime
+  releaseDate: DateTime!
   createdAt: DateTime! @createdAt
   updatedAt: DateTime! @updatedAt
 }
