@@ -228,6 +228,14 @@ type DeploymentCapabilities {
   canDeleteServiceAccount: Boolean
 }
 
+type PlatformRelease {
+  version: String!
+  url: String
+  level: String
+  description: String
+  releaseDate: DateTime
+}
+
 type ServiceAccount {
   id: ID!
   uuid: Uuid @alias(field: "id")
@@ -288,6 +296,8 @@ type Query {
   ): AuthConfig
 
   self: AuthUser @auth
+
+  updateAvailable: PlatformRelease @auth(permissions: ["system.updates.get"])
 
   workspaces: [Workspace] @auth
 

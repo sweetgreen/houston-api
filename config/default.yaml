@@ -228,6 +228,7 @@ roles:
       ? system.monitoring.get
       ? system.serviceAccounts.get
       ? system.airflow.get
+      ? system.updates.get
 
   SYSTEM_EDITOR:
     name: System Editor

@@ -17,7 +17,8 @@
     "prisma-deploy": "prisma deploy --force",
     "cleanup-deployments": "prisma generate && babel-node src/scripts/cleanup-deployments/index.js",
     "upgrade-deployments": "prisma generate && babel-node src/scripts/upgrade-deployments/index.js",
-    "expire-deployments": "prisma generate && babel-node src/scripts/expire-deployments/index.js"
+    "expire-deployments": "prisma generate && babel-node src/scripts/expire-deployments/index.js",
+    "check-platfrom-updates": "prisma generate && babel-node src/scripts/check-platform-updates/index.js"
   },
   "author": "Astronomer",
   "license": "Astronomer Enterprise License",

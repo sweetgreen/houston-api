@@ -7,6 +7,7 @@ import deploymentServiceAccounts from "./deployment-service-accounts";
 import deployments from "./deployments";
 import invites from "./invites";
 import logs from "./logs";
+import updateAvailable from "./platform-releases";
 import self from "./self";
 import serviceAccounts from "./service-accounts";
 import workspaceDeployments from "./workspace-deployments";
@@ -28,6 +29,7 @@ export default {
   deployments,
   invites,
   logs,
+  updateAvailable,
   self,
   serviceAccounts,
   workspaceDeployments,

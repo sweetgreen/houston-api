@@ -144,3 +144,14 @@ type DockerImage {
   deployment: Deployment! @relation(name: "DeploymentDockerImages")
   createdAt: DateTime! @createdAt
 }
+
+type PlatformRelease {
+  id: ID! @id
+  version: String @unique
+  url: String
+  description: String
+  level: String
+  releaseDate: DateTime
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
