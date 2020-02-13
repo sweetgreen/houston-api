@@ -67,7 +67,7 @@ export default async function createToken(parent, args, ctx) {
   }
 
   // Run the analytics track event
-  track(ctx.user.id, "Logged In", {
+  track(user.id, "Logged In", {
     email: args.identity
   });
 
