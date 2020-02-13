@@ -174,9 +174,12 @@ export async function createSchema(
   schema,
   user,
   password,
-  creator,
+  admin,
   allowRootAccess
 ) {
+  // Ensure username is in proper format
+  const creator = cleanCreator(admin);
+
   // Create a new limited access user, with random password.
   await conn.raw(
     `CREATE USER ${user} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION CONNECTION LIMIT -1 ENCRYPTED PASSWORD '${password}';`
@@ -218,4 +221,9 @@ export async function createSchema(
 export function parseConnection(conn) {
   if (isString(conn)) return parse(conn);
   return conn;
+}
+
+// Strip '@dbserver' from username. Necessary for Azure DB PostgreSQL users.
+export function cleanCreator(creator) {
+  return creator.replace(/@.*/g, '');
 }
