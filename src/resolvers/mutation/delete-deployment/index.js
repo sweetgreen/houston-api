@@ -25,8 +25,7 @@ export default async function deleteDeployment(parent, args, ctx, info) {
   track(ctx.user.id, "Deleted Deployment", {
     deploymentId: args.deploymentUuid,
     label: deployment.label,
-    releaseName: deployment.releaseName,
-    deletedAt: new Date()
+    releaseName: deployment.releaseName
   });
 
   // Delete deployment from helm.

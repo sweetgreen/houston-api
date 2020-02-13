@@ -103,7 +103,7 @@ describe("updateDeployment", () => {
     const commander = {
       request: jest.fn()
     };
-    const user = {};
+    const user = { id: casual.uuid };
 
     // Set up our spy.
     jest.spyOn(validate, "default").mockReturnValue();

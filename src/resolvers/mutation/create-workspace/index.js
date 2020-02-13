@@ -44,8 +44,7 @@ export default async function createWorkspace(parent, args, ctx, info) {
   track(ctx.user.id, "Created Workspace", {
     workspaceId: workspace.id,
     label: args.label,
-    description: args.description,
-    createdAt: workspace.createdAt
+    description: args.description
   });
 
   return workspace;

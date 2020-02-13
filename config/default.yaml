@@ -76,7 +76,6 @@ stripe:
 
 # Analytics configuration
 analytics:
-  enabled: false
   writeKey: ~
 
 # Set the length of a Cloud Trial

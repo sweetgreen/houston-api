@@ -99,8 +99,7 @@ export default async function(req, res) {
         deploymentId: updatedDeployment.id,
         label: updatedDeployment.label,
         releaseName,
-        tag,
-        deployedAt: new Date()
+        tag
       });
     })
   );

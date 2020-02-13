@@ -21,8 +21,7 @@ export default async function deleteWorkspace(parent, args, ctx) {
 
   // Run the analytics track event
   track(ctx.user.id, "Deleted Workspace", {
-    workspaceId: args.workspaceUuid,
-    deletedAt: new Date()
+    workspaceId: args.workspaceUuid
   });
 
   // Delete the record from the database.

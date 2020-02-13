@@ -161,7 +161,4 @@ deployments:
     connection: "DEPLOYMENTS__DATABASE__CONNECTION"
 
 analytics:
-  enabled:
-    __name: "ANALYTICS__ENABLED"
-    __format: "json"
   writeKey: "ANALYTICS__WRITE_KEY"
