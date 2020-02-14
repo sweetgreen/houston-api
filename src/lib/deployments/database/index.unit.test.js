@@ -1,7 +1,6 @@
 import * as databaseExports from "./index";
 
 describe("databaseExports.cleanCreator", () => {
-
   test("test if cleanCreator function does not modify a normal username", async () => {
     const creator = "user";
     const cleaned = databaseExports.cleanCreator(creator);

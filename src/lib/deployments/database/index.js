@@ -228,7 +228,7 @@ export function parseConnection(conn) {
 
 // Strip '@dbserver' from username. Necessary for Azure DB PostgreSQL users.
 export function cleanCreator(creator) {
-  return creator.replace(/@.*/g, '');
+  return creator.replace(/@.*/g, "");
 }
 
 // Get Azure DB Server name from username. Necessary for Azure DB PostgreSQL users.
