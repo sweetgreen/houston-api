@@ -233,6 +233,6 @@ export function cleanCreator(creator) {
 
 // Get Azure DB Server name from username. Necessary for Azure DB PostgreSQL users.
 export function getAzureDbServer(user) {
-  var match = user.match(/@.*/g);
+  const match = user.match(/@.*/g);
   return match[0];
 }
