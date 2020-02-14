@@ -18,7 +18,7 @@ jest.mock("generated/client", () => {
 const app = express()
   // Mock authentication middleware
   .use(function(req, res, next) {
-    req.user = { id: casual.uuid };
+    req.session = { user: { id: casual.uuid } };
     next();
   })
   .use(router);
