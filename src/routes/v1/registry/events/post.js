@@ -6,7 +6,7 @@ import log from "logger";
 import commander from "commander";
 import { version } from "utilities";
 import { track } from "analytics";
-import { merge, get } from "lodash";
+import { merge } from "lodash";
 import got from "got";
 import { DEPLOYMENT_AIRFLOW, MEDIATYPE_DOCKER_MANIFEST_V2 } from "constants";
 
@@ -95,7 +95,7 @@ export default async function(req, res) {
       });
 
       // Run the analytics track event
-      track(get(req, "session.user.id"), "Deployed Code", {
+      track("Deployed Code", {
         deploymentId: updatedDeployment.id,
         label: updatedDeployment.label,
         releaseName,
