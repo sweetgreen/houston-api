@@ -45,6 +45,7 @@ export async function createDatabaseForDeployment(deployment) {
     length: 32,
     numbers: true
   });
+  const azureDbServerName = getAzureDbServer(parsedConn.user);
 
   log.info(`Creating database ${dbName}`);
 
@@ -88,7 +89,8 @@ export async function createDatabaseForDeployment(deployment) {
     pass: airflowPassword,
     host: parsedConn.host,
     port: parsedConn.port,
-    db: dbName
+    db: dbName,
+    azureDbServer: azureDbServerName
   };
 
   // Construt connection details for celery schema.
@@ -97,7 +99,8 @@ export async function createDatabaseForDeployment(deployment) {
     pass: celeryPassword,
     host: parsedConn.host,
     port: parsedConn.port,
-    db: dbName
+    db: dbName,
+    azureDbServer: azureDbServerName
   });
 
   // Return both urls.
@@ -226,4 +229,10 @@ export function parseConnection(conn) {
 // Strip '@dbserver' from username. Necessary for Azure DB PostgreSQL users.
 export function cleanCreator(creator) {
   return creator.replace(/@.*/g, '');
+}
+
+// Get Azure DB Server name from username. Necessary for Azure DB PostgreSQL users.
+export function getAzureDbServer(user) {
+  var match = user.match(/@.*/g);
+  return match[0];
 }
