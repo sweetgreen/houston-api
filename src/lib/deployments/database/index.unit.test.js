@@ -18,4 +18,10 @@ describe("databaseExports.cleanCreator", () => {
     const azureDbServer = databaseExports.getAzureDbServer(creator);
     expect(azureDbServer).toBe("@azure-db");
   });
+
+  test("test if getAzureDbServer function returns empty string for normal user", async () => {
+    const creator = "user";
+    const azureDbServer = databaseExports.getAzureDbServer(creator);
+    expect(azureDbServer).toBe("");
+  });
 });
