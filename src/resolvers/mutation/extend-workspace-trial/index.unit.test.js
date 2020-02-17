@@ -29,6 +29,9 @@ const mutation = `
 
 describe("extendWorkspaceTrial", () => {
   test("typical request is successful", async () => {
+    // Create mock user.
+    const user = { id: casual.uuid };
+
     // Mock up some functions.
     const extraDays = Math.floor(Math.random());
     const updateWorkspace = jest.fn();
@@ -47,7 +50,7 @@ describe("extendWorkspaceTrial", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { db, user }, vars);
     expect(res.errors).toBeUndefined();
     expect(updateWorkspace.mock.calls).toHaveLength(1);
   });
