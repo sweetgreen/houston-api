@@ -2,6 +2,7 @@ import { DuplicateEmailError, UserInviteExistsError } from "errors";
 import { ui } from "utilities";
 import { sendEmail } from "emails";
 import shortid from "shortid";
+import { INVITE_SOURCE_SYSTEM } from "constants";
 
 export default async function inviteUser(parent, args, ctx) {
   let { email } = args;
@@ -34,7 +35,8 @@ export default async function inviteUser(parent, args, ctx) {
     {
       data: {
         email,
-        token
+        token,
+        source: INVITE_SOURCE_SYSTEM
       }
     },
     `{ id, token }`

@@ -5,7 +5,7 @@ import { sendEmail } from "emails";
 import { UserInputError } from "apollo-server";
 import shortid from "shortid";
 import { addFragmentToInfo } from "graphql-binding";
-import { ENTITY_WORKSPACE } from "constants";
+import { ENTITY_WORKSPACE, INVITE_SOURCE_WORKSPACE } from "constants";
 
 /*
  * Add a user to a workspace.
@@ -62,7 +62,8 @@ export default async function workspaceAddUser(parent, args, ctx, info) {
           email: email.toLowerCase(),
           token,
           role,
-          workspace: { connect: { id: workspaceUuid } }
+          workspace: { connect: { id: workspaceUuid } },
+          source: INVITE_SOURCE_WORKSPACE
         }
       },
       `{workspace { label } }`

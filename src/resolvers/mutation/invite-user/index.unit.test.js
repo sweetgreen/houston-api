@@ -4,6 +4,7 @@ import casual from "casual";
 import { graphql } from "graphql";
 import { makeExecutableSchema } from "graphql-tools";
 import { importSchema } from "graphql-import";
+import { INVITE_SOURCE_SYSTEM } from "constants";
 
 // Import our application schema
 const schema = makeExecutableSchema({
@@ -48,7 +49,8 @@ describe("inviteUser", () => {
       {
         data: {
           email: vars.email,
-          token: expect.any(String)
+          token: expect.any(String),
+          source: INVITE_SOURCE_SYSTEM
         }
       },
       // We don't care what fields we select here.

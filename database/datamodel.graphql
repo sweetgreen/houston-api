@@ -11,6 +11,11 @@ enum Role {
   USER
 }
 
+enum InviteSource {
+  SYSTEM
+  WORKSPACE
+}
+
 type User {
   id: ID! @id
   username: String @unique
@@ -76,6 +81,7 @@ type InviteToken {
   id: ID! @id
   email: String!
   token: String! @unique
+  source: InviteSource!
 
   # Optional. If one is specified both should be
   workspace: Workspace

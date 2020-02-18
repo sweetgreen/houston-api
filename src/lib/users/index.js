@@ -9,11 +9,13 @@ import { sendEmail } from "emails";
 import { identify } from "analytics";
 import config from "config";
 import shortid from "shortid";
+import { find, head } from "lodash";
 import {
   WORKSPACE_ADMIN,
   SYSTEM_ADMIN,
   USER_STATUS_PENDING,
-  USER_STATUS_ACTIVE
+  USER_STATUS_ACTIVE,
+  INVITE_SOURCE_SYSTEM
 } from "constants";
 
 /*
@@ -77,7 +79,13 @@ export async function createUser(opts) {
   if (haveInvite) {
     // Return the invite ID from the database to use in the
     // user record if the user has an invite
-    mutation.id = await prisma.inviteToken({ token: inviteTokens }).id();
+    const inviteToken =
+      // If there's a system invite token (ie. from ATC), use that id
+      // This will ensure our analytics userIds are consistent
+      find(inviteTokens, { source: INVITE_SOURCE_SYSTEM }) ||
+      head(inviteTokens);
+    // Set the userId to match the inviteId so our analytics user Ids are consistent
+    mutation.id = inviteToken.id;
     await prisma.deleteManyInviteTokens({ id_in: inviteTokens.map(t => t.id) });
   }
 
@@ -85,7 +93,6 @@ export async function createUser(opts) {
   const id = await prisma.createUser(mutation).id();
 
   // Run the analytics.js identify call
-
   identify(id, { name: fullName, email });
 
   if (emailToken != null) {
@@ -173,6 +180,7 @@ export async function validateInviteToken(inviteToken, email) {
       email
       token
       role
+      source
       workspace {
         id
       }

@@ -12,7 +12,9 @@ import {
   USER_STATUS_PENDING,
   USER_STATUS_ACTIVE,
   WORKSPACE_EDITOR,
-  WORKSPACE_VIEWER
+  WORKSPACE_VIEWER,
+  INVITE_TOKEN_SYSTEM,
+  INVITE_TOKEN_WORKSPACE
 } from "constants";
 
 jest.mock("emails");
@@ -146,6 +148,48 @@ describe("userExports.createUser", () => {
       );
       expect(roleBindings[1]).toHaveProperty("role", WORKSPACE_VIEWER);
 
+      mockValidateInvite.mockRestore();
+    });
+
+    test("replicates id if invite token is from source system", async () => {
+      const invite = casual.uuid;
+      const invite2 = casual.uuid;
+      const workspace = casual.uuid;
+      jest
+        .spyOn(prismaExports.prisma, "inviteToken")
+        .mockReturnValue({ id: () => casual.uuid });
+      const mockValidateInvite = jest
+        .spyOn(userExports, "validateInviteToken")
+        .mockImplementation(() => [
+          {
+            id: invite,
+            workspace: { id: workspace },
+            role: WORKSPACE_VIEWER,
+            source: INVITE_TOKEN_WORKSPACE
+          },
+          {
+            id: invite2,
+            workspace: null,
+            role: null,
+            source: INVITE_TOKEN_SYSTEM
+          }
+        ]);
+
+      const opts = {
+        user: casual.username,
+        email: casual.email,
+        inviteToken: invite
+      };
+
+      expect(await userExports.createUser(opts)).toBe(1);
+      expect(prismaExports.prisma.deleteManyInviteTokens).toHaveBeenCalledWith({
+        id_in: [invite, invite2]
+      });
+      expect(prismaExports.prisma.createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: invite
+        })
+      );
       mockValidateInvite.mockRestore();
     });
   });

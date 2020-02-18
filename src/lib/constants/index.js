@@ -44,6 +44,9 @@ export const DEPLOYMENT_VIEWER = "DEPLOYMENT_VIEWER";
 export const ENTITY_WORKSPACE = "WORKSPACE";
 export const ENTITY_DEPLOYMENT = "DEPLOYMENT";
 
+export const INVITE_SOURCE_WORKSPACE = "WORKSPACE";
+export const INVITE_SOURCE_SYSTEM = "SYSTEM";
+
 export const DOCKER_REGISTRY_CONTENT_TYPE =
   "application/vnd.docker.distribution.events.v1+json";
 
