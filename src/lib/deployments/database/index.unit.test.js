@@ -13,15 +13,15 @@ describe("databaseExports.cleanCreator", () => {
     expect(cleaned).toBe("user");
   });
 
-  test("test if getAzureDbServer function gets azure dbserver name from azure db username", async () => {
+  test("test if getDbServer function gets azure dbserver name from azure db username", async () => {
     const creator = "user@azure-db";
-    const azureDbServer = databaseExports.getAzureDbServer(creator);
+    const azureDbServer = databaseExports.getDbServer(creator);
     expect(azureDbServer).toBe("@azure-db");
   });
 
-  test("test if getAzureDbServer function returns empty string for normal user", async () => {
+  test("test if getDbServer function returns empty string for normal user", async () => {
     const creator = "user";
-    const azureDbServer = databaseExports.getAzureDbServer(creator);
+    const azureDbServer = databaseExports.getDbServer(creator);
     expect(azureDbServer).toBe("");
   });
 });

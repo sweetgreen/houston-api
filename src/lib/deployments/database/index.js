@@ -32,11 +32,14 @@ export async function createDatabaseForDeployment(deployment) {
   const rootConn = createConnection(parsedConn);
 
   // Generate some data.
+  const dbServerName = getDbServer(parsedConn.user);
   const dbName = generateDatabaseName(deployment.releaseName);
   const airflowSchemaName = "airflow";
   const celerySchemaName = "celery";
   const airflowUserName = generateAirflowUsername(deployment.releaseName);
+  const airflowConnUserName = airflowUserName + dbServerName;
   const celeryUserName = generateCeleryUsername(deployment.releaseName);
+  const celeryConnUserName = celeryUserName + dbServerName;
   const airflowPassword = passwordGenerator.generate({
     length: 32,
     numbers: true
@@ -45,7 +48,6 @@ export async function createDatabaseForDeployment(deployment) {
     length: 32,
     numbers: true
   });
-  const azureDbServerName = getAzureDbServer(parsedConn.user);
 
   log.info(`Creating database ${dbName}`);
 
@@ -85,22 +87,20 @@ export async function createDatabaseForDeployment(deployment) {
 
   // Construct connection details for airflow schema.
   const metadataConnection = {
-    user: airflowUserName,
+    user: airflowConnUserName,
     pass: airflowPassword,
     host: parsedConn.host,
     port: parsedConn.port,
-    db: dbName,
-    azureDbServer: azureDbServerName
+    db: dbName
   };
 
   // Construt connection details for celery schema.
   const resultBackendConnection = merge(clone(parsedConn), {
-    user: celeryUserName,
+    user: celeryConnUserName,
     pass: celeryPassword,
     host: parsedConn.host,
     port: parsedConn.port,
-    db: dbName,
-    azureDbServer: azureDbServerName
+    db: dbName
   });
 
   // Return both urls.
@@ -231,8 +231,8 @@ export function cleanCreator(creator) {
   return creator.replace(/@.*/g, "");
 }
 
-// Get Azure DB Server name from username. Necessary for Azure DB PostgreSQL users.
-export function getAzureDbServer(user) {
+// Get DB Server name from username. Necessary for Azure DB PostgreSQL users.
+export function getDbServer(user) {
   const dbServer = user.match(/@.*/g);
   if (Array.isArray(dbServer)) return dbServer[0];
   else return "";
