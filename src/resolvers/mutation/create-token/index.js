@@ -68,7 +68,8 @@ export default async function createToken(parent, args, ctx) {
 
   // Run the analytics track event
   track(user.id, "Logged In", {
-    email: args.identity
+    email: args.identity,
+    method: "Local"
   });
 
   // Return our user id, AuthUser resolver takes it from there.

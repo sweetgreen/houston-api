@@ -1,6 +1,7 @@
 import fragment from "./fragment";
 import { createUser as _createUser, isFirst } from "users";
 import { getClient } from "oauth/config";
+import { track } from "analytics";
 import { PublicSignupsDisabledError } from "errors";
 import { ui } from "utilities";
 import { prisma } from "generated/client";
@@ -79,6 +80,13 @@ export default async function(req, res, next) {
     await prisma.updateUser({
       where: { id: userId },
       data: { fullName, avatarUrl }
+    });
+
+    // Run the analytics track call for a log in event
+    track(user.id, "Logged In", {
+      email: userData.email,
+      name: userData.name,
+      method: "OAuth"
     });
   }
 
