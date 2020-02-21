@@ -37,8 +37,10 @@ export async function createDatabaseForDeployment(deployment) {
   const airflowSchemaName = "airflow";
   const celerySchemaName = "celery";
   const airflowUserName = generateAirflowUsername(deployment.releaseName);
+  // Format username as user@dbserver for Azure DB PostgreSQL connection
   const airflowConnUserName = airflowUserName + dbServerName;
   const celeryUserName = generateCeleryUsername(deployment.releaseName);
+  // Format username as user@dbserver for Azure DB PostgreSQL connection
   const celeryConnUserName = celeryUserName + dbServerName;
   const airflowPassword = passwordGenerator.generate({
     length: 32,
