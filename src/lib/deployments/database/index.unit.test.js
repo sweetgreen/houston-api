@@ -18,7 +18,7 @@ describe("databaseExports.cleanCreator", () => {
     const cleaned = databaseExports.cleanCreator(creator);
     expect(cleaned).toBe("user");
   });
-  
+
   test("test if cleanCreator function strips dbserver name from azure db username", async () => {
     const creator = "my-u$3r@azure-db";
     const cleaned = databaseExports.cleanCreator(creator);
@@ -49,5 +49,3 @@ describe("databaseExports.cleanCreator", () => {
     expect(azureDbServer).toBe("");
   });
 });
-
-
