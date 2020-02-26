@@ -20,3 +20,9 @@ export function track(userId, event, properties) {
     client.track({ userId, event, properties });
   }
 }
+
+export function group(userId, groupId, traits) {
+  if (client) {
+    client.group({ userId, groupId, traits });
+  }
+}

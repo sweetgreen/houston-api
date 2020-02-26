@@ -1,5 +1,5 @@
 import fragment from "./fragment";
-import { track } from "analytics";
+import { track, group } from "analytics";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 import moment from "moment";
@@ -44,6 +44,13 @@ export default async function createWorkspace(parent, args, ctx, info) {
   track(ctx.user.id, "Created Workspace", {
     workspaceId: workspace.id,
     label: args.label,
+    description: args.description,
+    trialEndsAt
+  });
+
+  // Run the group event to bucket user into workspace
+  group(ctx.user.id, workspace.id, {
+    name: args.label,
     description: args.description,
     trialEndsAt
   });

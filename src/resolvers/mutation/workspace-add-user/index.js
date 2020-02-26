@@ -1,6 +1,7 @@
 import fragment from "./fragment";
 import { UserInviteExistsError } from "errors";
 import { ui } from "utilities";
+import { group } from "analytics";
 import { sendEmail } from "emails";
 import { UserInputError } from "apollo-server";
 import shortid from "shortid";
@@ -39,6 +40,9 @@ export default async function workspaceAddUser(parent, args, ctx, info) {
         workspace: { connect: { id: workspaceUuid } }
       }
     });
+
+    // Run the group event to bucket user into workspace
+    group(user.id, workspaceUuid, null);
   } else {
     // Check if we have an invite for incoming email and user.
     const existingInvites = await ctx.db.query.inviteTokensConnection(
@@ -66,7 +70,7 @@ export default async function workspaceAddUser(parent, args, ctx, info) {
           source: INVITE_SOURCE_WORKSPACE
         }
       },
-      `{workspace { label } }`
+      `{ id, workspace { label } }`
     );
 
     sendEmail(email, "user-invite", {
@@ -75,6 +79,10 @@ export default async function workspaceAddUser(parent, args, ctx, info) {
       token,
       workspaceLabel: res.workspace.label
     });
+    // Run the group event to bucket user into workspace
+    // Note, we can use the inviteId here because it will be the same as the
+    // userId once the user accepts the invite
+    group(res.id, workspaceUuid, null);
   }
 
   // Return the workspace.

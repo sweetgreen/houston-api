@@ -1,4 +1,4 @@
-import { track } from "analytics";
+import { track, group } from "analytics";
 import moment from "moment";
 
 export default async function extendWorkspaceTrial(parent, args, ctx) {
@@ -27,5 +27,9 @@ export default async function extendWorkspaceTrial(parent, args, ctx) {
     trialEndsAt
   });
 
+  // Change workspace trialEndsAt date in downstream tools
+  group(ctx.user.id, workspaceUuid, {
+    trialEndsAt
+  });
   return workspace;
 }
