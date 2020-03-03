@@ -15,6 +15,7 @@ import { TrialError } from "errors";
 import config from "config";
 import { addFragmentToInfo } from "graphql-binding";
 import { get, merge, pick } from "lodash";
+import crypto from "crypto";
 import { DEPLOYMENT_AIRFLOW } from "constants";
 
 /*
@@ -85,7 +86,18 @@ export default async function updateDeployment(parent, args, ctx, info) {
     });
 
     // Map the user input env vars to a format that the helm chart expects.
-    const envs = mapCustomEnvironmentVariables(updatedDeployment, args.env);
+    const values = mapCustomEnvironmentVariables(updatedDeployment, args.env);
+
+    // Add an annotation to Airflow pods to inform pods to restart when
+    // secrets have been changed
+    const buf = Buffer.from(JSON.stringify(args.env));
+    const hash = crypto
+      .createHash("sha512")
+      .update(buf)
+      .digest("hex");
+
+    // This annotation is a sha512 hash of the user-provided Airflow environment variables
+    values.airflowPodAnnotations = { "checksum/airflow-secrets": hash };
 
     // Update the deployment, passing in our custom env vars.
     await ctx.commander.request("updateDeployment", {
@@ -94,7 +106,7 @@ export default async function updateDeployment(parent, args, ctx, info) {
         name: DEPLOYMENT_AIRFLOW,
         version: updatedDeployment.version
       },
-      rawConfig: JSON.stringify(generateHelmValues(updatedDeployment, envs))
+      rawConfig: JSON.stringify(generateHelmValues(updatedDeployment, values))
     });
   }
 
