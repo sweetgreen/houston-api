@@ -28,7 +28,7 @@ describe("POST /registry", () => {
   test("fails if no no Authorization header", async () => {
     const res = await request.get("/");
 
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(401);
     expect(res.body).not.toHaveProperty("token");
   });
 
@@ -373,7 +373,7 @@ describe("POST /registry", () => {
         .set("X-Original-Uri", "http://houston.local")
         .query({ scope: "base-images/airflow:pull" });
 
-      expect(res.statusCode).toBe(403);
+      expect(res.statusCode).toBe(401);
     });
   });
 });
