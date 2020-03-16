@@ -8,6 +8,7 @@ import moment from "moment";
 
 // Use sample data if prom is not enabled
 const useSample = !config.get("prometheus.enabled");
+const interval = config.get("prometheus.statusPollInterval");
 
 // Return sample as a promise
 const samplePromise = new Promise(resolve => {
@@ -47,14 +48,19 @@ export async function subscribe(parent, args, { pubsub }) {
   }
 
   // Return promQL data if in production
-  return createPoller(async publish => {
-    const res = await Promise.resolve(getMetric(releaseName));
-    publish({
-      deploymentStatus: {
-        result: res && res.result ? res.result[0].value[1] : 0
-      }
-    });
-  }, pubsub);
+  return createPoller(
+    async publish => {
+      const res = await Promise.resolve(getMetric(releaseName));
+      publish({
+        deploymentStatus: {
+          result: res && res.result ? res.result[0].value[1] : 0
+        }
+      });
+    },
+    pubsub,
+    interval,
+    3600000 * 24 // Kill after 24 hours
+  );
 }
 
 export default { subscribe };

@@ -112,6 +112,7 @@ prometheus:
   host: localhost
   port: 9090
   pollInterval: 5000
+  statusPollInterval: 60000
 
 # Charts live here.
 # This is where the airflow chart is installed from.
