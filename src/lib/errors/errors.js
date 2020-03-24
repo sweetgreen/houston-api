@@ -130,6 +130,10 @@ export class DuplicateRoleBindingError extends UserInputError {
   message = this.message || "A duplicate role binding already exists";
 }
 
+export class MissingRoleBindingError extends UserInputError {
+  message = this.message || "The role binding does not exist for this user";
+}
+
 export class DuplicateEmailError extends ApolloError {
   name = "DuplicateEmailError";
   constructor() {

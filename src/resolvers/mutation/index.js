@@ -14,6 +14,7 @@ import deleteDeployment from "./delete-deployment";
 import deleteInviteToken from "./delete-invite-token";
 import deleteServiceAccount from "./delete-service-account";
 import deleteDeploymentServiceAccount from "./delete-deployment-service-account";
+import deleteSystemRoleBinding from "./delete-system-rolebinding";
 import deleteSystemServiceAccount from "./delete-system-service-account";
 import deleteWorkspaceServiceAccount from "./delete-workspace-service-account";
 import deleteWorkspace from "./delete-workspace";
@@ -55,6 +56,7 @@ export default {
   deleteInviteToken,
   deleteServiceAccount,
   deleteDeploymentServiceAccount,
+  deleteSystemRoleBinding,
   deleteSystemServiceAccount,
   deleteWorkspaceServiceAccount,
   deleteWorkspace,

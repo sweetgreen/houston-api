@@ -577,6 +577,11 @@ type Mutation {
     role: Role!
   ): RoleBinding @auth(permissions: ["system.iam.update"])
 
+  deleteSystemRoleBinding(
+    userId: ID!
+    role: Role!
+  ): RoleBinding @auth(permissions: ["system.iam.update"])
+
   # Invite a user to create an account in this system. Useful when signups are
   # disabled on the platform. To invite a user (new or existing) to a workspace
   # use the workspaceAddUser mutation.
