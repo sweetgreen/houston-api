@@ -36,22 +36,21 @@ export default async function(req, res, next) {
     nonce: null
   });
 
+  const email = tokenSet.claims.email
+    ? tokenSet.claims.email.toLowerCase()
+    : tokenSet.claims.preferred_username
+    ? tokenSet.claims.preferred_username.toLowerCase()
+    : null;
+
   // Grab user data
   // Some IDPs don't return useful info, so fall back to the claims if we don't have it
   const userData = merge(await provider.userinfo(tokenSet.access_token), {
-    email:
-      tokenSet.claims.email.toLowerCase() ||
-      tokenSet.claims.preferred_username.toLowerCase(),
+    email,
     sub: tokenSet.claims.sub,
     name: tokenSet.claims.name || tokenSet.claims.unique_name
   });
 
-  const {
-    sub: providerUserId,
-    email,
-    name: fullName,
-    picture: avatarUrl
-  } = userData;
+  const { sub: providerUserId, name: fullName, picture: avatarUrl } = userData;
 
   if (!email) {
     // Somehow we got no email! Abort
