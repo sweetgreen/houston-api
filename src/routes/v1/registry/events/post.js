@@ -126,15 +126,20 @@ export async function extractImageMetadata(ev) {
 
   const client = got.extend({
     headers: {
-      Accept: MEDIATYPE_DOCKER_MANIFEST_V2,
-      Authorization: `Bearer ${dockerJWT}`,
       "User-Agent": `houston/${version()}`
     },
     json: true
   });
 
   log.info(`Fetching manifest from ${ev.target.url}`);
-  const manifest = (await client.get(ev.target.url)).body;
+  const manifest = (
+    await client.get(ev.target.url, {
+      headers: {
+        Accept: MEDIATYPE_DOCKER_MANIFEST_V2,
+        Authorization: `Bearer ${dockerJWT}`
+      }
+    })
+  ).body;
 
   if (!manifest.config) {
     log.debug("No config field in manifest!");
@@ -146,11 +151,28 @@ export async function extractImageMetadata(ev) {
     `blobs/${manifest.config.digest}`
   );
   log.debug(`Fectching image config from ${configURL}`);
-  const imageMetadata = (
-    await client.get(configURL, {
-      headers: { Accept: manifest.config.mediaType }
-    })
-  ).body;
+
+  const { statusCode, headers, body } = await client.get(configURL, {
+    headers: {
+      Accept: manifest.config.mediaType,
+      Authorization: `Bearer ${dockerJWT}`
+    },
+    followRedirect: false
+  });
+
+  // If using Azure Blob registry storage back end, we receive a 307 response code.
+  // Solution described here https://github.com/Azure/acr/issues/217#issuecomment-490372387
+  const imageMetadata =
+    statusCode === 200
+      ? body
+      : statusCode === 307
+      ? (await client.get(headers.location)).body
+      : null;
+
+  if (!imageMetadata) {
+    log.debug("No image metadata found!");
+    return;
+  }
 
   return {
     labels: imageMetadata.config.Labels,
