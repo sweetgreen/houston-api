@@ -2,7 +2,6 @@ import { hasPermission } from "rbac";
 import { prisma } from "generated/client";
 import log from "logger";
 import { createJWT } from "jwt";
-import config from "config";
 import { ENTITY_DEPLOYMENT } from "constants";
 import url from "url";
 
@@ -65,8 +64,7 @@ export function airflowJWT(user, roles, audience) {
   } else if (user.label) {
     // A ServiceAccount
     //
-    const baseDomain = config.get("helm.baseDomain");
-    email = `${user.id}@sa.${baseDomain}`;
+    email = `${user.id}@sa.astro.io`;
     name = `Service Account: ${user.label}`;
   } else {
     throw new Error(
