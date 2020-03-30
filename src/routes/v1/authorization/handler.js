@@ -20,7 +20,9 @@ export default async function(req, res) {
   const [subdomain] = hostname.split(".");
 
   // If we're accessing a monitoring service and we have permission, allow it.
-  const monitoringSubdomain = /^(grafana|kibana)$/.test(subdomain);
+  const monitoringSubdomain = /^(grafana|kibana|alertmanager|prometheus)$/.test(
+    subdomain
+  );
   if (monitoringSubdomain && hasPermission(user, "system.monitoring.get")) {
     log.info(`Authorizing request to ${originalUrl}`);
     return res.sendStatus(200);
