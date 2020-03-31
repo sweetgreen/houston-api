@@ -5,10 +5,14 @@ import {
   UserInputError
 } from "apollo-server";
 
-export class PublicSignupsDisabledError extends Error {
-  message =
-    this.message ||
-    "Public sign ups are disabled, a valid inviteToken is required to login to the platform. Public sign ups can be enabled via configuration change.";
+export class PublicSignupsDisabledError extends ApolloError {
+  name = "PublicSignupsDisabledError";
+  constructor() {
+    super(
+      "Public sign ups are disabled, a valid inviteToken is required to login to the platform. Public sign ups can be enabled via configuration change.",
+      "PUBLIC_SIGNUPS_DISABLED"
+    );
+  }
 }
 
 export class InviteTokenNotFoundError extends UserInputError {

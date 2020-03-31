@@ -6,6 +6,7 @@ import { PublicSignupsDisabledError } from "errors";
 import { ui } from "utilities";
 import { prisma } from "generated/client";
 import { createAuthJWT, setJWTCookie } from "jwt";
+import { ApolloError } from "apollo-server";
 import config from "config";
 import { first, merge } from "lodash";
 import { URLSearchParams } from "url";
@@ -64,15 +65,26 @@ export default async function(req, res, next) {
       .$fragment(fragment)
   );
 
-  // Set the userId, either the existing, or the newly created one.
-  const userId = user
-    ? user.id
-    : await _createUser({
-        fullName,
-        email,
-        inviteToken: state.inviteToken,
-        active: true // OAuth users are active immediately
-      });
+  let userId = null;
+
+  try {
+    // Set the userId, either the existing, or the newly created one.
+    userId = user
+      ? user.id
+      : await _createUser({
+          fullName,
+          email,
+          inviteToken: state.inviteToken,
+          active: true // OAuth users are active immediately
+        });
+  } catch (e) {
+    // Confirm that error is a noPubSignupsError and send user back to UI login
+    // where an error message can be shown
+    if (e instanceof ApolloError) {
+      const url = `${ui()}/login?error=${e.extensions.code}`;
+      res.redirect(url);
+    }
+  }
 
   // If we already have a user, update it.
   if (user) {
