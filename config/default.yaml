@@ -111,7 +111,7 @@ prometheus:
   enabled: false
   host: localhost
   port: 9090
-  pollInterval: 5000
+  pollInterval: 30000
   statusPollInterval: 60000
 
 # Charts live here.
