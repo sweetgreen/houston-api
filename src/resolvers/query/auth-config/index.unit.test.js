@@ -25,6 +25,7 @@ const query = `
       inviteToken: $inviteToken
     ) {
       publicSignup
+      externalSignupUrl
       initialSignup
       localEnabled
       googleEnabled

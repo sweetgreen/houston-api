@@ -140,6 +140,8 @@ publicSignups:
   __name: "PUBLIC_SIGNUPS"
   __format: "json"
 
+externalSignupUrl: "EXTERNAL_SIGNUP_URL"
+
 emailConfirmation:
   __name: "EMAIL_CONFIRMATION"
   __format: "json"

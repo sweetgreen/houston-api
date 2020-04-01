@@ -83,6 +83,7 @@ type AuthProvider {
 
 type AuthConfig {
   publicSignup: Boolean
+  externalSignupUrl: String
   initialSignup: Boolean
   localEnabled: Boolean
   providers: [AuthProvider!]

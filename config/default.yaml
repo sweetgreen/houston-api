@@ -205,6 +205,9 @@ serviceAccounts:
 # Allow public signups.
 publicSignups: false
 
+# URL to send users to for signup when publicSignups is disabled
+externalSignupUrl: ~
+
 # Require email confirmation.
 emailConfirmation: true
 

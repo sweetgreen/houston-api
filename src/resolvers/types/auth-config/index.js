@@ -11,6 +11,15 @@ export function publicSignup() {
 }
 
 /*
+ * Return a string of an external URL to visit for platform access
+ * (when public signups are disabled).
+ * @return {String} External signup URL.
+ */
+export function externalSignupUrl() {
+  return config.get("externalSignupUrl");
+}
+
+/*
  * Return a boolean indicating if there is an initial signup yet.
  * @return {Boolean} Initial signup.
  */
@@ -46,6 +55,7 @@ export async function providers(parent) {
 
 export default {
   publicSignup,
+  externalSignupUrl,
   initialSignup,
   localEnabled,
   providers
