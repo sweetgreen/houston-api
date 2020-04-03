@@ -36,7 +36,10 @@ export async function request(...args) {
     log.info(`Calling commander method ${method}`);
     const req = new client.Request(...args);
     const res = await req.exec();
-    log.info(`Response from ${method}: ${JSON.stringify(res.response)}`);
+
+    const result = method === "#getSecret" ? res.response.result : res.response;
+    log.info(`Response from ${method}: ${JSON.stringify(result)}`);
+
     return res.response;
   }
   log.info(`Commander disabled, skipping call to ${method}`);
