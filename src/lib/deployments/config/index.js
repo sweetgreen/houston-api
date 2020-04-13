@@ -1,4 +1,12 @@
-import { parseJSON } from "utilities";
+import {
+  houston,
+  ui,
+  deploymentsSubdomain,
+  airflowSubdomain,
+  flowerSubdomain,
+  deploymentsUrl,
+  parseJSON
+} from "utilities";
 import log from "logger";
 import {
   curry,
@@ -70,10 +78,51 @@ export function generateHelmValues(deployment, values = {}) {
 export function ingress() {
   const { baseDomain, releaseName } = config.get("helm");
 
+  const ingressClass = `${releaseName}-nginx`;
+
+  const commonAnnotations = {
+    "kubernetes.io/ingress.class": ingressClass,
+    "nginx.ingress.kubernetes.io/custom-http-errors": "403,404,502,503",
+    "nginx.ingress.kubernetes.io/auth-url": `${houston()}/v1/authorization`,
+    "nginx.ingress.kubernetes.io/auth-signin": `${ui()}/login`,
+    "nginx.ingress.kubernetes.io/proxy-cookie-path": `/ /${releaseName}/`,
+    "nginx.ingress.kubernetes.io/auth-response-headers":
+      "authorization, username, email"
+  };
+
   return {
     ingress: {
       baseDomain,
-      class: `${releaseName}-nginx`
+      webserverAnnotations: merge(
+        {
+          "nginx.ingress.kubernetes.io/server-snippet": `
+             location ^~ /api/ {
+               if ($host = '${deploymentsSubdomain()}' ) {
+                 return 404;
+               }
+               proxy_pass ${deploymentsUrl()}/airflow/$request_uri;
+             }`,
+          "nginx.ingress.kubernetes.io/configuration-snippet": `
+             if ($host = '${airflowSubdomain()}' ) {
+               return 308 ${deploymentsUrl()}/airflow/$request_uri;
+             }`
+        },
+        commonAnnotations
+      ),
+      flowerAnnotations: merge(
+        {
+          "nginx.ingress.kubernetes.io/rewrite-target": "/$2;",
+          "nginx.ingress.kubernetes.io/configuration-snippet": `
+             if ($host = '${flowerSubdomain()}' ) {
+               rewrite ^ ${deploymentsUrl()}/flower permanent;
+             }
+             subs_filter_types text/css text/xml text/css;
+             sub_filter '="/' '="/${releaseName}/flower/';
+             sub_filter_last_modified on;
+             sub_filter_once off;`
+        },
+        commonAnnotations
+      )
     }
   };
 }
