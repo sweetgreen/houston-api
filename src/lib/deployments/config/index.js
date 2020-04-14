@@ -93,6 +93,7 @@ export function ingress(deployment) {
   return {
     ingress: {
       baseDomain,
+      class: `${releaseName}-nginx`,
       webserverAnnotations: merge(
         {
           "nginx.ingress.kubernetes.io/server-snippet": `
