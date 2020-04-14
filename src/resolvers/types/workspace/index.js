@@ -19,6 +19,10 @@ export function users(parent, args, ctx, info) {
   );
 }
 
+export function deployments(parent) {
+  return filter(parent.deployments, d => isNull(d.deletedAt));
+}
+
 export function invites(parent, args, ctx) {
   return ctx.db.query.inviteTokens({
     where: { workspace: { id: parent.id } }
@@ -124,6 +128,7 @@ export async function paywallEnabled(parent, args, ctx) {
 
 export default {
   users,
+  deployments,
   invites,
   deploymentCount,
   workspaceCapabilities,

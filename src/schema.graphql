@@ -129,6 +129,8 @@ type Workspace {
   properties: JSON
   label: String
   users: [User]
+  deployments: [Deployment]
+  serviceAccounts: [ServiceAccount]
   deploymentCount: Int
   stripeCustomerId: String
   roleBindings: [RoleBinding!]
@@ -218,6 +220,7 @@ type Deployment {
   updatedAt: DateTime!
   roleBindings: [RoleBinding!]
   deploymentCapabilities: DeploymentCapabilities
+  serviceAccounts: [ServiceAccount]
 }
 
 type DeploymentCapabilities {
