@@ -53,7 +53,7 @@ export function generateHelmValues(deployment, values = {}) {
     {}, // Start with an empty object.
     base, // Apply base settings from config YAML.
     values, // Apply any settings passed in directly.
-    ingress(), // Apply ingress settings.
+    ingress(deployment), // Apply ingress settings.
     defaultResources(), // Apply resource requests and limits.
     limitRange(), // Apply the limit range.
     constraints(deployment), // Apply any constraints (quotas, pgbouncer, etc).
@@ -75,7 +75,7 @@ export function generateHelmValues(deployment, values = {}) {
  * Return the Ingress configuration.
  * @return {Object} Ingress values.
  */
-export function ingress() {
+export function ingress(deployment) {
   const { baseDomain, releaseName } = config.get("helm");
 
   const ingressClass = `${releaseName}-nginx`;
@@ -85,7 +85,7 @@ export function ingress() {
     "nginx.ingress.kubernetes.io/custom-http-errors": "403,404,502,503",
     "nginx.ingress.kubernetes.io/auth-url": `${houston()}/v1/authorization`,
     "nginx.ingress.kubernetes.io/auth-signin": `${ui()}/login`,
-    "nginx.ingress.kubernetes.io/proxy-cookie-path": `/ /${releaseName}/`,
+    "nginx.ingress.kubernetes.io/proxy-cookie-path": `/ /${deployment.releaseName}/`,
     "nginx.ingress.kubernetes.io/auth-response-headers":
       "authorization, username, email"
   };
@@ -117,7 +117,7 @@ export function ingress() {
                rewrite ^ ${deploymentsUrl()}/flower permanent;
              }
              subs_filter_types text/css text/xml text/css;
-             sub_filter '="/' '="/${releaseName}/flower/';
+             sub_filter '="/' '="/${deployment.releaseName}/flower/';
              sub_filter_last_modified on;
              sub_filter_once off;`
         },
