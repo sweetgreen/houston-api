@@ -629,7 +629,7 @@ export function airflowImages() {
   return config
     .get("deployments.images")
     .slice(0)
-    .sort((a, b) => semver.rcompare(b.version, a.version));
+    .sort((a, b) => semver.rcompare(a.version, b.version));
 }
 
 /*
