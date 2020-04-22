@@ -50,6 +50,7 @@ enum Operator {
 type AppConfig {
   version: String
   baseDomain: String
+  smtpConfigured: Boolean
 }
 
 type AuthUser {
@@ -290,7 +291,7 @@ type DeploymentStatus {
 # Queries
 #
 type Query {
-  appConfig: AppConfig @auth
+  appConfig: AppConfig
 
   authConfig(
     redirect: String
