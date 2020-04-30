@@ -106,6 +106,7 @@ export default async function updateDeployment(parent, args, ctx, info) {
         name: DEPLOYMENT_AIRFLOW,
         version: updatedDeployment.version
       },
+      namespace: generateNamespace(updatedDeployment.releaseName),
       rawConfig: JSON.stringify(generateHelmValues(updatedDeployment, values))
     });
   }
