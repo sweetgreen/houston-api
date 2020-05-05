@@ -1,10 +1,15 @@
-import { ExpiredToken, InvalidToken, MissingToken, PermissionError } from "errors";
+import {
+  ExpiredToken,
+  InvalidToken,
+  MissingToken,
+  PermissionError
+} from "errors";
 import * as rbac from "rbac";
+import { decodeJWT } from "jwt";
 import { SchemaDirectiveVisitor } from "graphql-tools";
 import { defaultFieldResolver } from "graphql";
 import { every, some } from "lodash";
 import { ENTITY_WORKSPACE, ENTITY_DEPLOYMENT } from "constants";
-import { decodeJWT } from "jwt";
 
 /*
  * Directive to enforce authentication and authorization
