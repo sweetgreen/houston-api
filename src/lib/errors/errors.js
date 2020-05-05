@@ -126,6 +126,14 @@ export class InvalidToken extends UserInputError {
   message = this.message || "Invalid token";
 }
 
+export class ExpiredToken extends UserInputError {
+  message = this.message || "Expired token";
+}
+
+export class MissingToken extends UserInputError {
+  message = this.message || "No token provided";
+}
+
 export class InvalidRoleError extends UserInputError {
   message = this.message || "Invalid role";
 }

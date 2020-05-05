@@ -1,9 +1,10 @@
-import { PermissionError } from "errors";
+import { ExpiredToken, InvalidToken, MissingToken, PermissionError } from "errors";
 import * as rbac from "rbac";
 import { SchemaDirectiveVisitor } from "graphql-tools";
 import { defaultFieldResolver } from "graphql";
 import { every, some } from "lodash";
 import { ENTITY_WORKSPACE, ENTITY_DEPLOYMENT } from "constants";
+import { decodeJWT } from "jwt";
 
 /*
  * Directive to enforce authentication and authorization
@@ -43,8 +44,17 @@ export default class AuthDirective extends SchemaDirectiveVisitor {
       // for ease of acess in downstream resolvers.
       ctx.user = ctx.req.session.user;
 
+      const token = ctx.req.headers.authorization;
+
       // Throw error if there is no token.
-      if (!ctx.user) throw new PermissionError();
+      if (!token) throw new MissingToken();
+
+      // Throw error if token is invalid.
+      if (token && !ctx.user) throw new InvalidToken();
+
+      // Throw error if token is expired.
+      const decodedToken = await decodeJWT(token);
+      if (!decodedToken.exp) throw new ExpiredToken();
 
       const permissions = field._requiredPermission;
       // If this instance of the directive is specifying a permission,
