@@ -5,6 +5,11 @@ jobs:
     steps:
       - docker-build:
           image_name: ap-houston-api
+  test:
+    docker:
+      - image: node:13-buster
+    steps:
+      - test
   scan:
     executor: clair-scanner/default
     steps:
@@ -45,12 +50,17 @@ workflows:
   build-images:
     jobs:
       - build
+      - test:
+          requires:
+            - build
       - scan-trivy:
           requires:
             - build
+            - test
       - scan:
           requires:
             - build
+            - test
       - publish-master:
           requires:
             - scan
@@ -116,6 +126,29 @@ commands:
           root: .
           paths:
             - './*.tar'
+  test:
+    description: "Run tests and code coverage"
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+      - run:
+          name: install-npm-wee
+          command: |
+            npm install
+            npm install -g codecov
+      - save_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - ./node_modules
+      - run:
+          name: Run lint
+          command: |
+            npm run lint
+      - run:
+          name: Run unit tests
+          command: |
+            npm run coverage -- --runInBand && codecov
   trivy-scan:
     description: "Trivy: Vulnerability scanner a Docker image"
     parameters:

@@ -1,7 +1,7 @@
 # Houston API
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/fa7e3822ab433568f524/maintainability)](https://codeclimate.com/github/astronomer/houston-api-2/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/fa7e3822ab433568f524/test_coverage)](https://codeclimate.com/github/astronomer/houston-api-2/test_coverage)
+[![codecov](https://codecov.io/gh/astronomer/houston-api/branch/master/graph/badge.svg)](https://codecov.io/gh/astronomer/houston-api)
 
 ## Description
 
