@@ -32,10 +32,25 @@ export default async function(req, res) {
         `Received docker registry webhook for ${releaseName}, deploying new tag ${tag}.`
       );
 
-      // Get the existing config for this deployment.
-      const config = await prisma.deployment({ releaseName }).config();
+      const deployment = await prisma
+        .deployment({ releaseName })
+        .$fragment(`{ config deletedAt }`);
 
-      if (!config) return;
+      if (!deployment) {
+        log.info(`Deployment not found for ${releaseName}.`);
+        return res.sendStatus(200);
+      }
+
+      if (deployment.deletedAt) {
+        log.info(`Deployment ${releaseName} soft-deleted`);
+        return res.sendStatus(200);
+      }
+
+      const config = deployment.config;
+      if (!config) {
+        log.info(`Deployment config not found for ${releaseName}`);
+        return res.sendStatus(200);
+      }
 
       try {
         const imageMetadata = await exports.extractImageMetadata(ev);
