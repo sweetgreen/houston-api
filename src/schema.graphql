@@ -328,8 +328,13 @@ type Query {
 
   workspaceDeployments(
     workspaceUuid: Uuid!
-    releaseName: String
+    releaseName: String # backwards compatibility, move to use workspaceDeployment to query 1 dep
   ): [Deployment] @auth(permissions: ["workspace.deployments.get", "system.deployments.get"], op: OR)
+
+  workspaceDeployment(
+    workspaceUuid: Uuid!
+    releaseName: String!
+  ): Deployment @auth(permissions: ["workspace.deployments.get", "system.deployments.get"], op: OR)
 
   # Legacy - backwards compatibility
   serviceAccounts(
