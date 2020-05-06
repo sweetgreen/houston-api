@@ -96,6 +96,14 @@ export class InvalidDeploymentError extends Error {
   message = this.message || "Invalid deployment";
 }
 
+export class InvalideReleaseName extends UserInputError {
+  message = this.message || "Release name not formatted correctly.";
+}
+
+export class InvalidReleaseNameLength extends UserInputError {
+  message = this.message || "Release name exceeds maximum length.";
+}
+
 export class MissingArgumentError extends UserInputError {
   constructor(argName) {
     super();

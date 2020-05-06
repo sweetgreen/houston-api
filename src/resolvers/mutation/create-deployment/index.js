@@ -1,5 +1,6 @@
 import { deploymentFragment, workspaceFragment } from "./fragment";
 import {
+  validateReleaseName,
   generateReleaseName,
   generateNamespace,
   generateDeploymentLabels,
@@ -94,8 +95,12 @@ export default async function createDeployment(parent, args, ctx, info) {
     generatePassword({ length: 32, numbers: true })
   ).toString("base64");
 
-  // Generate a random space-themed release name.
-  const releaseName = generateReleaseName();
+  // Set release name - either randomly generated or manually
+  const isManualNamespace =
+    config.get("deployments.manualReleaseNames") && args.releaseName;
+  const releaseName = isManualNamespace
+    ? validateReleaseName(args.releaseName)
+    : generateReleaseName();
 
   // Add default props if exists
   const properties = {

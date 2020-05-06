@@ -51,6 +51,7 @@ type AppConfig {
   version: String
   baseDomain: String
   smtpConfigured: Boolean
+  manualReleaseNames: Boolean
 }
 
 type AuthUser {
@@ -291,7 +292,7 @@ type DeploymentStatus {
 # Queries
 #
 type Query {
-  appConfig: AppConfig
+  appConfig: AppConfig @auth
 
   authConfig(
     redirect: String
@@ -433,6 +434,7 @@ type Mutation {
 
   createDeployment(
     workspaceUuid: Uuid!
+    releaseName: String
     type: String!
     label: String!
     description: String

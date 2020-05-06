@@ -7,6 +7,8 @@ export default async function appConfig() {
   return {
     version: config.get("helm.releaseVersion"),
     baseDomain: config.get("helm.baseDomain"),
-    smtpConfigured: config.get("email.enabled") && !!config.get("email.smtpUrl")
+    smtpConfigured:
+      config.get("email.enabled") && !!config.get("email.smtpUrl"),
+    manualReleaseNames: config.get("deployments.manualReleaseNames")
   };
 }
