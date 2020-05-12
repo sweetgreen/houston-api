@@ -10,6 +10,7 @@ import logs from "./logs";
 import updateAvailable from "./platform-releases";
 import self from "./self";
 import serviceAccounts from "./service-accounts";
+import workspace from "./workspace";
 import workspaceDeployment from "./workspace-deployment";
 import workspaceDeployments from "./workspace-deployments";
 import workspaceInvites from "./workspace-invites";
@@ -33,6 +34,7 @@ export default {
   updateAvailable,
   self,
   serviceAccounts,
+  workspace,
   workspaceDeployment,
   workspaceDeployments,
   workspaceInvites,

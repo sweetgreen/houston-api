@@ -168,6 +168,7 @@ type AirflowImage {
 type WorkspaceCapabilities {
   canUpdateBilling: Boolean
   canUpdateIAM: Boolean
+  canGetWorkspace: Boolean
   canUpdateWorkspace: Boolean
   canDeleteWorkspace: Boolean
   canCreateDeployment: Boolean
@@ -304,6 +305,10 @@ type Query {
   self: AuthUser @auth
 
   updateAvailable: PlatformRelease @auth(permissions: ["system.updates.get"])
+  
+  workspace(
+    workspaceUuid: Uuid!
+  ): Workspace @auth(permissions: ["workspace.config.get", "system.workspace.get"], op: OR)
 
   workspaces: [Workspace] @auth
 

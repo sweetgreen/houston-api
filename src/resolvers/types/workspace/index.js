@@ -44,6 +44,10 @@ export function deploymentCount(parent) {
 export function workspaceCapabilities(parent, args, ctx) {
   const permissions = [
     {
+      key: "canGetWorkspace",
+      value: "workspace.config.get"
+    },
+    {
       key: "canUpdateBilling",
       value: "workspace.billing.update"
     },
