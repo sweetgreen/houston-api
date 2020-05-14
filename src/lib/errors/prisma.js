@@ -11,6 +11,7 @@ export function throwPrismaError(e) {
   if (duplicateEmailError(e)) {
     throw new DuplicateEmailError();
   }
+  throw e;
 }
 
 /*
@@ -33,5 +34,8 @@ export function duplicateEmailError(e) {
  * @return {Boolean} If the message was found.
  */
 export function hasError(e, code, re) {
-  return some(e.result.errors, e => e.code == code && e.message.match(re));
+  return (
+    e.result &&
+    some(e.result.errors, e => e.code == code && e.message.match(re))
+  );
 }
