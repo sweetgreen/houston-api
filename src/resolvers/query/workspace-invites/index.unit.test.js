@@ -14,11 +14,11 @@ const schema = makeExecutableSchema({
 const query = `
   query workspaceInvites(
     $workspaceUuid: Uuid!
-    $email: String
+    $invite: InviteSearch
   ) {
     workspaceInvites(
       workspaceUuid: $workspaceUuid
-      email: $email
+      invite: $invite
     ) {
       id
       email
@@ -30,20 +30,47 @@ const query = `
 `;
 
 describe("invites", () => {
-  test("typical request is successful", async () => {
-    // Mock up some db functions.
-    const inviteTokens = jest.fn();
+  // Mock up some db functions.
+  const inviteTokens = jest.fn();
 
-    // Construct db object for context.
-    const db = {
-      query: {
-        inviteTokens
+  // Construct db object for context.
+  const db = {
+    query: {
+      inviteTokens
+    }
+  };
+
+  test("typical request is successful", async () => {
+    const vars = {
+      workspaceUuid: casual.uuid
+    };
+
+    // Run the graphql mutation.
+    const res = await graphql(schema, query, null, { db }, vars);
+    expect(res.errors).toBeUndefined();
+    expect(inviteTokens.mock.calls.length).toBe(1);
+  });
+
+  test("typical request (by email) is successful", async () => {
+    const vars = {
+      workspaceUuid: casual.uuid,
+      invite: {
+        email: casual.email
       }
     };
 
+    // Run the graphql mutation.
+    const res = await graphql(schema, query, null, { db }, vars);
+    expect(res.errors).toBeUndefined();
+    expect(inviteTokens.mock.calls.length).toBe(1);
+  });
+
+  test("typical request (by ID) is successful", async () => {
     const vars = {
       workspaceUuid: casual.uuid,
-      email: casual.email
+      invite: {
+        inviteUuid: casual.uuid
+      }
     };
 
     // Run the graphql mutation.

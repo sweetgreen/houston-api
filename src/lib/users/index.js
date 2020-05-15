@@ -206,3 +206,30 @@ export function defaultWorkspaceDescription(opts) {
   const descName = opts.fullName || opts.email || opts.username;
   return descName ? `Default workspace for ${descName}` : "Default Workspace";
 }
+
+/*
+ * Build the workspaceUsers query based on args.
+ * @param {Object} args The graphql arguments.
+ * @param {Object} ctx The graphql context.
+ * @return {Object} The user query.
+ */
+export function userQuery(args) {
+  if (!args.user) return null;
+
+  // Pull out some args.
+  const { userUuid, fullName, username, email } = args.user;
+
+  // If userUuid, use it.
+  if (userUuid) return { id: userUuid };
+
+  // If email, use it
+  if (email) return { emails_some: { address: email.toLowerCase() } };
+
+  // If username, use it
+  if (username) return { username_contains: username.toLowerCase() };
+
+  // If fullName, use it.
+  if (fullName) return { fullName_contains: fullName };
+
+  return null;
+}

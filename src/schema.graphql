@@ -45,6 +45,21 @@ enum Operator {
 }
 
 #
+# Input Types
+#
+input InviteSearch {
+  inviteUuid: Uuid
+  email: String
+}
+
+input UserSearch {
+  userUuid: Uuid
+  username: String
+  email: String
+  fullName: String
+}
+
+#
 # Types
 #
 type AppConfig {
@@ -362,28 +377,25 @@ type Query {
 
   workspaceInvites(
     workspaceUuid: Uuid!
-    email: String
+    invite: InviteSearch
   ): [Invite] @auth(permissions:["workspace.invites.get"])
 
   workspaceUsers(
     workspaceUuid: Uuid!
-    email: String
-    fullName: String
+    user: UserSearch
   ): [User] @auth(permissions: ["workspace.users.get"])
 
   workspaceUser(
     workspaceUuid: Uuid!
-    username: String!
+    user: UserSearch!
   ): User @auth(permissions: ["workspace.users.get"])
 
   users(
-    userUuid: Uuid
-    username: String
-    email: String
+    user: UserSearch
   ): [User] @auth(permissions: ["system.users.get"])
 
   invites(
-    email: String
+    invite: InviteSearch
   ): [Invite] @auth(permissions:["system.users.get"])
 
   logs(

@@ -284,3 +284,49 @@ describe("userExports.defaultWorkspaceDescription", () => {
     expect(res).toBe("Default Workspace");
   });
 });
+
+describe("userExports.userQuery", () => {
+  test("query using id if supplied", () => {
+    const id = casual.uuid;
+    const args = {
+      user: {
+        userUuid: id
+      }
+    };
+    const res = userExports.userQuery(args);
+    expect(res).toHaveProperty("id", id);
+  });
+
+  test("query using username if supplied", () => {
+    const username = casual.username;
+    const args = {
+      user: {
+        username
+      }
+    };
+    const res = userExports.userQuery(args);
+    expect(res).toHaveProperty("username_contains", username.toLowerCase());
+  });
+
+  test("query using email if supplied", () => {
+    const email = casual.email;
+    const args = {
+      user: {
+        email
+      }
+    };
+    const res = userExports.userQuery(args);
+    expect(res).toHaveProperty("emails_some.address", email.toLowerCase());
+  });
+
+  test("query using fullName if supplied", () => {
+    const fullName = casual.full_name;
+    const args = {
+      user: {
+        fullName
+      }
+    };
+    const res = userExports.userQuery(args);
+    expect(res).toHaveProperty("fullName_contains", fullName);
+  });
+});

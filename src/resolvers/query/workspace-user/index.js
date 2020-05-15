@@ -1,4 +1,5 @@
 import { userFragment } from "./fragment";
+import { userQuery } from "../../../lib/users";
 import { ResourceNotFoundError } from "errors";
 import { addFragmentToInfo } from "graphql-binding";
 import { ApolloError } from "apollo-server";
@@ -11,13 +12,16 @@ import { ApolloError } from "apollo-server";
  * @return users on this specific workspace
  */
 export default async function workspaceUser(parent, args, ctx, info) {
+  // Build the user query.
+  const query = userQuery(args);
+
   const workspaceUsers = await ctx.db.query.users(
     {
       where: {
         roleBindings_some: {
           workspace: { id: args.workspaceUuid }
         },
-        username: args.username
+        ...query
       }
     },
     addFragmentToInfo(info, userFragment)

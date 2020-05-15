@@ -14,11 +14,11 @@ const schema = makeExecutableSchema({
 const query = `
   query workspaceUser(
     $workspaceId: Uuid!
-    $username: String!
+    $user: UserSearch!
   ) {
     workspaceUser(
       workspaceUuid: $workspaceId,
-      username: $username
+      user: $user
     ) {
       id
       username
@@ -36,7 +36,9 @@ describe("workspaceUser", () => {
   // Create vars.
   const vars = {
     workspaceId: casual.uuid,
-    username: casual.word
+    user: {
+      username: casual.word
+    }
   };
 
   test("when user exists", async () => {
