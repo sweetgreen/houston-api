@@ -20,7 +20,7 @@ import { WorkspaceSuspendedError, TrialError } from "errors";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 import bcrypt from "bcryptjs";
-import { get, isNull, find, size } from "lodash";
+import { get, isNull, find, size, merge, isEmpty } from "lodash";
 import { generate as generatePassword } from "generate-password";
 import {
   DEPLOYMENT_AIRFLOW,
@@ -108,12 +108,30 @@ export default async function createDeployment(parent, args, ctx, info) {
     ...args.properties
   };
 
+  const serviceAccountAnnotations = {};
+
+  const serviceAccountAnnotationKey = config.get(
+    "deployments.serviceAccountAnnotationKey"
+  );
+
+  // Generate the service account annotations.
+  if (args.cloudRole && serviceAccountAnnotationKey) {
+    serviceAccountAnnotations[serviceAccountAnnotationKey] = args.cloudRole;
+  }
+
+  const deploymentConfig = merge(
+    {},
+    args.config || generateDefaultDeploymentConfig(),
+    // Store serviceAccount annotations only we have value in it
+    !isEmpty(serviceAccountAnnotations) && { serviceAccountAnnotations }
+  );
+
   // Create the base mutation.
   const mutation = {
     data: {
       label: args.label,
       description: args.description,
-      config: args.config || generateDefaultDeploymentConfig(),
+      config: deploymentConfig,
       version,
       airflowVersion,
       releaseName,

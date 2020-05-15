@@ -534,3 +534,8 @@ deployments:
     # the KubernetesPodOperator and KubernetesExecutor. This is what signals to apply the
     # required RoleBindings.
     allowPodLaunching: true
+
+  # Annotation name to map the `cloud-role` from creating a deployment to on the Deployment Service account.
+  # AWS - eks.amazonaws.com/role-arn
+  # GCP - iam.gke.io/gcp-service-account
+  serviceAccountAnnotationKey: ~

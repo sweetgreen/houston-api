@@ -30,6 +30,7 @@ const mutation = `
     $config: JSON
     $env: JSON
     $properties: JSON
+    $cloudRole: String
   ) {
     createDeployment(
       workspaceUuid: $workspaceUuid
@@ -40,6 +41,7 @@ const mutation = `
       config: $config
       env: $env
       properties: $properties
+      cloudRole: $cloudRole
     ) {
         id
         config
@@ -155,6 +157,133 @@ describe("createDeployment", () => {
       expect(res.data.createDeployment.id).toBe(deploymentId);
     });
 
+    test("is successful with cloudRole and serviceAccountAnnotationKey annotation", async () => {
+      // Create some deployment vars.
+      // Override and not throw any error.
+      jest.spyOn(validate, "default").mockReturnValue();
+
+      config.deployments.serviceAccountAnnotationKey =
+        "eks.amazonaws.com/role-arn";
+
+      vars = {
+        workspaceUuid: casual.uuid,
+        type: DEPLOYMENT_AIRFLOW,
+        label: casual.word,
+        cloudRole: "test"
+      };
+
+      // Run the graphql mutation.
+      const res = await graphql(
+        schema,
+        mutation,
+        null,
+        { db, commander, user },
+        vars
+      );
+
+      expect(res.errors).toBeUndefined();
+      expect(createDeployment.mock.calls.length).toBe(1);
+      expect(createDeployment).toBeCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            config: expect.objectContaining({
+              serviceAccountAnnotations: {
+                "eks.amazonaws.com/role-arn": "test"
+              }
+            })
+          })
+        }),
+        expect.any(Object)
+      );
+
+      expect(commander.request.mock.calls[0][0]).toBe("createDeployment");
+      expect(commander.request.mock.calls[0][1].namespace).toEqual(
+        expect.stringMatching("^" + currentNamespace + "-")
+      );
+      expect(res.data.createDeployment.id).toBe(deploymentId);
+    });
+
+    test("is successful with cloudRole and without serviceAccountAnnotationKey annotation", async () => {
+      // Create some deployment vars.
+      // Override and not throw any error.
+      jest.spyOn(validate, "default").mockReturnValue();
+
+      config.deployments.serviceAccountAnnotationKey = null;
+
+      vars = {
+        workspaceUuid: casual.uuid,
+        type: DEPLOYMENT_AIRFLOW,
+        label: casual.word,
+        cloudRole: "test"
+      };
+
+      // Run the graphql mutation.
+      const res = await graphql(
+        schema,
+        mutation,
+        null,
+        { db, commander, user },
+        vars
+      );
+
+      expect(res.errors).toBeUndefined();
+      expect(createDeployment.mock.calls.length).toBe(1);
+      expect(createDeployment).toBeCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            config: { executor: "CeleryExecutor" }
+          })
+        }),
+        expect.any(Object)
+      );
+
+      expect(commander.request.mock.calls[0][0]).toBe("createDeployment");
+      expect(commander.request.mock.calls[0][1].namespace).toEqual(
+        expect.stringMatching("^" + currentNamespace + "-")
+      );
+      expect(res.data.createDeployment.id).toBe(deploymentId);
+    });
+
+    test("is successful without cloudRole but with serviceAccountAnnotationKey annotation", async () => {
+      // Create some deployment vars.
+      // Override and not throw any error.
+      jest.spyOn(validate, "default").mockReturnValue();
+
+      config.deployments.serviceAccountAnnotationKey =
+        "eks.amazonaws.com/role-arn";
+
+      vars = {
+        workspaceUuid: casual.uuid,
+        type: DEPLOYMENT_AIRFLOW,
+        label: casual.word
+      };
+
+      // Run the graphql mutation.
+      const res = await graphql(
+        schema,
+        mutation,
+        null,
+        { db, commander, user },
+        vars
+      );
+
+      expect(res.errors).toBeUndefined();
+      expect(createDeployment.mock.calls.length).toBe(1);
+      expect(createDeployment).toBeCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            config: { executor: "CeleryExecutor" }
+          })
+        }),
+        expect.any(Object)
+      );
+
+      expect(commander.request.mock.calls[0][0]).toBe("createDeployment");
+      expect(commander.request.mock.calls[0][1].namespace).toEqual(
+        expect.stringMatching("^" + currentNamespace + "-")
+      );
+      expect(res.data.createDeployment.id).toBe(deploymentId);
+    });
     describe("in singleNamespace node", () => {
       beforeEach(() => {
         config.helm.singleNamespace = true;

@@ -14,7 +14,7 @@ import {
 import { TrialError } from "errors";
 import config from "config";
 import { addFragmentToInfo } from "graphql-binding";
-import { get, merge, pick } from "lodash";
+import { get, isEmpty, merge, pick } from "lodash";
 import crypto from "crypto";
 import { DEPLOYMENT_AIRFLOW } from "constants";
 
@@ -49,10 +49,32 @@ export default async function updateDeployment(parent, args, ctx, info) {
     "version"
   ]);
 
+  const serviceAccountAnnotations = {};
+
+  const serviceAccountAnnotationKey = config.get(
+    "deployments.serviceAccountAnnotationKey"
+  );
+
+  const originalConfig = get(deployment, "config", {});
+
+  // Generate the service account annotations.
+  if (args.cloudRole && serviceAccountAnnotationKey) {
+    serviceAccountAnnotations[serviceAccountAnnotationKey] = args.cloudRole;
+  }
+
+  const deploymentConfig = merge(
+    {},
+    // Get current serviceAccountAnnotations
+    originalConfig,
+    args.config,
+    // Store serviceAccount annotations only we have value in it
+    !isEmpty(serviceAccountAnnotations) && { serviceAccountAnnotations }
+  );
+
   // Munge the args together to resemble the createDeployment mutation.
   // Once we fix the updateDeployment schema to match, we can skip this.
   const mungedArgs = merge({}, updatablePayload, {
-    config: args.config,
+    config: deploymentConfig,
     env: args.env,
     properties: get(args, "payload.properties", {})
   });
