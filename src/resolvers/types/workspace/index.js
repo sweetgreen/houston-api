@@ -2,7 +2,7 @@ import { userFragment, workspaceFragment } from "./fragment";
 import { hasPermission } from "rbac";
 import config from "config";
 import { addFragmentToInfo } from "graphql-binding";
-import { filter, isNull, size } from "lodash";
+import { filter, isNull } from "lodash";
 import moment from "moment";
 import { ENTITY_WORKSPACE } from "constants";
 
@@ -27,10 +27,6 @@ export function invites(parent, args, ctx) {
   return ctx.db.query.inviteTokens({
     where: { workspace: { id: parent.id } }
   });
-}
-
-export function deploymentCount(parent) {
-  return size(filter(parent.deployments, d => isNull(d.deletedAt)));
 }
 
 /*
@@ -134,7 +130,6 @@ export default {
   users,
   deployments,
   invites,
-  deploymentCount,
   workspaceCapabilities,
   billingEnabled,
   paywallEnabled

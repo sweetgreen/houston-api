@@ -1,4 +1,4 @@
-import { users, deployments, invites, deploymentCount } from "./index";
+import { users, deployments, invites } from "./index";
 import casual from "casual";
 
 describe("Workspace", () => {
@@ -38,25 +38,5 @@ describe("Workspace", () => {
     };
     invites(parent, {}, { db });
     expect(db.query.inviteTokens.mock.calls).toHaveLength(1);
-  });
-
-  test("deploymentCount returns length of deployments", () => {
-    const parent = { deployments: [{ id: casual.uuid, deletedAt: null }] };
-    const count = deploymentCount(parent);
-    expect(count).toBe(1);
-  });
-
-  test("deploymentCount returns 0 when no deployments", () => {
-    const parent = {};
-    const count = deploymentCount(parent);
-    expect(count).toBe(0);
-  });
-
-  test("deploymentCount returns 0 when there is a single deleted deployment", () => {
-    const parent = {
-      deployments: [{ id: casual.uuid, deletedAt: new Date() }]
-    };
-    const count = deploymentCount(parent);
-    expect(count).toBe(0);
   });
 });

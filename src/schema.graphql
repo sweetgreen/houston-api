@@ -148,7 +148,6 @@ type Workspace {
   users: [User]
   deployments: [Deployment]
   serviceAccounts: [ServiceAccount]
-  deploymentCount: Int
   stripeCustomerId: String
   roleBindings: [RoleBinding!]
   workspaceCapabilities: WorkspaceCapabilities
