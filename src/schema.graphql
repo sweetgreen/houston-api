@@ -503,7 +503,7 @@ type Mutation {
     email: String!
     # For backwards compatibility specify the previous behaviour as default value
     role: Role! = WORKSPACE_VIEWER
-  ): Workspace @auth(permissions: ["workspace.iam.update"])
+  ): Workspace @auth(permissions: ["workspace.iam.update", "system.iam.update"], op: OR)
 
   workspaceUpdateUserRole(
     workspaceUuid: Uuid!
