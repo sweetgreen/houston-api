@@ -34,7 +34,7 @@ export default async function(req, res) {
 
       const deployment = await prisma
         .deployment({ releaseName })
-        .$fragment(`{ config deletedAt }`);
+        .$fragment(`{ config deletedAt airflowVersion }`);
 
       if (!deployment) {
         log.info(`Deployment not found for ${releaseName}.`);
@@ -52,6 +52,7 @@ export default async function(req, res) {
         return res.sendStatus(200);
       }
 
+      let airflowVersion;
       try {
         const imageMetadata = await exports.extractImageMetadata(ev);
         await prisma.upsertDockerImage({
@@ -74,6 +75,11 @@ export default async function(req, res) {
             digest: ev.target.digest
           }
         });
+        airflowVersion = get(
+          imageMetadata.labels,
+          "io.astronomer.docker.airflow.version",
+          deployment.airflowVersion
+        );
       } catch (e) {
         if (e instanceof got.GotError) {
           log.error(`Error fetching ${e.url} ${e}`);
@@ -84,7 +90,6 @@ export default async function(req, res) {
         // Registry to keep trying to send the webhook to us!
         return;
       }
-
       // Merge the new image tag in.
       const updatedConfig = merge({}, config, {
         images: { airflow: { repository, tag } }
@@ -94,10 +99,10 @@ export default async function(req, res) {
       const updatedDeployment = await prisma
         .updateDeployment({
           where: { releaseName },
-          data: { config: updatedConfig }
+          data: { config: updatedConfig, airflowVersion }
         })
         .$fragment(
-          `{ id config label releaseName extraAu version workspace { id } }`
+          `{ id config label releaseName extraAu airflowVersion version workspace { id } }`
         );
 
       // Fire the helm upgrade to commander.

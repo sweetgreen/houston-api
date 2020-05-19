@@ -1,6 +1,7 @@
 import router from "./index";
 import * as postExports from "./post";
 import { prisma } from "generated/client";
+import { generateHelmValues } from "deployments/config";
 import casual from "casual";
 import request from "supertest";
 import express from "express";
@@ -11,6 +12,12 @@ jest.mock("generated/client", () => {
   return {
     __esModule: true,
     prisma: jest.fn().mockName("MockPrisma")
+  };
+});
+
+jest.mock("deployments/config", () => {
+  return {
+    generateHelmValues: jest.fn().mockName("generateHelmValues")
   };
 });
 
@@ -47,12 +54,15 @@ describe("POST /registry-events", () => {
           return {
             workspace: { id: casual.uuid },
             label: casual.word,
-            id: casual.uuid
+            id: casual.uuid,
+            airflowVersion: "1.10.10"
           };
         }
       });
 
-    const labels = Symbol(),
+    const labels = {
+        "io.astronomer.docker.airflow.version": "1.10.10"
+      },
       env = Symbol(),
       digest =
         "sha256:907b4a633d31872f7fc9b4cb22998b9de4c25f8cc8f08529ca56c2ace698e541";
@@ -89,8 +99,24 @@ describe("POST /registry-events", () => {
     const name = "cosmic-dust-1234/airflow:cli-1";
 
     expect(prisma.deployment).toHaveBeenCalledTimes(1);
+    expect(prisma.deployment).toHaveBeenCalledWith({
+      releaseName: "cosmic-dust-1234"
+    });
     expect(prisma.updateDeployment).toHaveBeenCalledTimes(1);
+    expect(prisma.updateDeployment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          airflowVersion: "1.10.10"
+        })
+      })
+    );
     expect(extractImageMetadata).toHaveBeenCalledTimes(1);
+    expect(generateHelmValues).toHaveBeenCalledTimes(1);
+    expect(generateHelmValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        airflowVersion: "1.10.10"
+      })
+    );
     expect(prisma.upsertDockerImage).toHaveBeenCalledTimes(1);
     expect(prisma.upsertDockerImage).toHaveBeenCalledWith({
       where: { name },

@@ -14,6 +14,7 @@ import {
   generateDefaultTag,
   deploymentOverrides,
   mapCustomEnvironmentVariables,
+  airflowImages,
   platform
 } from "./index";
 import { generateReleaseName } from "deployments/naming";
@@ -444,5 +445,36 @@ describe("airflowImageForVersion", () => {
     const version = "1.10.5";
     const image = airflowImageForVersion(version);
     expect(image.tag).toBe("1.10.5-alpine3.10-onbuild");
+  });
+});
+
+describe("airflowImages", () => {
+  test("returns correct semantic version images order", () => {
+    config.deployments.images = [
+      {
+        version: "1.10.7",
+        tag: "1.10.7-alpine3.10-onbuild"
+      },
+      {
+        version: "1.10.6",
+        tag: "1.10.6-alpine3.10-onbuild"
+      },
+      {
+        version: "1.10.5",
+        tag: "1.10.5-alpine3.10-onbuild"
+      },
+      {
+        version: "1.10.10",
+        tag: "1.10.10-alpine3.10-onbuild"
+      }
+    ];
+    const images = airflowImages();
+    // Right now it sorts the oldest version we have by default and we need to keep it.
+    expect(images).toStrictEqual([
+      { tag: "1.10.5-alpine3.10-onbuild", version: "1.10.5" },
+      { tag: "1.10.6-alpine3.10-onbuild", version: "1.10.6" },
+      { tag: "1.10.7-alpine3.10-onbuild", version: "1.10.7" },
+      { tag: "1.10.10-alpine3.10-onbuild", version: "1.10.10" }
+    ]);
   });
 });
