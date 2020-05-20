@@ -46,6 +46,12 @@ Houston supports multiple authentication methods. Currently it supports the buil
 Houston currently defines several default role values in it's datamodel [here](https://github.com/astronomer/houston-api-2/blob/master/database/datamodel.graphql). These values are backed by a configurable permission mapping via a config file. The default permission mappings are defined [here](https://github.com/astronomer/houston-api-2/blob/master/config/default.yaml). These permissions are currently enforced using a [GraphQL
 Directive](https://www.apollographql.com/docs/graphql-tools/schema-directives.html).
 
+## Prerequisites
+
+Houston API uses node LTS.  Please install [node LTS](https://nodejs.org/en/) or use the following command if you have [nvm](https://github.com/nvm-sh/nvm) installed:
+
+`nvm use`
+
 ## Development
 
 Houston is written in ES6 and beyond, and it's currently built with [Babel](https://babeljs.io). The easiest way to run the project locally is to first run `docker-compose up`, or `docker-compose up -d` to detach and run the containers in the background, freeing up your terminal. This will start the postgres database, as well as the prisma service. From here you can run `npm install`, then `npm start` to start the project locally, connecting to the previously started data stack. This uses [Nodemon](https://github.com/remy/nodemon) and will restart when any source files change. The only exception is `./database/datamodel.graphql`. Changes to this file require you to restart, triggering a `prisma deploy` and `prisma generate`. We could probably automate that process on change as well. Houston could also be added to the docker-compose services, but it's easier to interpret the logs when it's on its own. Houston will start the [Playground](https://github.com/prisma/graphql-playground) by default, but it's also possible to start a playground that will expose the application API, as well as the prisma API. To start this on port 3000, just run `graphql playground`, or send it to the background with `graphql playground &`.
