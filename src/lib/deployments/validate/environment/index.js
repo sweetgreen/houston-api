@@ -21,6 +21,16 @@ const list = [
 ];
 
 export default function validateEnvironment(envs) {
+  validateHelmOverrides(envs);
+  validateEnvironmentVariables(envs);
+}
+
+/*
+ * Validate that the deployment environment variables are not a part of the Helm Overrides.
+ * Throws if any reserved Helm key is found.
+ * @param {[]Object} An array of environment variable key/value pairs
+ */
+function validateHelmOverrides(envs) {
   const i = intersection(
     list,
     map(envs, v => v.key.toUpperCase())
@@ -34,4 +44,20 @@ export default function validateEnvironment(envs) {
     } set automatically and cannot be overridden`;
     throw new InvalidDeploymentError(msg);
   }
+}
+/*
+ * Validate format of the key for deployment env vars. Throws if the format is invalid.
+ * @param {[]Object} An array of environment variable key/value pairs
+ */
+function validateEnvironmentVariables(envs) {
+  const matcher = /^(?=.*[A-Z])([A-Z_]+$)/g;
+  envs.forEach(pair => {
+    const key = pair.key;
+    const invalid = key.match(matcher) === null;
+
+    if (invalid) {
+      const msg = `Invalid Environment Variable Key: ${key} (use A-Z and underscores)`;
+      throw new InvalidDeploymentError(msg);
+    }
+  });
 }
