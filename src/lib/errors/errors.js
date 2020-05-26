@@ -96,7 +96,7 @@ export class InvalidDeploymentError extends Error {
   message = this.message || "Invalid deployment";
 }
 
-export class InvalideReleaseName extends UserInputError {
+export class InvalidReleaseName extends UserInputError {
   message = this.message || "Release name not formatted correctly.";
 }
 

@@ -25,7 +25,7 @@ helm:
   acme: ~
   rbacEnabled: ~
   releaseName: astronomer
-  releaseNamespace: ~
+  releaseNamespace: astronomer
   # need for testing src/resolvers/query/platform-releases/index.unit.test.js:41
   releaseVersion: 0.0.1
 
