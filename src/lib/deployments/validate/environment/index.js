@@ -51,13 +51,14 @@ function validateHelmOverrides(envs) {
  */
 function validateEnvironmentVariables(envs) {
   const matcher = /^(?=.*[A-Z])([A-Z_]+$)/g;
-  envs.forEach(pair => {
-    const key = pair.key;
-    const invalid = key.match(matcher) === null;
+  envs &&
+    envs.forEach(pair => {
+      const key = pair.key;
+      const invalid = key.match(matcher) === null;
 
-    if (invalid) {
-      const msg = `Invalid Environment Variable Key: ${key} (use A-Z and underscores)`;
-      throw new InvalidDeploymentError(msg);
-    }
-  });
+      if (invalid) {
+        const msg = `Invalid Environment Variable Key: ${key} (use A-Z and underscores)`;
+        throw new InvalidDeploymentError(msg);
+      }
+    });
 }

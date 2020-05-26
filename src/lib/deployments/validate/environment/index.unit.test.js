@@ -1,19 +1,36 @@
 import validateEnvironment from "./index";
 
 describe("When valid environment variables are passed", () => {
-  test("it does not throw an error", () => {
-    const goodEnvs = [{ key: "GOOD_VARIABLE", value: "" }];
-    expect(validateEnvironment(goodEnvs)).toBeUndefined();
-  });
+  describe("it does not throw an error", () => {
+    test("when env is undefined", () => {
+      const goodEnvs = undefined;
+      expect(validateEnvironment(goodEnvs)).toBeUndefined();
+    });
 
-  expect(() => {
-    const goodEnvs = [{ key: "A", value: "" }];
-    expect(validateEnvironment(goodEnvs)).toBeUndefined();
-  });
+    test("when env is null", () => {
+      const goodEnvs = null;
+      expect(validateEnvironment(goodEnvs)).toBeUndefined();
+    });
 
-  expect(() => {
-    const goodEnvs = [{ key: "_STARTS_ENDS_UNDERSCORES_", value: "" }];
-    expect(validateEnvironment(goodEnvs)).toBeUndefined();
+    test("when env is empty", () => {
+      const goodEnvs = [];
+      expect(validateEnvironment(goodEnvs)).toBeUndefined();
+    });
+
+    test("when env is uppercase", () => {
+      const goodEnvs = [{ key: "A", value: "" }];
+      expect(validateEnvironment(goodEnvs)).toBeUndefined();
+    });
+
+    test("when env is uppercase and uses underscores", () => {
+      const goodEnvs = [{ key: "GOOD_VARIABLE", value: "" }];
+      expect(validateEnvironment(goodEnvs)).toBeUndefined();
+    });
+
+    test("when env is uppercase and starts and ends with underscores", () => {
+      const goodEnvs = [{ key: "_STARTS_ENDS_UNDERSCORES_", value: "" }];
+      expect(validateEnvironment(goodEnvs)).toBeUndefined();
+    });
   });
 });
 
