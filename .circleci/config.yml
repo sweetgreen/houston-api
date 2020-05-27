@@ -49,18 +49,14 @@ workflows:
   version: 2.1
   build-images:
     jobs:
+      - test
       - build
-      - test:
-          requires:
-            - build
       - scan-trivy:
           requires:
             - build
-            - test
       - scan:
           requires:
             - build
-            - test
       - publish-master:
           requires:
             - scan
