@@ -5,20 +5,20 @@ import elasticsearch from "elasticsearch";
 import { clone, random, range } from "lodash";
 import casual from "casual";
 
-/*
+/**
  * This is a singleton instance of a log generator. It
- * infinately iterates over sample logs.
+ * infinitely iterates over sample logs.
  */
 export const generateLogMessage = (function* generateLogs() {
   const max = sampleLogs.length;
   let counter = 0;
   while (true) {
-    yield sampleLogs[++counter];
+    yield sampleLogs[counter++];
     if (counter == max) counter = 0;
   }
 })();
 
-/*
+/**
  * Generate full sample elasticsearch log records, using
  * the log message generator, for a given release, component.
  * @param {String} release A release name.
@@ -41,7 +41,7 @@ export function generateMockLogRecords(release, component) {
   };
 }
 
-/*
+/**
  * Return an elasticsearch search query for the given args.
  * @param {String} release An airflow release name.
  * @param {String} component An airflow deployment component name (scheduler|webserver|worker).
@@ -89,8 +89,8 @@ export function createLogQuery(release, component, gt, searchPhrase) {
   return query;
 }
 
-/*
- * Execute a search query aginst elasticsearch.
+/**
+ * Execute a search query against elasticsearch.
  * This is a wrapper around the function above to skip
  * if elasticsearch is disabled.
  */
@@ -111,7 +111,7 @@ export async function search(...args) {
   log.debug(`Elasticsearch disabled, returning nothing`);
 }
 
-/*
+/**
  * Map an Elasticsearch log document to the format expected on the client.
  * @param {Object} document An elasticsearch result document.
  * @return {Object} The properly formatted object.
