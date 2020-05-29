@@ -38,7 +38,14 @@ module.exports = {
   // ],
 
   // An object that configures minimum threshold enforcement for coverage results
-  // coverageThreshold: null,
+  coverageThreshold: {
+    global: {
+      branches: 71.95,
+      functions: 77.29,
+      lines: 79.01,
+      statements: 78.7
+    }
+  },
 
   // Make calling deprecated APIs throw helpful error messages
   // errorOnDeprecated: false,
