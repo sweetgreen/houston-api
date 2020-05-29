@@ -10,19 +10,10 @@ import { USER_STATUS_ACTIVE, USER_STATUS_PENDING } from "constants";
  */
 export default async function confirmEmail(parent, args, ctx) {
   // Search for a user by username or email.
-  const email = await ctx.db.query.email(
-    {
-      where: { token: args.token }
-    },
-    `{
-      verified
-      primary
-      user {
-        id
-        status
-      }
-     }`
-  );
+  const email = await ctx.prisma.email.findOne({
+    where: { token: args.token },
+    include: { user: true }
+  });
 
   // Throw error if user not found.
   if (!email || !email.user) {
@@ -50,7 +41,7 @@ export default async function confirmEmail(parent, args, ctx) {
       throw new InvalidToken();
   }
 
-  await ctx.db.mutation.updateEmail({
+  await ctx.prisma.email.update({
     where: { token: args.token },
     data: mutation
   });

@@ -5,12 +5,12 @@ describe("AuthUser", () => {
   test("token resolves a valid token", async () => {
     const userId = "12345";
     const cookie = jest.fn();
-    const db = {
-      query: {
-        user: jest.fn().mockReturnValueOnce({ status: USER_STATUS_ACTIVE })
+    const prisma = {
+      user: {
+        findOne: jest.fn().mockReturnValueOnce({ status: USER_STATUS_ACTIVE })
       }
     };
-    const res = await token({ userId }, {}, { db, res: { cookie } });
+    const res = await token({ userId }, {}, { prisma, res: { cookie } });
 
     // Test that uuid gets set propertly.
     expect(res.payload.uuid).toBe(userId);

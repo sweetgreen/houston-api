@@ -3,8 +3,8 @@
  */
 import "dotenv/config";
 import log from "logger";
-import { prisma } from "generated/client";
 import { version } from "utilities";
+import { PrismaClient } from "@prisma/client";
 import request from "request-promise-native";
 import { size } from "lodash";
 import yargs from "yargs";
@@ -42,12 +42,12 @@ export async function updatePlatformReleases(uri) {
     log.info("There are no new releases to update");
     return;
   }
-
+  const prisma = new PrismaClient();
   // Loop through the new release from updates service and current db
   for (const newRelease of newReleases) {
     log.info(`Checking possible new release version ${newRelease.version}`);
     // Create new release in db
-    await prisma.upsertPlatformRelease({
+    await prisma.platformRelease.upsert({
       where: { version: newRelease.version },
       create: {
         version: newRelease.version,
@@ -64,6 +64,8 @@ export async function updatePlatformReleases(uri) {
       }
     });
   }
+
+  await prisma.disconnect();
 }
 
 const argv = yargs

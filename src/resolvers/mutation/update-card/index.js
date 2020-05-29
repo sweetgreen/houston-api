@@ -9,10 +9,10 @@ import { updateStripeCustomer } from "stripe";
  */
 export default async function updateCard(parent, args, ctx) {
   // Get the stripeCustomerId associated with the user
-  const { stripeCustomerId } = await ctx.db.query.workspace(
-    { where: { id: args.workspaceUuid } },
-    `{ stripeCustomerId }`
-  );
+  const { stripeCustomerId } = await ctx.prisma.workspace.findOne({
+    where: { id: args.workspaceUuid },
+    select: { stripeCustomerId: true }
+  });
 
   const response = await updateStripeCustomer(
     stripeCustomerId,

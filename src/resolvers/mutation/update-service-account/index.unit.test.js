@@ -1,15 +1,7 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import { WORKSPACE_ADMIN } from "constants";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const mutation = `
@@ -53,11 +45,16 @@ describe("updateServiceAccount", () => {
     };
 
     // Mock up some functions.
-    const updateServiceAccount = jest.fn();
+    const update = jest.fn().mockReturnValue({
+      id: casual.uuid,
+      entityType: "someType",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
 
     // Construct db object for context.
-    const db = {
-      mutation: { updateServiceAccount }
+    const prisma = {
+      serviceAccount: { update }
     };
 
     // Vars for the gql mutation.
@@ -72,13 +69,10 @@ describe("updateServiceAccount", () => {
     const data = { label };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db, user }, vars);
+    const res = await graphql(schema, mutation, null, { prisma, user }, vars);
     expect(res.errors).toBeUndefined();
-    expect(updateServiceAccount).toHaveBeenCalledTimes(1);
-    expect(updateServiceAccount).toHaveBeenCalledWith(
-      { where, data },
-      expect.any(Object)
-    );
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledWith({ where, data });
   });
 
   test("invalid fields are ignored", async () => {
@@ -99,11 +93,16 @@ describe("updateServiceAccount", () => {
     };
 
     // Mock up some functions.
-    const updateServiceAccount = jest.fn();
+    const update = jest.fn().mockReturnValue({
+      id: casual.uuid,
+      entityType: "someType",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
 
     // Construct db object for context.
-    const db = {
-      mutation: { updateServiceAccount }
+    const prisma = {
+      serviceAccount: { update }
     };
 
     // Vars for the gql mutation.
@@ -119,12 +118,9 @@ describe("updateServiceAccount", () => {
     const data = { label };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db, user }, vars);
+    const res = await graphql(schema, mutation, null, { prisma, user }, vars);
     expect(res.errors).toBeUndefined();
-    expect(updateServiceAccount).toHaveBeenCalledTimes(1);
-    expect(updateServiceAccount).toHaveBeenCalledWith(
-      { where, data },
-      expect.any(Object)
-    );
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledWith({ where, data });
   });
 });

@@ -12,15 +12,10 @@ import shortid from "shortid";
  */
 export default async function resendConfirmation(parent, args, ctx) {
   // Check for user by incoming email arg.
-  const email = await ctx.db.query.email(
-    { where: { address: args.email.toLowerCase() } },
-    `{
-      id
-      address
-      verified
-      token
-    }`
-  );
+  const email = await ctx.prisma.email.findOne({
+    where: { address: args.email.toLowerCase() },
+    select: { id: true, address: true, verified: true, token: true }
+  });
 
   if (!email || email.verified) {
     return false;
@@ -28,7 +23,7 @@ export default async function resendConfirmation(parent, args, ctx) {
 
   if (!email.token) {
     email.token = shortid.generate();
-    await ctx.db.mutation.updateEmail({
+    await ctx.prisma.email.update({
       data: { token: email.token },
       where: { id: email.id }
     });

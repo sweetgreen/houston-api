@@ -1,14 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const mutation = `
@@ -29,11 +21,13 @@ const mutation = `
 describe("addCustomerId", () => {
   test("typical request is successful", async () => {
     // Mock up some functions.
-    const updateWorkspace = jest.fn();
+    const update = jest
+      .fn()
+      .mockReturnValue({ label: casual.word, stripeCustomerId: casual.uuid });
 
     // Construct db object for context.
-    const db = {
-      mutation: { updateWorkspace }
+    const prisma = {
+      workspace: { update }
     };
     // Vars for the gql mutation.
     const vars = {
@@ -42,8 +36,8 @@ describe("addCustomerId", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
-    expect(updateWorkspace.mock.calls.length).toBe(1);
+    expect(update.mock.calls.length).toBe(1);
   });
 });

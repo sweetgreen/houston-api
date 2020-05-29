@@ -1,15 +1,7 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import { SYSTEM_ADMIN } from "constants";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
@@ -38,16 +30,18 @@ describe("deleteSystemServiceAccount", () => {
     };
 
     // Mock up some db functions.
-    const serviceAccount = jest.fn().mockReturnValue({
+    const findOne = jest.fn().mockReturnValue({
       id: casual.id
     });
 
-    const deleteServiceAccount = jest.fn();
-
     // Construct db object for context.
-    const db = {
-      query: { serviceAccount },
-      mutation: { deleteServiceAccount }
+    const prisma = {
+      serviceAccount: {
+        findOne,
+        delete: jest.fn().mockReturnValue({
+          id: casual.uuid
+        })
+      }
     };
 
     const vars = {
@@ -55,14 +49,14 @@ describe("deleteSystemServiceAccount", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db, user }, vars);
+    const res = await graphql(schema, query, null, { prisma, user }, vars);
     expect(res.errors).toBeUndefined();
-    expect(deleteServiceAccount).toHaveBeenCalledWith(
-      { where: { id: vars.serviceAccountUuid } },
-      expect.any(Object)
-    );
-    expect(serviceAccount.mock.calls).toHaveLength(1);
-    expect(deleteServiceAccount.mock.calls).toHaveLength(1);
+    expect(prisma.serviceAccount.delete).toHaveBeenCalledWith({
+      where: { id: vars.serviceAccountUuid },
+      select: { id: true }
+    });
+    expect(findOne.mock.calls).toHaveLength(1);
+    expect(prisma.serviceAccount.delete.mock.calls).toHaveLength(1);
   });
 
   test("request throws if service account is not found", async () => {
@@ -81,13 +75,11 @@ describe("deleteSystemServiceAccount", () => {
     };
 
     // Mock up some db functions.
-    const serviceAccount = jest.fn();
-    const deleteServiceAccount = jest.fn();
+    const findOne = jest.fn();
 
     // Construct db object for context.
-    const db = {
-      query: { serviceAccount },
-      mutation: { deleteServiceAccount }
+    const prisma = {
+      serviceAccount: { findOne, delete: jest.fn() }
     };
 
     const vars = {
@@ -96,9 +88,9 @@ describe("deleteSystemServiceAccount", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db, user }, vars);
+    const res = await graphql(schema, query, null, { prisma, user }, vars);
     expect(res.errors).toHaveLength(1);
-    expect(serviceAccount.mock.calls).toHaveLength(1);
-    expect(deleteServiceAccount.mock.calls).toHaveLength(0);
+    expect(findOne.mock.calls).toHaveLength(1);
+    expect(prisma.serviceAccount.delete.mock.calls).toHaveLength(0);
   });
 });

@@ -89,24 +89,22 @@ export function type() {
  */
 export async function deployInfo(parent, args, ctx) {
   const prefix = config.get("deployments.tagPrefix");
-  const images = await ctx.db.query.dockerImages(
-    {
-      where: { deployment: { id: parent.id }, tag_starts_with: `${prefix}-` }
+  const images = await ctx.prisma.dockerImage.findMany({
+    where: {
+      deployment: { id: parent.id },
+      tag: { startsWith: `${prefix}-` }
     },
-    `{ tag }`
-  );
+    select: { tag: true }
+  });
   const tags = map(images, "tag");
   const latest = findLatestTag(tags);
   const nextCli = generateNextTag(latest);
 
-  const imagesCreated = await ctx.db.query.dockerImages(
-    {
-      where: { deployment: { id: parent.id } },
-      orderBy: "createdAt_DESC",
-      first: 1
-    },
-    `{ tag }`
-  );
+  const imagesCreated = await ctx.prisma.dockerImage.findMany({
+    where: { deployment: { id: parent.id } },
+    orderBy: { createdAt: "desc" },
+    first: 1
+  });
 
   const current = first(map(imagesCreated, "tag"));
   return { latest, nextCli, current };

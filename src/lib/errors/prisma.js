@@ -11,6 +11,7 @@ export function throwPrismaError(e) {
   if (duplicateEmailError(e)) {
     throw new DuplicateEmailError();
   }
+
   throw e;
 }
 

@@ -1,6 +1,3 @@
-import fragment from "./fragment";
-import { addFragmentToInfo } from "graphql-binding";
-
 /*
  * Get 1 deployment for a workspace.
  * @param {Object} parent The result of the parent resolver.
@@ -8,13 +5,8 @@ import { addFragmentToInfo } from "graphql-binding";
  * @param {Object} ctx The graphql context.
  * @return {Deployment} The Deployment.
  */
-export default async function workspaceDeployment(parent, args, ctx, info) {
-  return await ctx.db.query.deployment(
-    {
-      where: {
-        releaseName: args.releaseName
-      }
-    },
-    addFragmentToInfo(info, fragment)
-  );
+export default async function workspaceDeployment(parent, args, ctx) {
+  return await ctx.prisma.deployment.findOne({
+    where: { releaseName: args.releaseName }
+  });
 }

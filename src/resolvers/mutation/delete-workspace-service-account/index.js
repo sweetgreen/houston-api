@@ -1,5 +1,4 @@
 import { ResourceNotFoundError } from "errors";
-import { addFragmentToInfo } from "graphql-binding";
 
 /*
  * Delete a Workspace Service Account.
@@ -8,31 +7,23 @@ import { addFragmentToInfo } from "graphql-binding";
  * @param {Object} ctx The graphql context.
  * @return {Invite} The deleted Invite.
  */
-export default async function deleteWorkspaceServiceAccount(
-  parent,
-  args,
-  ctx,
-  info
-) {
+export default async function deleteWorkspaceServiceAccount(parent, args, ctx) {
   // Pull out some variables.
   const { serviceAccountUuid } = args;
 
   // Look for the service account.
-  const serviceAccount = await ctx.db.query.serviceAccount(
+  const serviceAccount = await ctx.prisma.serviceAccount.findOne(
     {
       where: { id: serviceAccountUuid }
-    },
-    `{ roleBinding { workspace { id }, deployment { id } } }`
+    }
+    // `{ roleBinding { workspace { id }, deployment { id } } }`
   );
 
   // Throw if it doesn't exist.
   if (!serviceAccount) throw new ResourceNotFoundError();
 
   // Delete the record from the database.
-  return ctx.db.mutation.deleteServiceAccount(
-    {
-      where: { id: serviceAccountUuid }
-    },
-    addFragmentToInfo(info, `{ id }`)
-  );
+  return ctx.prisma.serviceAccount.delete({
+    where: { id: serviceAccountUuid }
+  });
 }

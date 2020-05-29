@@ -1,13 +1,5 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our query
 const query = `
@@ -22,11 +14,9 @@ const query = `
 describe("appConfig", () => {
   test("typical request is successful", async () => {
     // Construct db object for context.
-    const db = {
-      query: {}
-    };
+    const prisma = {};
 
     // Run the graphql mutation.
-    await graphql(schema, query, null, { db });
+    await graphql(schema, query, null, { prisma });
   });
 });

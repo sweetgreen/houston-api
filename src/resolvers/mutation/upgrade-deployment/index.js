@@ -1,7 +1,5 @@
-import fragment from "./fragment";
 import { generateHelmValues } from "deployments/config";
 import { generateNamespace } from "deployments/naming";
-import { addFragmentToInfo } from "graphql-binding";
 import { DEPLOYMENT_AIRFLOW } from "constants";
 
 /*
@@ -11,14 +9,14 @@ import { DEPLOYMENT_AIRFLOW } from "constants";
  * @param {Object} ctx The graphql context.
  * @return {Deployment} The updated Deployment.
  */
-export default async function upgradeDeployment(parent, args, ctx, info) {
+export default async function upgradeDeployment(parent, args, ctx) {
   // Update the deployment in the database.
   const where = { id: args.deploymentUuid };
   const data = { version: args.version };
-  const updatedDeployment = await ctx.db.mutation.updateDeployment(
-    { where, data },
-    addFragmentToInfo(info, fragment)
-  );
+  const updatedDeployment = await ctx.prisma.deployment.update({
+    where,
+    data
+  });
 
   // In the future, as the airflow chart values continue to evolve,
   // we may need to add some additional upgrade logic here, to take

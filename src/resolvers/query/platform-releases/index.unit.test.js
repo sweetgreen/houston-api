@@ -1,13 +1,5 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
@@ -21,19 +13,19 @@ const query = `
 describe("updateAvailable", () => {
   test("when no updates available", async () => {
     // Mock up some db functions.
-    const platformReleases = jest.fn();
+    const findMany = jest.fn();
 
     // Construct db object for context.
-    const db = {
-      query: {
-        platformReleases
+    const prisma = {
+      platformRelease: {
+        findMany
       }
     };
 
     // Run the graphql query.
-    const res = await graphql(schema, query, null, { db });
+    const res = await graphql(schema, query, null, { prisma });
     expect(res.errors).toBeUndefined();
-    expect(platformReleases.mock.calls.length).toBe(1);
+    expect(findMany.mock.calls.length).toBe(1);
     expect(res.data).toHaveProperty("updateAvailable", null);
   });
 
@@ -52,14 +44,14 @@ describe("updateAvailable", () => {
     ];
 
     // Construct db object for context.
-    const db = {
-      query: {
-        platformReleases: jest.fn().mockReturnValue(releases)
+    const prisma = {
+      platformRelease: {
+        findMany: jest.fn().mockReturnValue(releases)
       }
     };
 
     // Run the graphql query.
-    const res = await graphql(schema, query, null, { db });
+    const res = await graphql(schema, query, null, { prisma });
     expect(res.errors).toBeUndefined();
     expect(res.data.updateAvailable).toEqual({ version: "0.0.2" });
   });

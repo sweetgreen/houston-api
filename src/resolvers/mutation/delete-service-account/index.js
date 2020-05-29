@@ -12,7 +12,7 @@ export default async function deleteServiceAccount(parent, args, ctx) {
   const { serviceAccountUuid } = args;
 
   // Look for the service account.
-  const serviceAccount = await ctx.db.query.serviceAccount(
+  const serviceAccount = await ctx.prisma.serviceAccount.findOne(
     {
       where: { id: serviceAccountUuid }
     },
@@ -23,10 +23,7 @@ export default async function deleteServiceAccount(parent, args, ctx) {
   if (!serviceAccount) throw new ResourceNotFoundError();
 
   // Delete the record from the database.
-  return ctx.db.mutation.deleteServiceAccount(
-    {
-      where: { id: serviceAccountUuid }
-    },
-    `{ id }`
-  );
+  return ctx.prisma.serviceAccount.delete({
+    where: { id: serviceAccountUuid }
+  });
 }

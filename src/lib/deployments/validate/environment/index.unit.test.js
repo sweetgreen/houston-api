@@ -32,12 +32,32 @@ describe("When valid environment variables are passed", () => {
       expect(validateEnvironment(goodEnvs)).toBeUndefined();
     });
   });
+
+  expect(() => {
+    const goodEnvs = [{ key: "A", value: "" }];
+    expect(validateEnvironment(goodEnvs)).toBeUndefined();
+  });
+
+  expect(() => {
+    const goodEnvs = [{ key: "_STARTS_ENDS_UNDERSCORES_", value: "" }];
+    expect(validateEnvironment(goodEnvs)).toBeUndefined();
+  });
 });
 
 describe("When invalid environment variables are passed", () => {
   test("it throws an error for helm overrides", () => {
     expect(() => {
       const badEnvs = [{ key: "AIRFLOW__CORE__EXECUTOR", value: "" }];
+      validateEnvironment(badEnvs);
+    }).toThrow();
+  });
+
+  test("it throws an error for multiple helm overrides", () => {
+    expect(() => {
+      const badEnvs = [
+        { key: "AIRFLOW__CORE__EXECUTOR", value: "" },
+        { key: "AIRFLOW__CORE__SQL_ALCHEMY_CONN", value: "" }
+      ];
       validateEnvironment(badEnvs);
     }).toThrow();
   });

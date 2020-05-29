@@ -16,7 +16,7 @@ export default async function addCustomerId(parent, args, ctx) {
 
   const where = { id: workspaceUuid };
 
-  const response = await ctx.db.mutation.updateWorkspace({
+  const response = await ctx.prisma.workspace.update({
     data,
     where
   });

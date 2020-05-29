@@ -1,6 +1,5 @@
 import validateExistence from "./index";
 import { DuplicateDeploymentLabelError } from "errors";
-import * as exports from "generated/client";
 import casual from "casual";
 
 describe("validateExistence", () => {
@@ -8,20 +7,20 @@ describe("validateExistence", () => {
     const workspaceId = casual.uuid;
     const label = casual.word;
 
-    const deployments = function() {
-      return {
-        id: () => [{ id: casual.uuid }]
-      };
+    // Set up our spy.
+    const prisma = {
+      deployment: {
+        findMany: jest.fn().mockImplementation(() => {
+          return [{ id: casual.uuid }];
+        })
+      }
     };
 
-    // Set up our spy.
-    jest.spyOn(exports.prisma, "deployments").mockImplementation(deployments);
-
     // Call the function.
-    await expect(validateExistence(workspaceId, label)).rejects.toThrow(
+    await expect(validateExistence(prisma, workspaceId, label)).rejects.toThrow(
       new DuplicateDeploymentLabelError(label)
     );
-    expect(exports.prisma.deployments).toBeCalledWith({
+    expect(prisma.deployment.findMany).toBeCalledWith({
       where: { deletedAt: null, label, workspace: { id: workspaceId } }
     });
   });
@@ -31,20 +30,20 @@ describe("validateExistence", () => {
     const label = casual.word;
     const deploymentId = casual.uuid;
 
-    const deployments = function() {
-      return {
-        id: () => [{ id: deploymentId }]
-      };
-    };
-
     // Set up our spy.
-    jest.spyOn(exports.prisma, "deployments").mockImplementation(deployments);
+    const prisma = {
+      deployment: {
+        findMany: jest.fn().mockImplementation(() => {
+          return [{ id: deploymentId }];
+        })
+      }
+    };
 
     // Call the function.
     await expect(
-      validateExistence(workspaceId, label, deploymentId)
+      validateExistence(prisma, workspaceId, label, deploymentId)
     ).resolves.not.toThrow();
-    expect(exports.prisma.deployments).toBeCalledWith({
+    expect(prisma.deployment.findMany).toBeCalledWith({
       where: { deletedAt: null, label, workspace: { id: workspaceId } }
     });
   });
@@ -54,20 +53,20 @@ describe("validateExistence", () => {
     const label = casual.word;
     const deploymentId = casual.uuid;
 
-    const deployments = function() {
-      return {
-        id: () => [{ id: casual.uuid }]
-      };
-    };
-
     // Set up our spy.
-    jest.spyOn(exports.prisma, "deployments").mockImplementation(deployments);
+    const prisma = {
+      deployment: {
+        findMany: jest.fn().mockImplementation(() => {
+          return [{ id: casual.uuid }];
+        })
+      }
+    };
 
     // Call the function.
     await expect(
-      validateExistence(workspaceId, label, deploymentId)
+      validateExistence(prisma, workspaceId, label, deploymentId)
     ).rejects.toThrow(new DuplicateDeploymentLabelError(label));
-    expect(exports.prisma.deployments).toBeCalledWith({
+    expect(prisma.deployment.findMany).toBeCalledWith({
       where: { deletedAt: null, label, workspace: { id: workspaceId } }
     });
   });
@@ -77,20 +76,20 @@ describe("validateExistence", () => {
     const label = casual.word;
     const deploymentId = casual.uuid;
 
-    const deployments = function() {
-      return {
-        id: () => []
-      };
-    };
-
     // Set up our spy.
-    jest.spyOn(exports.prisma, "deployments").mockImplementation(deployments);
+    const prisma = {
+      deployment: {
+        findMany: jest.fn().mockImplementation(() => {
+          return [];
+        })
+      }
+    };
 
     // Call the function.
     await expect(
-      validateExistence(workspaceId, label, deploymentId)
+      validateExistence(prisma, workspaceId, label, deploymentId)
     ).resolves.not.toThrow();
-    expect(exports.prisma.deployments).toBeCalledWith({
+    expect(prisma.deployment.findMany).toBeCalledWith({
       where: { deletedAt: null, label, workspace: { id: workspaceId } }
     });
   });

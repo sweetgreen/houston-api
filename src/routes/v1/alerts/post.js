@@ -1,7 +1,7 @@
-import { prisma } from "generated/client";
 import { sendEmail } from "emails";
 import log from "logger";
 import { ui } from "utilities";
+import { PrismaClient } from "@prisma/client";
 import moment from "moment";
 
 /*
@@ -11,6 +11,8 @@ import moment from "moment";
  */
 export default async function(req, res) {
   const { alerts = [] } = req.body;
+  // Create prisma client
+  const prisma = new PrismaClient();
 
   await Promise.all(
     alerts.map(async alert => {
@@ -18,7 +20,9 @@ export default async function(req, res) {
       log.info(`Sending email alerts for ${releaseName}`);
 
       // Get a list of emails to send alerts to.
-      const emails = await prisma.deployment({ releaseName }).alertEmails();
+      const emails = await prisma.deployment.findOne({
+        where: { releaseName: releaseName }
+      }).alertEmails;
 
       // Bail if we have no emails to send.
       if (!emails) return;
@@ -44,6 +48,7 @@ export default async function(req, res) {
       );
     })
   );
-
+  // It is recommended to always explicitly call disconnect
+  await prisma.disconnect();
   res.sendStatus(200);
 }

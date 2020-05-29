@@ -1,5 +1,4 @@
 import { enabledProviders, getClient } from "oauth/config";
-import { prisma } from "generated/client";
 import config from "config";
 
 /*
@@ -23,13 +22,9 @@ export function externalSignupUrl() {
  * Return a boolean indicating if there is an initial signup yet.
  * @return {Boolean} Initial signup.
  */
-export async function initialSignup() {
-  const count = await prisma
-    .usersConnection({})
-    .aggregate()
-    .count();
-
-  return count === 0;
+export async function initialSignup(parent, args, ctx) {
+  const allUsers = await ctx.prisma.user.findMany({});
+  return allUsers.length === 0;
 }
 
 /*

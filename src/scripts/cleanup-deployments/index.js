@@ -5,8 +5,8 @@ import "dotenv/config";
 import log from "logger";
 import { version } from "utilities";
 import { createDockerJWT } from "registry/jwt";
-import { prisma } from "generated/client";
 import { removeDatabaseForDeployment } from "deployments/database";
+import { PrismaClient } from "@prisma/client";
 import request from "request-promise-native";
 import config from "config";
 import yargs from "yargs";
@@ -159,6 +159,8 @@ async function cleanupDeployments() {
 
   log.debug(`Query: ${JSON.stringify(query)}`);
 
+  const prisma = new PrismaClient();
+
   // Find the deployments that are older than cleanup
   const deployments = await prisma
     .deployments(query)
@@ -173,12 +175,14 @@ async function cleanupDeployments() {
   } else {
     // Return early if we have no deployments.
     log.info("No deployments to cleanup, exiting now");
+    await prisma.disconnect();
     return;
   }
 
   // Exit now if dry-run.
   if (argv["dry-run"]) {
     log.info("This is a dry-run, skipping deployment cleanup and exiting now");
+    await prisma.disconnect();
     return;
   }
 
@@ -191,6 +195,8 @@ async function cleanupDeployments() {
       releaseName: deployment.releaseName
     });
   }
+
+  await prisma.disconnect();
 }
 
 const argv = yargs

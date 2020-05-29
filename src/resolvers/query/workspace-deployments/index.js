@@ -1,5 +1,3 @@
-import fragment from "./fragment";
-import { addFragmentToInfo } from "graphql-binding";
 import { compact } from "lodash";
 
 /*
@@ -9,15 +7,12 @@ import { compact } from "lodash";
  * @param {Object} ctx The graphql context.
  * @return {[]Deployment} List of Deployments.
  */
-export default async function workspaceDeployments(parent, args, ctx, info) {
+export default async function workspaceDeployments(parent, args, ctx) {
   // Build the deployments query.
   const query = deploymentsQuery(args, ctx);
 
   // Run final query
-  return await ctx.db.query.deployments(
-    query,
-    addFragmentToInfo(info, fragment)
-  );
+  return await ctx.prisma.deployment.findMany(query);
 }
 
 /*
@@ -48,7 +43,11 @@ export function deploymentsQuery(args, ctx) {
     const deploymentIds = ctx.user.roleBindings.map(rb =>
       rb.deployment ? rb.deployment.id : null
     );
-    query.where.AND.push({ id_in: compact(deploymentIds) });
+    query.where.AND.push({
+      id: {
+        in: compact(deploymentIds)
+      }
+    });
   }
 
   // Exclude soft-deleted deployments

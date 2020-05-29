@@ -1,5 +1,3 @@
-import { prisma } from "generated/client";
-
 import {
   hasPermission,
   getAuthUser,
@@ -9,6 +7,7 @@ import log from "logger";
 import { createDockerJWT } from "registry/jwt";
 import validateDeploymentCredentials from "deployments/validate/authorization";
 import { ACTIONS, VALID_RELEASE_NAME } from "deployments/validate/docker-tag";
+import { PrismaClient } from "@prisma/client";
 import config from "config";
 import { compact, isArray, find, includes } from "lodash";
 import { ENTITY_DEPLOYMENT } from "constants";
@@ -88,6 +87,8 @@ export default async function(req, res) {
   // Pull out the scope variable.
   const scope = req.query.scope;
 
+  const prisma = new PrismaClient();
+
   // Scope will not exist on a docker login (astro auth login).
   // It will exist for a code push (docker push) and when deployment pods
   // pull the image (docker pull).
@@ -123,7 +124,9 @@ export default async function(req, res) {
         // This path is for a code push.
         if (!isDeploymentAuth) {
           // Look up deploymentId by releaseName.
-          const deploymentId = await prisma.deployment({ releaseName }).id();
+          const deploymentId = await prisma.deployment.findOne({
+            where: { releaseName: releaseName }
+          }).id;
 
           // Check if the User or Service Account has permission to update this deployment.
           const permission = isPushAction
@@ -167,13 +170,12 @@ export default async function(req, res) {
     "deployment.images.pull"
   );
   if (otherReleaseIds.length > 0) {
-    const otherReleaseNames = await prisma
-      .deployments({
-        where: {
-          id_in: otherReleaseIds
-        }
-      })
-      .releaseName();
+    const otherReleaseNames = await prisma.deployment.findMany({
+      where: {
+        id: { in: otherReleaseIds }
+      },
+      select: { releaseName: true }
+    });
     for (let name of otherReleaseNames.map(_ => _.releaseName)) {
       name = `${name}/airflow`;
       if (!find(payload, _ => _.name == name)) {
@@ -181,6 +183,8 @@ export default async function(req, res) {
       }
     }
   }
+
+  await prisma.disconnect();
 
   // Create and respond with the JWT.
   const expiration = 3600;

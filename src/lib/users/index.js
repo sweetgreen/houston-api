@@ -4,7 +4,6 @@ import {
   InviteTokenNotFoundError,
   InviteTokenEmailError
 } from "errors";
-import { prisma } from "generated/client";
 import { sendEmail } from "emails";
 import { identify } from "analytics";
 import config from "config";
@@ -21,18 +20,24 @@ import {
 /*
  * Centralized helper method to create new user in the system.
  */
-export async function createUser(opts) {
+export async function createUser(ctx, opts) {
   // Pull out some options.
-  const { fullName, email, inviteToken: rawInviteToken, active } = opts;
+  const { fullName, email, active } = opts;
   const username = opts.username || email;
-  const inviteTokens = await exports.validateInviteToken(rawInviteToken, email);
+
+  const inviteTokens = await ctx.prisma.inviteToken.findMany({
+    where: { email },
+    include: {
+      workspace: true
+    }
+  });
 
   // Grab some configuration.
   const emailConfirmation = config.get("emailConfirmation");
   const publicSignups = config.get("publicSignups");
 
   // Check if this the first signup.
-  const first = await isFirst();
+  const first = await isFirst(ctx.prisma);
   const haveInvite = inviteTokens.length > 0;
 
   // If it's not the first signup and we're not allowing public signups, check for invite.
@@ -86,11 +91,17 @@ export async function createUser(opts) {
       head(inviteTokens);
     // Set the userId to match the inviteId so our analytics user Ids are consistent
     mutation.id = inviteToken.id;
-    await prisma.deleteManyInviteTokens({ id_in: inviteTokens.map(t => t.id) });
+    await ctx.prisma.inviteToken.deleteMany({
+      where: {
+        id: {
+          in: inviteTokens.map(t => t.id)
+        }
+      }
+    });
   }
 
   // Run the mutation and return id.
-  const id = await prisma.createUser(mutation).id();
+  const { id } = await ctx.prisma.user.create({ data: mutation });
 
   // Run the analytics.js identify call
   identify(id, { name: fullName, email });
@@ -110,13 +121,9 @@ export async function createUser(opts) {
  * Check if we have any users in the system yet.
  * @return {Promise<Boolean> User count is 0
  */
-export async function isFirst() {
-  const count = await prisma
-    .usersConnection({})
-    .aggregate()
-    .count();
-
-  return count == 0;
+export async function isFirst(prisma) {
+  const allUsers = await prisma.user.findMany();
+  return allUsers.length == 0;
 }
 
 /*
@@ -127,21 +134,14 @@ export async function isFirst() {
 export function generateRoleBindings(first, inviteTokens) {
   const roleBindings = [];
 
-  for (let inviteToken of inviteTokens) {
-    // If we have an invite token, add user to the originating workspace.
-    if (inviteToken && inviteToken.workspace) {
+  inviteTokens.map(token => {
+    if (token.workspace) {
       roleBindings.push({
-        // We didn't used to put the role in the invite token - if it was missing
-        // the invite is from the days when everyone was an admin.
-        role: inviteToken.role || WORKSPACE_ADMIN,
-        workspace: {
-          connect: {
-            id: inviteToken.workspace.id
-          }
-        }
+        role: token.role || WORKSPACE_ADMIN,
+        workspace: { connect: { id: token.workspace.id } }
       });
     }
-  }
+  });
 
   // Add admin role if first signup.
   if (first) {
@@ -160,12 +160,14 @@ export function generateRoleBindings(first, inviteTokens) {
  * @param {String} email The email of the incoming user.
  * @return {InviteToken} All invite tokens for this email address
  */
-export async function validateInviteToken(inviteToken, email) {
+export async function validateInviteToken(prisma, inviteToken, email) {
   // Return early if no token found.
   if (!inviteToken) return [];
 
   // Grab the invite token.
-  const inviteEmail = await prisma.inviteToken({ token: inviteToken }).email();
+  const inviteEmail = await prisma.inviteToken.findOne({
+    where: { token: inviteToken }
+  }).email;
 
   // Throw error if token not found.
   if (!inviteEmail) throw new InviteTokenNotFoundError();
@@ -174,17 +176,17 @@ export async function validateInviteToken(inviteToken, email) {
   if (inviteEmail !== email.toLowerCase()) throw new InviteTokenEmailError();
 
   // Return validated token, and any other tokens for the same email address.
-  return await prisma.inviteTokens({ where: { email } })
-    .$fragment(`fragment EnsureFiields on InviteToken {
-      id
-      email
-      token
-      role
-      source
-      workspace {
-        id
-      }
-    }`);
+  return await prisma.inviteToken.findMany({
+    where: { email: email },
+    include: {
+      id: true,
+      email: true,
+      token: true,
+      role: true,
+      source: true,
+      workspace: { id: true }
+    }
+  });
 }
 
 /*

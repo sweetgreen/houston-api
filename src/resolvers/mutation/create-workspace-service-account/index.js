@@ -1,5 +1,3 @@
-import fragment from "./fragment";
-import { addFragmentToInfo } from "graphql-binding";
 import crypto from "crypto";
 
 /*
@@ -9,12 +7,7 @@ import crypto from "crypto";
  * @param {Object} ctx The graphql context.
  * @return {ServiceAccount} The new ServiceAccount.
  */
-export default async function createWorkspaceServiceAccount(
-  parent,
-  args,
-  ctx,
-  info
-) {
+export default async function createWorkspaceServiceAccount(parent, args, ctx) {
   // Pull out some variables.
   const { label, category, workspaceUuid, role } = args;
 
@@ -28,17 +21,13 @@ export default async function createWorkspaceServiceAccount(
       roleBinding: {
         create: {
           role,
-          workspace: {
-            connect: { id: workspaceUuid }
-          }
+          workspace: { connect: { id: workspaceUuid } },
+          user: { connect: { id: ctx.user.id } }
         }
       }
     }
   };
 
   // Run the mutation.
-  return ctx.db.mutation.createServiceAccount(
-    mutation,
-    addFragmentToInfo(info, fragment)
-  );
+  return ctx.prisma.serviceAccount.create(mutation);
 }

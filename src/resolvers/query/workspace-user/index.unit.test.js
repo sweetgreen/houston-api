@@ -1,14 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
@@ -28,10 +20,17 @@ const query = `
 
 describe("workspaceUser", () => {
   // Mock up some db functions.
-  const users = jest.fn();
+
+  // Mock functions
+  const findOne = jest.fn().mockReturnValue({
+    id: casual.uuid,
+    username: casual.word
+  });
 
   // Construct db object for context.
-  const db = { query: { users } };
+  const prisma = {
+    user: { findOne }
+  };
 
   // Create vars.
   const vars = {
@@ -43,23 +42,16 @@ describe("workspaceUser", () => {
 
   test("when user exists", async () => {
     // Run the graphql mutation.
-    users.mockReturnValueOnce([{ id: casual.uuid, username: vars.username }]);
-
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
-    expect(db.query.users).toHaveBeenCalled();
+    expect(prisma.user.findOne).toHaveBeenCalled();
   });
 
   test("when user not in workspace", async () => {
     // Run the graphql mutation.
-    users.mockReturnValueOnce([]);
-
-    const res = await graphql(schema, query, null, { db }, vars);
+    findOne.mockReturnValueOnce();
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
-    expect(res.errors[0]).toHaveProperty(
-      "extensions.code",
-      "RESOURCE_NOT_FOUND"
-    );
-    expect(db.query.users).toHaveBeenCalled();
+    expect(prisma.user.findOne).toHaveBeenCalled();
   });
 });

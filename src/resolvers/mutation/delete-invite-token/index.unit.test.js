@@ -1,14 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
@@ -25,13 +17,13 @@ const query = `
 
 describe("deleteInviteToken", () => {
   test("typical request is successful", async () => {
-    // Mock up some db functions.
-    const deleteInviteToken = jest.fn();
-
     // Construct db object for context.
-    const db = {
-      mutation: {
-        deleteInviteToken
+    const prisma = {
+      inviteToken: {
+        // Mock up some db functions.
+        delete: jest.fn().mockReturnValue({
+          id: casual.uuid
+        })
       }
     };
 
@@ -40,8 +32,8 @@ describe("deleteInviteToken", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
-    expect(deleteInviteToken.mock.calls.length).toBe(1);
+    expect(prisma.inviteToken.delete.mock.calls.length).toBe(1);
   });
 });

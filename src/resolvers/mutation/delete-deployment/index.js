@@ -1,7 +1,5 @@
-import fragment from "./fragment";
 import { track } from "analytics";
 import { generateNamespace } from "deployments/naming";
-import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 
 /*
@@ -11,15 +9,12 @@ import config from "config";
  * @param {Object} ctx The graphql context.
  * @return {Deployment} The deleted Deployment.
  */
-export default async function deleteDeployment(parent, args, ctx, info) {
+export default async function deleteDeployment(parent, args, ctx) {
   // Soft delete the record from the database.
-  const deployment = await ctx.db.mutation.updateDeployment(
-    {
-      where: { id: args.deploymentUuid },
-      data: { deletedAt: new Date() }
-    },
-    addFragmentToInfo(info, fragment)
-  );
+  const deployment = await ctx.prisma.deployment.update({
+    where: { id: args.deploymentUuid },
+    data: { deletedAt: new Date() }
+  });
 
   // Run the analytics track event
   track(ctx.user.id, "Deleted Deployment", {

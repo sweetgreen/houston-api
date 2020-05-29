@@ -25,7 +25,7 @@ export default function validateEnvironment(envs) {
   validateEnvironmentVariables(envs);
 }
 
-/*
+/**
  * Validate that the deployment environment variables are not a part of the Helm Overrides.
  * Throws if any reserved Helm key is found.
  * @param {[]Object} An array of environment variable key/value pairs
@@ -45,7 +45,8 @@ function validateHelmOverrides(envs) {
     throw new InvalidDeploymentError(msg);
   }
 }
-/*
+
+/**
  * Validate format of the key for deployment env vars. Throws if the format is invalid.
  * @param {[]Object} An array of environment variable key/value pairs
  */

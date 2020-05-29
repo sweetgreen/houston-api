@@ -1,15 +1,7 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import { WORKSPACE_ADMIN } from "constants";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
@@ -50,11 +42,11 @@ describe("workspaceServiceAccount", () => {
     };
 
     // Mock up some db functions.
-    const serviceAccount = jest.fn();
+    const findOne = jest.fn();
 
     // Construct db object for context.
-    const db = {
-      query: { serviceAccount }
+    const prisma = {
+      serviceAccount: { findOne }
     };
 
     const vars = {
@@ -63,9 +55,9 @@ describe("workspaceServiceAccount", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db, user }, vars);
+    const res = await graphql(schema, query, null, { prisma, user }, vars);
     expect(res.errors).toBeUndefined();
-    expect(serviceAccount).toHaveBeenCalledTimes(1);
+    expect(findOne).toHaveBeenCalledTimes(1);
   });
 
   test("request fails if missing an argument", async () => {

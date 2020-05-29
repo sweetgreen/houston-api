@@ -1,16 +1,8 @@
+import { schema } from "../../../schema";
 import * as users from "users";
-import resolvers from "resolvers";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import { USER_STATUS_ACTIVE } from "constants";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const mutation = `
@@ -45,17 +37,21 @@ const mutation = `
 describe("createUser", () => {
   test("typical request is successful", async () => {
     // Mock up some functions.
-    const createLocalCredential = jest.fn();
-    const user = jest.fn(() => ({
+    const create = jest.fn();
+    const findOne = jest.fn(() => ({
       status: USER_STATUS_ACTIVE,
       id: casual.uuid
     }));
     const cookie = jest.fn();
 
     // Construct db object for context.
-    const db = {
-      query: { user },
-      mutation: { createLocalCredential }
+    const prisma = {
+      localCredential: { findOne, create },
+      user: {
+        findOne: jest
+          .fn()
+          .mockReturnValue({ id: casual.uuid, status: USER_STATUS_ACTIVE })
+      }
     };
 
     // Set up our spy.
@@ -75,7 +71,7 @@ describe("createUser", () => {
       schema,
       mutation,
       null,
-      { db, res: { cookie } },
+      { prisma, res: { cookie } },
       vars
     );
 
@@ -86,7 +82,7 @@ describe("createUser", () => {
     // oAuth flows.
     expect(createUserSpy.mock.calls[0][0]).not.toHaveProperty("active");
 
-    expect(createLocalCredential.mock.calls).toHaveLength(1);
+    expect(create.mock.calls).toHaveLength(1);
     expect(cookie.mock.calls).toHaveLength(1);
 
     expect(res.data.createUser.token.payload.iat).toBeDefined();

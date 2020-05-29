@@ -38,6 +38,9 @@ export async function getMetric(releaseName) {
 
 // Start the subscription
 export async function subscribe(parent, args, { pubsub }) {
+  log.info("subscribe(parent, args, { pubsub })");
+  log.info("parent", parent);
+  log.info("args", args);
   let { releaseName } = args;
 
   // Return sample data

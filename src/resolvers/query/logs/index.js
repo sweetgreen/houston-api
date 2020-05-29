@@ -11,10 +11,12 @@ import moment from "moment";
  * @return {[]DeploymentLog} A list of DeploymentLogs.
  */
 export default async function logs(parent, args, ctx) {
-  const { releaseName } = await ctx.db.query.deployment(
-    { where: { id: args.deploymentUuid } },
-    `{ releaseName }`
-  );
+  const { releaseName } = await ctx.prisma.deployment.findOne({
+    where: { id: args.deploymentUuid },
+    select: {
+      releaseName: true
+    }
+  });
 
   const gt = moment(args.timestamp || 0); // Epoch if null.
   const component = args.component;

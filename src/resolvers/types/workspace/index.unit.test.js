@@ -4,11 +4,11 @@ import casual from "casual";
 describe("Workspace", () => {
   test("users returns an empty array", () => {
     const parent = { id: casual.uuid };
-    const db = {
-      query: { users: jest.fn() }
+    const prisma = {
+      user: { findMany: jest.fn() }
     };
-    users(parent, {}, { db });
-    expect(db.query.users.mock.calls).toHaveLength(1);
+    users(parent, {}, { prisma });
+    expect(prisma.user.findMany.mock.calls).toHaveLength(1);
   });
 
   test("deployments returns array of deployments", () => {
@@ -23,7 +23,7 @@ describe("Workspace", () => {
     expect(deps).toHaveLength(0);
   });
 
-  test("deployments returns  empty array when there is a single deleted deployment", () => {
+  test("deployments returns empty array when there is a single deleted deployment", () => {
     const parent = {
       deployments: [{ id: casual.uuid, deletedAt: new Date() }]
     };
@@ -33,10 +33,10 @@ describe("Workspace", () => {
 
   test("invites queries invites with parent workspace id", () => {
     const parent = { id: casual.uuid };
-    const db = {
-      query: { inviteTokens: jest.fn() }
+    const prisma = {
+      inviteToken: { findMany: jest.fn() }
     };
-    invites(parent, {}, { db });
-    expect(db.query.inviteTokens.mock.calls).toHaveLength(1);
+    invites(parent, {}, { prisma });
+    expect(prisma.inviteToken.findMany.mock.calls).toHaveLength(1);
   });
 });

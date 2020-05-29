@@ -1,3 +1,4 @@
+import log from "logger";
 import { createUser as _createUser } from "users";
 import { throwPrismaError } from "errors";
 import { get } from "lodash";
@@ -20,7 +21,7 @@ export default async function createUser(parent, args, ctx) {
   // Try to create the user.
   try {
     // Create the user and nested relations.
-    const userId = await _createUser({
+    const userId = await _createUser(ctx, {
       fullName,
       username: args.username,
       email: args.email.toLowerCase(),
@@ -28,7 +29,7 @@ export default async function createUser(parent, args, ctx) {
     });
 
     // Create the local credential and connect to user.
-    await ctx.db.mutation.createLocalCredential({
+    await ctx.prisma.localCredential.create({
       data: {
         password,
         user: { connect: { id: userId } }
@@ -39,6 +40,7 @@ export default async function createUser(parent, args, ctx) {
   } catch (e) {
     // This is mostly for compatibility with the UI.
     // Take a prisma error and throw an error that the UI expects.
+    log.error(e);
     throwPrismaError(e);
   }
 }

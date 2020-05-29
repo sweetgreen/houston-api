@@ -1,22 +1,17 @@
-import { userFragment, workspaceFragment } from "./fragment";
 import { hasPermission } from "rbac";
 import config from "config";
-import { addFragmentToInfo } from "graphql-binding";
 import { filter, isNull } from "lodash";
 import moment from "moment";
 import { ENTITY_WORKSPACE } from "constants";
 
-export function users(parent, args, ctx, info) {
-  return ctx.db.query.users(
-    {
-      where: {
-        roleBindings_some: {
-          workspace: { id: parent.id }
-        }
+export function users(parent, args, ctx) {
+  return ctx.prisma.user.findMany({
+    where: {
+      roleBindings: {
+        some: { workspace: { id: parent.id } }
       }
-    },
-    info ? addFragmentToInfo(info, userFragment) : info
-  );
+    }
+  });
 }
 
 export function deployments(parent) {
@@ -24,7 +19,7 @@ export function deployments(parent) {
 }
 
 export function invites(parent, args, ctx) {
-  return ctx.db.query.inviteTokens({
+  return ctx.prisma.inviteToken.findMany({
     where: { workspace: { id: parent.id } }
   });
 }
@@ -110,10 +105,9 @@ export function billingEnabled() {
 // Function to determine if the user should be blocked from viewing their workspace
 export async function paywallEnabled(parent, args, ctx) {
   // Check for hard override of trial paywall logic and throw paywall
-  const workspace = await ctx.db.query.workspace(
-    { where: { id: parent.id } },
-    workspaceFragment
-  );
+  const workspace = await ctx.prisma.workspace.findOne({
+    where: { id: parent.id }
+  });
 
   const now = new Date();
 

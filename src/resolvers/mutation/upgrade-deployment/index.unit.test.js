@@ -1,16 +1,8 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import { generateReleaseName } from "deployments/naming";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import { AIRFLOW_EXECUTOR_DEFAULT } from "constants";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const mutation = `
@@ -36,9 +28,6 @@ const mutation = `
         status
         type
         version
-        workspace {
-          id
-        }
         createdAt
         updatedAt
       }
@@ -50,7 +39,7 @@ describe("upgradeDeployment", () => {
     const id = casual.uuid;
 
     // Mock up some db functions.
-    const updateDeployment = jest.fn().mockReturnValue({
+    const update = jest.fn().mockReturnValue({
       id,
       releaseName: generateReleaseName(),
       config: { executor: AIRFLOW_EXECUTOR_DEFAULT },
@@ -62,8 +51,10 @@ describe("upgradeDeployment", () => {
     });
 
     // Construct db object for context.
-    const db = {
-      mutation: { updateDeployment }
+    const prisma = {
+      deployment: {
+        update
+      }
     };
 
     // Create mock commander client.
@@ -78,10 +69,16 @@ describe("upgradeDeployment", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db, commander }, vars);
+    const res = await graphql(
+      schema,
+      mutation,
+      null,
+      { prisma, commander },
+      vars
+    );
 
     expect(res.errors).toBeUndefined();
-    expect(updateDeployment.mock.calls.length).toBe(1);
+    expect(update.mock.calls.length).toBe(1);
     expect(res.data.upgradeDeployment.id).toBe(id);
   });
 });

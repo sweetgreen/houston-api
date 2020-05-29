@@ -1,14 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const mutation = `
@@ -24,9 +16,6 @@ const mutation = `
 describe("verifyEmail", () => {
   // Define constants to be applied to each test
   const email = casual.email;
-  const query = {
-    users: jest.fn()
-  };
   // Vars for the gql mutation.
   const vars = {
     email
@@ -35,31 +24,33 @@ describe("verifyEmail", () => {
     const usr = {
       id: casual.uuid
     };
-    // Run the mock query on the database
-    query.users.mockReturnValue([usr]);
 
     // Mock up some functions.
     const updateUser = jest.fn();
 
     // Construct db object for context.
-    const db = {
-      query,
-      mutation: { updateUser }
+    const prisma = {
+      user: {
+        findMany: jest.fn().mockReturnValue([usr]),
+        update: updateUser
+      }
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
     expect(updateUser).toHaveBeenCalledTimes(1);
   });
 
   test("throws error if user not found", async () => {
-    const db = { query };
-    // Mock up some db functions.
-    query.users.mockReturnValue([]);
+    const prisma = {
+      user: {
+        findMany: jest.fn().mockReturnValue([])
+      }
+    };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
     expect(res.errors[0].message).toEqual(
       expect.stringMatching(/^The requested resource was not found/)

@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SYSTEM_ADMIN
+  SYSTEM_EDITOR
+  SYSTEM_VIEWER
+  WORKSPACE_ADMIN
+  WORKSPACE_EDITOR
+  WORKSPACE_VIEWER
+  DEPLOYMENT_ADMIN
+  DEPLOYMENT_EDITOR
+  DEPLOYMENT_VIEWER
+  USER
+}
+
+enum InviteSource {
+  SYSTEM
+  WORKSPACE
+}
+
+model User {
+  id              String            @default(cuid()) @id
+  username        String?           @unique
+  status          String?
+  fullName        String?
+  avatarUrl       String?
+  emails          Email[]           @relation(name: "EmailToUser")
+  roleBindings    RoleBinding[]     @relation(name: "RoleBindingToUser")
+  localCredential LocalCredential?   @relation(name: "LocalCredentialToUser")
+  oauthCredentials OAuthCredential[] @relation(name: "OAuthCredentialToUser")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+// Ideally this type uses a union type once prisma supports it.
+// subject: User | ServiceAccount
+// principal: Workspace | Deployment
+// TODO: check in prisma2 -> https://github.com/prisma/prisma1/issues/165
+model RoleBinding {
+  id             String          @default(cuid()) @id
+  role           String?
+  user           User            @relation(fields: [userId], name: "RoleBindingToUser")
+  userId         String
+  serviceAccount ServiceAccount? @relation(fields: [serviceAccountId], name: "RoleBindingToServiceAccount", references: id)
+  serviceAccountId String?
+  workspace      Workspace?      @relation(fields: [workspaceId], name: "RoleBindingToWorkspace")
+  workspaceId    String?
+  deployment     Deployment?     @relation(fields: [deploymentId], name: "DeploymentRoleBindings")
+  deploymentId   String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Email {
+  id        String   @default(cuid()) @id
+  address   String?  @unique
+  primary   Boolean?
+  token     String?  @unique
+  user      User     @relation(fields: [userId], name: "EmailToUser")
+  userId    String
+  verified  Boolean?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LocalCredential {
+  id         String   @default(cuid()) @id
+  user       User     @relation(fields: [userId], name: "LocalCredentialToUser")
+  userId     String
+  password   String?
+  resetToken String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model OAuthCredential {
+  id            String    @default(cuid()) @id
+  expiresAt     DateTime?
+  oauthProvider String
+  oauthUserId   String
+  user          User      @relation(fields: [userId], name: "OAuthCredentialToUser")
+  userId        String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model InviteToken {
+  // Multi-column unique fields would be nice, but not supported yet
+  // TODO: @andriisoldatenko check prisma2
+  id        String     @default(cuid()) @id
+  email     String
+  token     String     @unique
+  source    InviteSource
+
+  // Optional. If one is specified both should be
+  workspace             Workspace?  @relation(fields: [workspaceId], references: [id])
+  workspaceId           String?
+  role      String?
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model ServiceAccount {
+  id             String        @default(cuid()) @id
+  apiKey         String?       @unique
+  label          String?
+  category       String?
+  active         Boolean?
+  roleBinding    RoleBinding @relation(name: "RoleBindingToServiceAccount")
+  lastUsedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Workspace {
+  id               String        @default(cuid()) @id
+  deployments      Deployment[]
+  description      String?
+  invites          InviteToken[]
+  label            String?
+  roleBindings     RoleBinding[] @relation(name: "RoleBindingToWorkspace")
+  stripeCustomerId String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  isSuspended      Boolean?
+  trialEndsAt      String?
+}
+
+model Deployment {
+  id                    String        @default(cuid()) @id
+  config                String?
+  description           String?
+  label                 String?
+  registryPassword      String?
+  elasticsearchPassword String?
+  releaseName           String?       @unique
+  version               String?
+  extraAu               Int?
+  airflowVersion        String?
+  alertEmails           String[]
+  roleBindings          RoleBinding[] @relation(name: "DeploymentRoleBindings")
+  workspace             Workspace?  @relation(fields: [workspaceId], references: [id])
+  workspaceId           String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  deletedAt             DateTime?
+  images                DockerImage[] @relation(name: "DeploymentDockerImages")
+  canary                Boolean?
+}
+
+model DockerImage {
+  id         String      @default(cuid()) @id
+  // Even though we only "need" the tag, to make it a unique string that we can
+  // create/update by we include repository in this too.
+  name       String?     @unique
+  labels     String
+  env        String
+  tag        String
+  digest     String
+  deployment Deployment  @relation(fields: [deploymentId], name: "DeploymentDockerImages")
+  deploymentId String
+  createdAt  DateTime    @default(now())
+}
+
+model PlatformRelease {
+  id          String   @default(cuid()) @id
+  version     String?  @unique
+  url         String?
+  description String?
+  level       String?
+  releaseDate DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

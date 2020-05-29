@@ -1,14 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our query
 const query = `
@@ -29,18 +21,18 @@ describe("self", () => {
 
     // Mock up some db functions.
     // const users = jest.fn().mockReturnValue([usr]);
-    const user = jest.fn().mockReturnValue(usr);
+    const findOne = jest.fn().mockReturnValue(usr);
 
     // Construct db object for context.
-    const db = {
-      query: {
-        user
+    const prisma = {
+      user: {
+        findOne
       }
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db, user: usr });
+    const res = await graphql(schema, query, null, { prisma, user: usr });
     expect(res.errors).toBeUndefined();
-    expect(user.mock.calls.length).toBe(1);
+    expect(findOne.mock.calls.length).toBe(1);
   });
 });

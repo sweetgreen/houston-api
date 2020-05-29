@@ -1,5 +1,4 @@
 import { generateHelmValues } from "deployments/config";
-import { prisma } from "generated/client";
 import { createDockerJWT } from "registry/jwt";
 import { generateNamespace } from "deployments/naming";
 import isValidTaggedDeployment from "deployments/validate/docker-tag";
@@ -7,6 +6,7 @@ import log from "logger";
 import commander from "commander";
 import { version } from "utilities";
 import { track } from "analytics";
+import { PrismaClient } from "@prisma/client";
 import { merge, get } from "lodash";
 import got from "got";
 import { DEPLOYMENT_AIRFLOW, MEDIATYPE_DOCKER_MANIFEST_V2 } from "constants";
@@ -32,14 +32,24 @@ export default async function(req, res) {
         `Received docker registry webhook for ${releaseName}, deploying new tag ${tag}.`
       );
 
-      const deployment = await prisma
-        .deployment({ releaseName })
-        .$fragment(`{ config deletedAt airflowVersion }`);
+      const prisma = new PrismaClient();
+
+      // Get the existing config for this deployment.
+      const deployment = await prisma.deployment.findOne({
+        where: { releaseName: releaseName },
+        select: {
+          config: true,
+          deletedAt: true,
+          airflowVersion: true
+        }
+      });
 
       if (!deployment) {
         log.info(`Deployment not found for ${releaseName}.`);
         return res.sendStatus(200);
       }
+
+      let airflowVersion;
 
       if (deployment.deletedAt) {
         log.info(`Deployment ${releaseName} soft-deleted`);
@@ -47,15 +57,15 @@ export default async function(req, res) {
       }
 
       const config = deployment.config;
+
       if (!config) {
         log.info(`Deployment config not found for ${releaseName}`);
         return res.sendStatus(200);
       }
 
-      let airflowVersion;
       try {
         const imageMetadata = await exports.extractImageMetadata(ev);
-        await prisma.upsertDockerImage({
+        await prisma.dockerImage.upsert({
           where: {
             name: `${ev.target.repository}:${tag}`
           },
@@ -96,14 +106,22 @@ export default async function(req, res) {
       });
 
       // Update the deployment.
-      const updatedDeployment = await prisma
-        .updateDeployment({
-          where: { releaseName },
-          data: { config: updatedConfig, airflowVersion }
-        })
-        .$fragment(
-          `{ id config label releaseName extraAu airflowVersion version workspace { id } }`
-        );
+      const updatedDeployment = await prisma.deployment.update({
+        where: { releaseName },
+        data: { config: updatedConfig, airflowVersion },
+        select: {
+          id: true,
+          config: true,
+          label: true,
+          releaseName: true,
+          extraAu: true,
+          version: true,
+          workspace: { id: true },
+          airflowVersion: true
+        }
+      });
+
+      await prisma.disconnect();
 
       // Fire the helm upgrade to commander.
       await commander.request("updateDeployment", {

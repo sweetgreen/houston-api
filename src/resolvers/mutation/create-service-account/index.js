@@ -1,7 +1,5 @@
-import fragment from "./fragment";
 import { hasPermission } from "rbac";
 import { PermissionError } from "errors";
-import { addFragmentToInfo } from "graphql-binding";
 import { UserInputError } from "apollo-server";
 import crypto from "crypto";
 import { ENTITY_DEPLOYMENT, ENTITY_WORKSPACE } from "constants";
@@ -15,7 +13,7 @@ import { ENTITY_DEPLOYMENT, ENTITY_WORKSPACE } from "constants";
  * @param {Object} ctx The graphql context.
  * @return {ServiceAccount} The new ServiceAccount.
  */
-export default async function createServiceAccount(parent, args, ctx, info) {
+export default async function createServiceAccount(parent, args, ctx) {
   // Pull out some variables.
   const {
     label,
@@ -69,8 +67,5 @@ export default async function createServiceAccount(parent, args, ctx, info) {
   };
 
   // Run the mutation.
-  return ctx.db.mutation.createServiceAccount(
-    mutation,
-    addFragmentToInfo(info, fragment)
-  );
+  return ctx.prisma.serviceAccount.create(mutation);
 }

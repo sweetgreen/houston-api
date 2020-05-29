@@ -1,11 +1,11 @@
 import * as userExports from "./index";
 import { sendEmail } from "emails";
-import * as prismaExports from "generated/client";
 import {
   InviteTokenNotFoundError,
   InviteTokenEmailError,
   PublicSignupsDisabledError
 } from "errors";
+
 import config from "config";
 import casual from "casual";
 import {
@@ -19,24 +19,21 @@ import {
 
 jest.mock("emails");
 
-describe("userExports.createUser", () => {
-  const usersConnection = () => {
-    return {
-      aggregate() {
-        return { count: () => 1 };
+describe("userExports.user.create", () => {
+  const ctx = {
+    prisma: {
+      inviteToken: {
+        findMany: jest.fn().mockReturnValue([]),
+        deleteMany: jest.fn()
+      },
+      user: {
+        findMany: jest.fn().mockReturnValue({}),
+        create: jest.fn().mockImplementation(() => {
+          return { id: 1 };
+        })
       }
-    };
+    }
   };
-
-  jest
-    .spyOn(prismaExports.prisma, "usersConnection")
-    .mockImplementation(usersConnection);
-
-  const prismaCreateUser = jest
-    .spyOn(prismaExports.prisma, "createUser")
-    .mockImplementation(() => {
-      return { id: () => 1 };
-    });
 
   const opts = {
     user: casual.username,
@@ -49,10 +46,10 @@ describe("userExports.createUser", () => {
 
   test("throws error if not the first signup and public signups disabled", async () => {
     config.publicSignups = false;
-    await expect(userExports.createUser(opts)).rejects.toThrow(
+    await expect(userExports.createUser(ctx, opts)).rejects.toThrow(
       new PublicSignupsDisabledError()
     );
-    expect(prismaCreateUser).not.toHaveBeenCalled();
+    expect(ctx.prisma.user.create).not.toHaveBeenCalled();
   });
 
   test("creates an pending user by default", async () => {
@@ -60,14 +57,13 @@ describe("userExports.createUser", () => {
       user: casual.username,
       email: casual.email
     };
-
-    expect(await userExports.createUser(opts)).toBe(1);
-    expect(prismaCreateUser.mock.calls[0][0]).toHaveProperty(
-      "status",
+    expect(await userExports.createUser(ctx, opts)).toBe(1);
+    expect(ctx.prisma.user.create.mock.calls[0][0]).toHaveProperty(
+      "data.status",
       USER_STATUS_PENDING
     );
-    expect(prismaCreateUser.mock.calls[0][0]).toHaveProperty(
-      "emails.create.verified",
+    expect(ctx.prisma.user.create.mock.calls[0][0]).toHaveProperty(
+      "data.emails.create.verified",
       false
     );
     expect(sendEmail).toHaveBeenCalledTimes(1);
@@ -81,32 +77,49 @@ describe("userExports.createUser", () => {
   test("creates an active user on request", async () => {
     // I.e. for oauth user signup flow.
     let activeOpts = { ...opts, active: true };
-
-    expect(await userExports.createUser(activeOpts)).toBe(1);
-    expect(prismaCreateUser.mock.calls[0][0]).toHaveProperty(
-      "status",
+    expect(await userExports.createUser(ctx, activeOpts)).toBe(1);
+    expect(ctx.prisma.user.create.mock.calls[0][0]).toHaveProperty(
+      "data.status",
       USER_STATUS_ACTIVE
     );
-    expect(prismaCreateUser.mock.calls[0][0]).toHaveProperty(
-      "emails.create.verified",
+    expect(ctx.prisma.user.create.mock.calls[0][0]).toHaveProperty(
+      "data.emails.create.verified",
       false
     );
   });
 
   describe("when given a valid inviteToken", () => {
+    const ctx = {
+      prisma: {
+        inviteToken: {
+          findMany: jest.fn().mockReturnValue([]),
+          deleteMany: jest.fn()
+        },
+        user: {
+          findMany: jest.fn().mockReturnValue({}),
+          create: jest.fn().mockImplementation(() => {
+            return { id: 1 };
+          })
+        }
+      }
+    };
+
     beforeEach(() => {
-      jest
-        .spyOn(prismaExports.prisma, "deleteManyInviteTokens")
-        .mockReturnValue(true);
+      ctx.prisma.inviteToken.deleteMany = jest.fn().mockReturnValue(true);
     });
     test("creates an active user", async () => {
       const invite = casual.uuid;
       const invite2 = casual.uuid;
       const workspace = casual.uuid;
       const workspace2 = casual.uuid;
-      jest
-        .spyOn(prismaExports.prisma, "inviteToken")
-        .mockReturnValue({ id: () => casual.uuid });
+      ctx.prisma.inviteToken.findMany.mockReturnValue([
+        { id: invite, workspace: { id: workspace }, role: WORKSPACE_EDITOR },
+        { id: invite2, workspace: { id: workspace2 }, role: WORKSPACE_VIEWER }
+      ]);
+
+      ctx.prisma.inviteToken.findOne = jest.fn().mockReturnValue({
+        id: casual.uuid
+      });
       const mockValidateInvite = jest
         .spyOn(userExports, "validateInviteToken")
         .mockImplementation(() => [
@@ -128,17 +141,17 @@ describe("userExports.createUser", () => {
         inviteToken: invite
       };
 
-      expect(await userExports.createUser(opts)).toBe(1);
+      expect(await userExports.createUser(ctx, opts)).toBe(1);
       expect(sendEmail).not.toHaveBeenCalled();
-      expect(prismaExports.prisma.deleteManyInviteTokens).toHaveBeenCalledWith({
-        id_in: [invite, invite2]
+      expect(ctx.prisma.inviteToken.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: [invite, invite2] } }
       });
 
-      const createData = prismaCreateUser.mock.calls[0][0];
-      expect(createData).toHaveProperty("status", USER_STATUS_ACTIVE);
-      expect(createData).toHaveProperty("emails.create.verified", true);
-      expect(createData).toHaveProperty("roleBindings.create");
-      const roleBindings = createData.roleBindings.create;
+      const createData = ctx.prisma.user.create.mock.calls[0][0];
+      expect(createData).toHaveProperty("data.status", USER_STATUS_ACTIVE);
+      expect(createData).toHaveProperty("data.emails.create.verified", true);
+      expect(createData).toHaveProperty("data.roleBindings.create");
+      const roleBindings = createData.data.roleBindings.create;
       expect(roleBindings).toHaveLength(2);
       expect(roleBindings[0]).toHaveProperty("workspace.connect.id", workspace);
       expect(roleBindings[0]).toHaveProperty("role", WORKSPACE_EDITOR);
@@ -155,9 +168,23 @@ describe("userExports.createUser", () => {
       const invite = casual.uuid;
       const invite2 = casual.uuid;
       const workspace = casual.uuid;
-      jest
-        .spyOn(prismaExports.prisma, "inviteToken")
-        .mockReturnValue({ id: () => casual.uuid });
+      ctx.prisma.inviteToken.findOne.mockReturnValue({
+        id: casual.uuid
+      });
+      ctx.prisma.inviteToken.findMany.mockReturnValue([
+        {
+          id: invite,
+          workspace: { id: workspace },
+          role: WORKSPACE_VIEWER,
+          source: INVITE_TOKEN_WORKSPACE
+        },
+        {
+          id: invite2,
+          workspace: null,
+          role: null,
+          source: INVITE_TOKEN_SYSTEM
+        }
+      ]);
       const mockValidateInvite = jest
         .spyOn(userExports, "validateInviteToken")
         .mockImplementation(() => [
@@ -181,13 +208,15 @@ describe("userExports.createUser", () => {
         inviteToken: invite
       };
 
-      expect(await userExports.createUser(opts)).toBe(1);
-      expect(prismaExports.prisma.deleteManyInviteTokens).toHaveBeenCalledWith({
-        id_in: [invite, invite2]
+      expect(await userExports.createUser(ctx, opts)).toBe(1);
+      expect(ctx.prisma.inviteToken.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: [invite, invite2] } }
       });
-      expect(prismaExports.prisma.createUser).toHaveBeenCalledWith(
+      expect(ctx.prisma.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: invite
+          data: expect.objectContaining({
+            id: invite
+          })
         })
       );
       mockValidateInvite.mockRestore();
@@ -198,44 +227,61 @@ describe("userExports.createUser", () => {
 describe("userExports.validateInviteToken", () => {
   // Set by each test case
   let inviteRecords;
+  const ctx = {
+    prisma: {
+      inviteToken: {
+        findOne: jest.fn()
+      }
+    }
+  };
 
   beforeEach(() => {
     inviteRecords = [];
-    jest.spyOn(prismaExports.prisma, "inviteToken").mockReturnValue({
-      email: () => (inviteRecords[0] ? inviteRecords[0].email : null)
+    ctx.prisma.inviteToken.findOne = jest.fn().mockReturnValue({
+      email: inviteRecords[0] ? inviteRecords[0].email : null
     });
   });
 
   test("return nothing if nothing passed", async () => {
-    const res = await userExports.validateInviteToken(undefined, casual.email);
+    const res = await userExports.validateInviteToken(
+      ctx.prisma,
+      undefined,
+      casual.email
+    );
     expect(res).toHaveLength(0);
   });
 
   test("throws if token is not found", async () => {
     await expect(
-      userExports.validateInviteToken(casual.word, casual.email)
+      userExports.validateInviteToken(ctx.prisma, casual.word, casual.email)
     ).rejects.toThrow(new InviteTokenNotFoundError());
   });
 
   test("throws if email does not match token email", async () => {
     inviteRecords = [{ email: casual.email }];
+    ctx.prisma.inviteToken.findOne = jest.fn().mockReturnValue({
+      email: () => (inviteRecords[0] ? inviteRecords[0].email : null)
+    });
     await expect(
-      userExports.validateInviteToken(casual.word, casual.email)
+      userExports.validateInviteToken(ctx.prisma, casual.word, casual.email)
     ).rejects.toThrow(new InviteTokenEmailError());
   });
 
   test("returns all tokens when token found and email matches", async () => {
-    jest
-      .spyOn(prismaExports.prisma, "inviteTokens")
-      .mockReturnValue({ $fragment: () => inviteRecords });
     // Casual generates emails in TitleCase, be we store them in lowercase from
     // the inviteUser mutation.
     const email = casual.email.toLowerCase();
-    inviteRecords = [{ email: email }];
-
+    ctx.prisma.inviteToken = {
+      findMany: jest.fn().mockReturnValue([{ email: email }]),
+      findOne: jest.fn().mockReturnValue({ email: email })
+    };
     await expect(
-      userExports.validateInviteToken(casual.word, email.toUpperCase())
-    ).resolves.toStrictEqual(inviteRecords);
+      userExports.validateInviteToken(
+        ctx.prisma,
+        casual.word,
+        email.toUpperCase()
+      )
+    ).resolves.toStrictEqual([{ email: email }]);
   });
 });
 

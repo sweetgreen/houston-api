@@ -104,7 +104,9 @@ export async function up(knex) {
   // Now that we have the data from the old tables, run prisma deploy to
   // update to the new schema, deleting the old join tables.
   log.debug("Running prisma-deploy");
-  execSync("node_modules/.bin/prisma deploy --force", { stdio: "inherit" });
+  execSync("node_modules/.bin/prisma migrate up --experimental", {
+    stdio: "inherit"
+  });
 
   await knex.transaction(async function(trx) {
     // Now that the schema is updated, go through and re-map in the foreign key ids.

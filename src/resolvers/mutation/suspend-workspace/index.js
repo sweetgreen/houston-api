@@ -1,5 +1,5 @@
 export default async function suspendWorkspace(parent, args, ctx) {
-  const workspace = await ctx.db.mutation.updateWorkspace({
+  const workspace = await ctx.prisma.workspace.update({
     data: {
       isSuspended: args.isSuspended
     },

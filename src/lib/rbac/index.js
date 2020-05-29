@@ -1,13 +1,8 @@
-import userFragment from "./user-fragment";
-import serviceAccountFragment from "./service-account-fragment";
-import deploymentFragment from "./deployment-fragment";
 import { decodeJWT } from "jwt";
 import { PermissionError } from "errors";
-import { prisma } from "generated/client";
 import {
   constant,
   filter,
-  find,
   fromPairs,
   get,
   includes,
@@ -15,6 +10,7 @@ import {
   map,
   size,
   times,
+  find,
   zip
 } from "lodash";
 import config from "config";
@@ -43,20 +39,20 @@ export function hasPermission(user, permission, entityType, entityId) {
   if (!entityType || !entityId) return false;
 
   // Otherwise we have to ensure the user has access to the entity.
-  const binding = find(user.roleBindings, binding => {
-    // Return true if we're looking for a scoped permission,
-    // and this binding has the entity type we're interested
-    // in and the id matches.
-    const hasEntity = !!binding[entityType];
+  const binding = user.roleBindings.filter(binding => {
+    const hasEntity = binding.role.includes(entityType.toUpperCase());
     return hasEntity && binding[entityType].id === entityId;
   });
 
+  const thisBind = binding[0];
+
   // If we didn't find a roleBinding, return false.
-  if (!binding) return false;
+  if (!thisBind) return false;
 
   // Otherwise return if this role has an appropriate permission.
-  const role = get(ROLES, binding.role, { permissions: [] });
+  const role = get(ROLES, thisBind.role, { permissions: [] });
 
+  // Let us know if they have permission to do the thing
   return get(role.permissions, permission, false) !== false;
 }
 
@@ -109,8 +105,26 @@ export function checkSystemPermission(user, permission) {
  * @param {String} id The user id.
  * @return {Object} The User object with RoleBindings.
  */
-export async function getUserWithRoleBindings(id) {
-  return await prisma.user({ id }).$fragment(userFragment);
+export async function getUserWithRoleBindings(prisma, id) {
+  if (id) {
+    const user = prisma.user.findOne({
+      where: { id },
+      include: {
+        roleBindings: {
+          select: {
+            id: true,
+            user: true,
+            role: true,
+            workspace: true,
+            deployment: true,
+            serviceAccount: true
+          }
+        }
+      }
+    });
+
+    return user;
+  }
 }
 
 /* Get a ServiceAccount that has the required information to make
@@ -118,11 +132,11 @@ export async function getUserWithRoleBindings(id) {
  * @param {String} apiKey The apiKey.
  * @return {Object} The ServiceAccount object with RoleBindings.
  */
-export async function getServiceAccountWithRoleBindings(apiKey) {
+export async function getServiceAccountWithRoleBindings(prisma, apiKey) {
   // Get the Service Account by API Key.
-  const serviceAccount = await prisma
-    .serviceAccount({ apiKey })
-    .$fragment(serviceAccountFragment);
+  const serviceAccount = await prisma.serviceAccount.findOne({
+    where: { apiKey }
+  });
 
   // Return early if we didn't find a service account.
   if (!serviceAccount) return;
@@ -148,7 +162,7 @@ export function isServiceAccount(authorization) {
  * @param {String} authorization An authorization header.
  * @return {Object} The authed user or Service Account.
  */
-export async function getAuthUser(authorization) {
+export async function getAuthUser(prisma, authorization) {
   // Return early if empty.
   if (!authorization) return;
 
@@ -158,7 +172,8 @@ export async function getAuthUser(authorization) {
   // If we do have a service account, set it as the user on the context.
   if (isServiceAcct) {
     return await addSyntheticRoleBindings(
-      await getServiceAccountWithRoleBindings(authorization)
+      prisma,
+      await getServiceAccountWithRoleBindings(prisma, authorization)
     );
   }
 
@@ -168,7 +183,10 @@ export async function getAuthUser(authorization) {
   // If we have a userId, set the user on the session,
   // otherwise return nothing.
   if (uuid) {
-    return await addSyntheticRoleBindings(await getUserWithRoleBindings(uuid));
+    return await addSyntheticRoleBindings(
+      prisma,
+      await getUserWithRoleBindings(prisma, uuid)
+    );
   }
 }
 
@@ -180,7 +198,7 @@ export async function getAuthUser(authorization) {
  * @param {Object} User A user or service account.
  * @return {Object} The user object with roleBindings.
  */
-async function addDeploymentRoleBindings(user) {
+async function addDeploymentRoleBindings(prisma, user) {
   if (!user) return;
 
   // Get list of roleBindings for all workspaces the user belongs to.
@@ -192,11 +210,19 @@ async function addDeploymentRoleBindings(user) {
   const workspaceIds = map(workspaceRoleBindings, "workspace.id");
 
   // Get the deployments that are under any of our workspaces.
-  const deployments = await prisma
-    .deployments({
-      where: { workspace: { id_in: workspaceIds }, deletedAt: null }
-    })
-    .$fragment(deploymentFragment);
+  const deployments = await prisma.deployment.findMany({
+    where: {
+      workspace: {
+        id: {
+          in: workspaceIds
+        }
+      },
+      deletedAt: null
+    },
+    include: {
+      workspace: true
+    }
+  });
 
   // Generate fake rolebindings for deployment level admin.
   const deploymentRoleBindings = map(deployments, deployment => {
@@ -250,8 +276,8 @@ export function addUserRoleBinding(user) {
  * @param {Object} User A user or service account.
  * @return {Object} The user object with roleBindings.
  */
-async function addSyntheticRoleBindings(user) {
-  return addUserRoleBinding(await addDeploymentRoleBindings(user));
+async function addSyntheticRoleBindings(prisma, user) {
+  return addUserRoleBinding(await addDeploymentRoleBindings(prisma, user));
 }
 
 // /* If the passed argument is a string, lookup the user by id.

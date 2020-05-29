@@ -1,8 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import bcrypt from "bcryptjs";
 import { USER_STATUS_ACTIVE } from "constants";
 
@@ -22,26 +20,20 @@ mutation resetPassword($token: String!, $pass: String!) {
 }
 `;
 
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
-
 describe("resetPassword", () => {
   const token = casual.uuid,
     pass = casual.string;
 
   describe("when token is invalid", () => {
     test("should return an error", async () => {
-      const q = jest.fn().mockReturnValue(null);
-      const db = { query: { localCredential: q } };
+      const findOne = jest.fn().mockReturnValue();
+      const prisma = { localCredential: { findOne } };
 
       const res = await graphql(
         schema,
         mutation,
         null,
-        { db },
+        { prisma },
         { token, pass }
       );
 
@@ -57,13 +49,14 @@ describe("resetPassword", () => {
       localCred = { id: casual.uuid, user };
 
     test("should change the password", async () => {
-      const updateLocalCredential = jest.fn().mockReturnValue();
-      const db = {
-        query: {
-          localCredential: jest.fn().mockReturnValue(localCred),
-          user: jest.fn().mockReturnValue(user)
+      const updateLocalCredential = jest.fn().mockReturnValue([]);
+      const findOne = jest.fn().mockReturnValue(localCred);
+      const prisma = {
+        localCredential: {
+          findOne,
+          update: updateLocalCredential
         },
-        mutation: { updateLocalCredential: updateLocalCredential }
+        user: { findOne: jest.fn().mockReturnValue(user) }
       };
 
       const cookie = jest.fn();
@@ -72,7 +65,7 @@ describe("resetPassword", () => {
         schema,
         mutation,
         null,
-        { db, res: { cookie } },
+        { prisma, res: { cookie } },
         { token, pass }
       );
 
@@ -80,7 +73,7 @@ describe("resetPassword", () => {
 
       expect(hash).toHaveBeenCalledWith(pass, 10);
 
-      expect(updateLocalCredential).toHaveBeenCalledWith({
+      expect(prisma.localCredential.update).toHaveBeenCalledWith({
         data: { resetToken: null, password: expect.stringMatching(/^\$2a\$/) },
         where: { id: localCred.id }
       });

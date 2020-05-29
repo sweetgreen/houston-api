@@ -11,7 +11,12 @@ import { AIRFLOW_EXECUTOR_DEFAULT } from "constants";
  * Validate deployment args. Throws if there is an issue.
  * @param {Object} args The graphql arguments.
  */
-export default async function validate(workspaceId, args, deployment = {}) {
+export default async function validate(
+  prisma,
+  workspaceId,
+  args,
+  deployment = {}
+) {
   // Grab deployment id. This will be undefined when creating a new deployment
   // and will be be populated for an update.
   const deploymentId = deployment.id;
@@ -39,5 +44,5 @@ export default async function validate(workspaceId, args, deployment = {}) {
 
   // Ensure this deployment label does not exist.
   args.label &&
-    (await validateExistence(workspaceId, args.label, deploymentId));
+    (await validateExistence(prisma, workspaceId, args.label, deploymentId));
 }

@@ -21,18 +21,15 @@ export default async function workspaceUpdateUserRole(parent, args, ctx) {
   // yet :(
 
   // Check for user by incoming email arg.
-  const roleBindings = await ctx.db.query.roleBindings(
-    {
-      where: {
-        workspace: { id: workspaceUuid },
-        user: { emails_some: { address: email } }
-      }
-    },
-    "{ id }"
-  );
+  const roleBindings = await ctx.prisma.roleBinding.findMany({
+    where: {
+      workspace: { id: workspaceUuid },
+      user: { emails: { some: { address: email } } }
+    }
+  });
 
   if (roleBindings.length == 1) {
-    await ctx.db.mutation.updateRoleBinding({
+    await ctx.prisma.roleBinding.update({
       data: { role },
       where: { id: roleBindings[0].id }
     });
@@ -41,18 +38,15 @@ export default async function workspaceUpdateUserRole(parent, args, ctx) {
   }
 
   // Not a current user, check for a pending invite;
-  const invites = await ctx.db.query.inviteTokens(
-    {
-      where: {
-        workspace: { id: workspaceUuid },
-        email
-      }
-    },
-    "{ id }"
-  );
+  const invites = await ctx.prisma.inviteToken.findMany({
+    where: {
+      workspace: { id: workspaceUuid },
+      email
+    }
+  });
 
   if (invites.length == 1) {
-    await ctx.db.mutation.updateInviteToken({
+    await ctx.prisma.inviteToken.update({
       data: { role },
       where: { id: invites[0].id }
     });

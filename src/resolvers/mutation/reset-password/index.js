@@ -9,15 +9,10 @@ import bcrypt from "bcryptjs";
  * @return {AuthToken} The auth token.
  */
 export default async function resetPassword(parent, args, ctx) {
-  const localCred = await ctx.db.query.localCredential(
-    { where: { resetToken: args.token } },
-    `{
-      id
-      user {
-        id
-      }
-    }`
-  );
+  const localCred = await ctx.prisma.localCredential.findOne({
+    where: { resetToken: args.token },
+    include: { user: true }
+  });
 
   if (!localCred) {
     throw new InvalidResetToken();
@@ -26,7 +21,7 @@ export default async function resetPassword(parent, args, ctx) {
   // Hash password.
   const password = await bcrypt.hash(args.password, 10);
 
-  await ctx.db.mutation.updateLocalCredential({
+  await ctx.prisma.localCredential.update({
     where: { id: localCred.id },
     data: { resetToken: null, password: password }
   });

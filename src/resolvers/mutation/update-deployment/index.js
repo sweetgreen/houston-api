@@ -1,4 +1,3 @@
-import { queryFragment, responseFragment } from "./fragments";
 import { track } from "analytics";
 import validate from "deployments/validate";
 import {
@@ -13,7 +12,6 @@ import {
 } from "deployments/naming";
 import { TrialError } from "errors";
 import config from "config";
-import { addFragmentToInfo } from "graphql-binding";
 import { get, isEmpty, merge, pick } from "lodash";
 import crypto from "crypto";
 import { DEPLOYMENT_AIRFLOW } from "constants";
@@ -25,12 +23,12 @@ import { DEPLOYMENT_AIRFLOW } from "constants";
  * @param {Object} ctx The graphql context.
  * @return {Deployment} The updated Deployment.
  */
-export default async function updateDeployment(parent, args, ctx, info) {
+export default async function updateDeployment(parent, args, ctx) {
   // Get the deployment first.
-  const deployment = await ctx.db.query.deployment(
-    { where: { id: args.deploymentUuid } },
-    queryFragment
-  );
+  const deployment = await ctx.prisma.deployment.findOne({
+    where: { id: args.deploymentUuid },
+    include: { workspace: true }
+  });
 
   // Block config changes if the user is in a trial
   const stripeEnabled = config.get("stripe.enabled");
@@ -80,20 +78,21 @@ export default async function updateDeployment(parent, args, ctx, info) {
   });
 
   // Validate our args.
-  await validate(deployment.workspace.id, mungedArgs, deployment);
+  await validate(ctx.prisma, deployment.workspace.id, mungedArgs, deployment);
 
   // Create the update statement.
   const where = { id: args.deploymentUuid };
   const data = merge({}, updatablePayload, {
-    config: mungedArgs.config,
+    config: JSON.stringify(mungedArgs.config),
     ...mapPropertiesToDeployment(mungedArgs.properties)
   });
 
   // Update the deployment in the database.
-  const updatedDeployment = await ctx.db.mutation.updateDeployment(
-    { where, data },
-    addFragmentToInfo(info, responseFragment)
-  );
+  const updatedDeployment = await ctx.prisma.deployment.update({
+    where,
+    data,
+    include: { workspace: true }
+  });
 
   // If we're syncing to kubernetes, fire updates to commander.
   if (args.sync) {

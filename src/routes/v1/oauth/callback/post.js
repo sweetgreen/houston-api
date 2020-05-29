@@ -1,11 +1,10 @@
-import fragment from "./fragment";
 import { createUser as _createUser, isFirst } from "users";
 import { getClient } from "oauth/config";
 import { track } from "analytics";
 import { PublicSignupsDisabledError } from "errors";
 import { ui } from "utilities";
-import { prisma } from "generated/client";
 import { createAuthJWT, setJWTCookie } from "jwt";
+import { PrismaClient } from "@prisma/client";
 import { ApolloError } from "apollo-server";
 import config from "config";
 import { first, merge } from "lodash";
@@ -17,9 +16,11 @@ import { URLSearchParams } from "url";
  * @param {Object} res The response.
  */
 export default async function(req, res, next) {
+  const prisma = new PrismaClient();
+
   // Grab params out of the request body.
   const { state: rawState } = req.body;
-  const firstUser = await isFirst();
+  const firstUser = await isFirst(prisma);
   const publicSignups = config.get("publicSignups");
 
   // TODO: Handle `error` in the response
@@ -59,19 +60,26 @@ export default async function(req, res, next) {
   }
 
   // Search for user in our system using email address.
+  // TODO: Handle looking up user that exists
   const user = first(
-    await prisma
-      .users({ where: { emails_some: { address: email } } })
-      .$fragment(fragment)
+    await prisma.user.findMany({
+      where: {
+        emails: {
+          some: { address: email }
+        }
+      },
+      include: { roleBindings: true }
+    })
   );
-
   let userId = null;
+
+  const ctx = { prisma };
 
   try {
     // Set the userId, either the existing, or the newly created one.
     userId = user
       ? user.id
-      : await _createUser({
+      : await _createUser(ctx, {
           fullName,
           email,
           inviteToken: state.inviteToken,
@@ -88,7 +96,7 @@ export default async function(req, res, next) {
 
   // If we already have a user, update it.
   if (user) {
-    await prisma.updateUser({
+    await prisma.user.update({
       where: { id: userId },
       data: { fullName, avatarUrl }
     });
@@ -108,10 +116,12 @@ export default async function(req, res, next) {
 
   // If we just created the user, also create and connect the oauth cred.
   if (!user) {
-    await prisma.createOAuthCredential({
-      oauthProvider: state.provider,
-      oauthUserId: providerUserId,
-      user: { connect: { id: userId } }
+    await prisma.oAuthCredential.create({
+      data: {
+        oauthProvider: state.provider,
+        oauthUserId: providerUserId,
+        user: { connect: { id: userId } }
+      }
     });
   }
 
@@ -120,6 +130,9 @@ export default async function(req, res, next) {
 
   // Set the cookie.
   setJWTCookie(res, token);
+
+  // It is recommended to always explicitly call disconnect
+  await prisma.disconnect();
 
   // Add userId and email for in-app tracking
   state.extras = { ...state.extras, userId, email };

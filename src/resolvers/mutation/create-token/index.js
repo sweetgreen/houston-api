@@ -18,7 +18,7 @@ import { USER_STATUS_ACTIVE, USER_STATUS_PENDING } from "constants";
  */
 export default async function createToken(parent, args, ctx) {
   // Search for a user by username or email.
-  const users = await ctx.db.query.users(
+  const users = await ctx.prisma.user.findMany(
     {
       where: {
         OR: [
@@ -26,14 +26,21 @@ export default async function createToken(parent, args, ctx) {
             username: args.identity
           },
           {
-            emails_every: {
-              address: args.identity
+            emails: {
+              every: {
+                address: args.identity
+              }
             }
           }
         ]
+      },
+      select: {
+        id: true,
+        status: true,
+        localCredential: { select: { password: true } }
       }
-    },
-    `{ id, status, localCredential { password } }`
+    }
+    // `{ id, status, localCredential { password } }`
   );
 
   // There should be one or none.

@@ -1,14 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import { graphql } from "graphql";
 import casual from "casual";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
@@ -29,16 +21,17 @@ const query = `
 
 describe("invites", () => {
   // Mock up some db functions.
-  const inviteTokens = jest.fn();
+  const findMany = jest.fn();
 
   // Construct db object for context.
-  const db = { query: { inviteTokens } };
+  const prisma = {
+    inviteToken: { findMany }
+  };
 
   test("typical request is successful", async () => {
-    // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db });
+    const res = await graphql(schema, query, null, { prisma });
     expect(res.errors).toBeUndefined();
-    expect(inviteTokens.mock.calls.length).toBe(1);
+    expect(prisma.inviteToken.findMany.mock.calls.length).toBe(1);
   });
 
   test("typical request (using ID) is successful", async () => {
@@ -49,8 +42,8 @@ describe("invites", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
-    expect(inviteTokens.mock.calls.length).toBe(1);
+    expect(prisma.inviteToken.findMany.mock.calls.length).toBe(1);
   });
 });

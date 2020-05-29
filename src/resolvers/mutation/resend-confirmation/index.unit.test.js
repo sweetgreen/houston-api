@@ -1,10 +1,8 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import { sendEmail } from "emails";
 import shortid from "shortid";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 
 jest.mock("emails");
 
@@ -14,21 +12,15 @@ mutation resendConfirmation($email: String!) {
 }
 `;
 
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
-
 describe("resendConfirmation", () => {
   const email = casual.email;
 
   describe("when email doesn't exist", () => {
     test("should not leak information about existing users", async () => {
       const emailQuery = jest.fn().mockReturnValue(null);
-      const db = { query: { email: emailQuery } };
+      const prisma = { email: { findOne: emailQuery } };
 
-      const res = await graphql(schema, mutation, null, { db }, { email });
+      const res = await graphql(schema, mutation, null, { prisma }, { email });
 
       expect(res.errors).toBeUndefined();
       expect(sendEmail).not.toHaveBeenCalled();
@@ -39,9 +31,9 @@ describe("resendConfirmation", () => {
   describe("when email is already confirrmed", () => {
     test("should not leak information about existing users", async () => {
       const emailQuery = jest.fn().mockReturnValue({ verified: true });
-      const db = { query: { email: emailQuery } };
+      const prisma = { email: { findOne: emailQuery } };
 
-      const res = await graphql(schema, mutation, null, { db }, { email });
+      const res = await graphql(schema, mutation, null, { prisma }, { email });
 
       expect(res.errors).toBeUndefined();
       expect(sendEmail).not.toHaveBeenCalled();
@@ -58,11 +50,9 @@ describe("resendConfirmation", () => {
       };
       const emailQuery = jest.fn().mockReturnValue(emailQueryRes);
 
-      const db = {
-        query: { email: emailQuery }
-      };
+      const prisma = { email: { findOne: emailQuery } };
 
-      const res = await graphql(schema, mutation, null, { db }, { email });
+      const res = await graphql(schema, mutation, null, { prisma }, { email });
 
       expect(res.errors).toBeUndefined();
       expect(res.data.resendConfirmation).toBe(true);

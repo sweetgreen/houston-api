@@ -1,15 +1,7 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import nock from "nock";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const mutation = `
@@ -51,13 +43,13 @@ describe("updateCard", () => {
     const stripeCustomerId = casual.uuid;
 
     // Mock up some functions.
-    const workspace = jest.fn().mockReturnValue({
+    const findOne = jest.fn().mockReturnValue({
       stripeCustomerId
     });
 
     // Construct db object for context.
-    const db = {
-      query: { workspace }
+    const prisma = {
+      workspace: { findOne }
     };
 
     nock("https://api.stripe.com")
@@ -78,20 +70,20 @@ describe("updateCard", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
-    expect(workspace.mock.calls.length).toBe(1);
+    expect(findOne.mock.calls.length).toBe(1);
   });
   test("typical request is unsuccessful", async () => {
     const stripeCustomerId = casual.uuid;
 
-    const workspace = jest.fn().mockReturnValue({
+    const findOne = jest.fn().mockReturnValue({
       stripeCustomerId
     });
 
     // Construct db object for context.
-    const db = {
-      query: { workspace }
+    const prisma = {
+      workspace: { findOne }
     };
 
     nock("https://api.stripe.com")
@@ -111,7 +103,7 @@ describe("updateCard", () => {
       token: casual.string
     };
 
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
   });
 });

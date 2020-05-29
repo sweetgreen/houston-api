@@ -1,7 +1,4 @@
-import fragment from "./fragment";
 import { compact } from "lodash";
-import { addFragmentToInfo } from "graphql-binding";
-
 /*
  * Get list of workspaces for user.
  * @param {Object} parent The result of the parent resolver.
@@ -10,14 +7,26 @@ import { addFragmentToInfo } from "graphql-binding";
  * @param {Object} info The graphql info.
  * @return {[]Workspace} List of workspaces.
  */
-export default async function workspaces(parent, args, ctx, info) {
+export default async function workspaces(parent, args, ctx) {
   const workspaceIds = ctx.user.roleBindings.map(rb =>
     rb.workspace ? rb.workspace.id : null
   );
 
+  const workspaces = await ctx.prisma.workspace.findMany({
+    where: { id: { in: compact(workspaceIds) } },
+    select: {
+      id: true,
+      label: true,
+      roleBindings: true,
+      description: true,
+      createdAt: true,
+      updatedAt: true,
+      deployments: {
+        select: { id: true, releaseName: true, deletedAt: true, label: true }
+      }
+    }
+  });
+
   // Get the workspaces, using their ids and passing the user specified selection set.
-  return await ctx.db.query.workspaces(
-    { where: { id_in: compact(workspaceIds) } },
-    addFragmentToInfo(info, fragment)
-  );
+  return workspaces;
 }

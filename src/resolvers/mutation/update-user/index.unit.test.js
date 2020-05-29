@@ -1,14 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const mutation = `
@@ -34,11 +26,14 @@ describe("updateUser", () => {
     const user = { id: casual.uuid };
 
     // Mock up some functions.
-    const updateUser = jest.fn();
+    const update = jest.fn().mockReturnValue({
+      id: user.id,
+      profile: [{ key: "test", value: "value" }]
+    });
 
     // Construct db object for context.
-    const db = {
-      mutation: { updateUser }
+    const prisma = {
+      user: { update }
     };
 
     // Vars for the gql mutation.
@@ -47,8 +42,8 @@ describe("updateUser", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db, user }, vars);
+    const res = await graphql(schema, mutation, null, { prisma, user }, vars);
     expect(res.errors).toBeUndefined();
-    expect(updateUser.mock.calls).toHaveLength(1);
+    expect(update.mock.calls).toHaveLength(1);
   });
 });

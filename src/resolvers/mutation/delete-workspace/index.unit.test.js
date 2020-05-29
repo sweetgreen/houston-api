@@ -1,14 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const mutation = `
@@ -29,16 +21,15 @@ describe("deleteWorkspace", () => {
     const id = casual.uuid;
 
     // Mock up some db functions.
-    const deployments = jest.fn().mockReturnValue([]);
-    const deleteWorkspace = jest.fn().mockReturnValue({ id });
+    const findMany = jest.fn().mockReturnValue([]);
 
     // Construct db object for context.
-    const db = {
-      query: {
-        deployments
+    const prisma = {
+      deployment: {
+        findMany
       },
-      mutation: {
-        deleteWorkspace
+      workspace: {
+        delete: jest.fn().mockReturnValue({ id })
       }
     };
 
@@ -51,18 +42,16 @@ describe("deleteWorkspace", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db, user }, vars);
+    const res = await graphql(schema, mutation, null, { prisma, user }, vars);
 
     expect(res.errors).toBeUndefined();
-    expect(deployments.mock.calls.length).toBe(1);
-    expect(deleteWorkspace.mock.calls.length).toBe(1);
+    expect(findMany.mock.calls.length).toBe(1);
+    expect(prisma.workspace.delete.mock.calls.length).toBe(1);
     expect(res.data.deleteWorkspace.id).toBe(id);
-    expect(deployments).toBeCalledWith(
-      {
-        where: { id, deletedAt: null }
-      },
-      expect.anything()
-    );
+    expect(findMany).toBeCalledWith({
+      where: { id, deletedAt: null },
+      select: { id: true }
+    });
   });
 
   test("errors if deployments are present", async () => {
@@ -70,16 +59,15 @@ describe("deleteWorkspace", () => {
     const id = casual.uuid;
 
     // Mock up some db functions.
-    const deployments = jest.fn().mockReturnValue([{ id }]);
-    const deleteWorkspace = jest.fn().mockReturnValue({ id });
+    const findMany = jest.fn().mockReturnValue([{ id }]);
 
     // Construct db object for context.
-    const db = {
-      query: {
-        deployments
+    const prisma = {
+      deployment: {
+        findMany
       },
-      mutation: {
-        deleteWorkspace
+      workspace: {
+        delete: jest.fn().mockReturnValue({ id })
       }
     };
 
@@ -89,17 +77,15 @@ describe("deleteWorkspace", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { prisma }, vars);
 
     expect(res.errors).toBeDefined();
-    expect(deployments.mock.calls.length).toBe(1);
-    expect(deleteWorkspace.mock.calls.length).toBe(0);
-    expect(res.data.deleteWorkspace).toBe(null);
-    expect(deployments).toBeCalledWith(
-      {
-        where: { id, deletedAt: null }
-      },
-      expect.anything()
-    );
+    expect(findMany.mock.calls.length).toBe(1);
+    expect(prisma.workspace.delete.mock.calls.length).toBe(0);
+    expect(res.data).toBe(null);
+    expect(findMany).toBeCalledWith({
+      where: { id, deletedAt: null },
+      select: { id: true }
+    });
   });
 });

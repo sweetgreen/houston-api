@@ -1,15 +1,7 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import { SYSTEM_ADMIN } from "constants";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
@@ -29,15 +21,14 @@ const query = `
 describe("deleteSystemRoleBinding", () => {
   test("correctly deletes a system role binding", async () => {
     // Mock up some db functions.
-    const roleBindings = jest
+    const findMany = jest
       .fn()
       .mockReturnValue([{ role: "SYSTEM_ADMIN" }, { role: "SYSTEM_ADMIN" }]);
-    const deleteRoleBinding = jest.fn();
+    const deleteRoleBinding = jest.fn().mockReturnValue({ id: casual.uuid });
 
     // Construct db object for context.
-    const db = {
-      query: { roleBindings },
-      mutation: { deleteRoleBinding }
+    const prisma = {
+      roleBinding: { findMany, delete: deleteRoleBinding }
     };
 
     const vars = {
@@ -46,19 +37,18 @@ describe("deleteSystemRoleBinding", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
   });
 
   test("throws error if the role binding does not exist", async () => {
     // Mock up some db functions.
-    const roleBindings = jest.fn().mockReturnValue([]);
+    const findMany = jest.fn().mockReturnValue([]);
     const deleteRoleBinding = jest.fn();
 
     // Construct db object for context.
-    const db = {
-      query: { roleBindings },
-      mutation: { deleteRoleBinding }
+    const prisma = {
+      roleBinding: { findMany, delete: deleteRoleBinding }
     };
 
     const vars = {
@@ -67,19 +57,18 @@ describe("deleteSystemRoleBinding", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
   });
 
   test("throws error if there are no other system admins", async () => {
     // Mock up some db functions.
-    const roleBindings = jest.fn().mockReturnValue([{ role: "SYSTEM_ADMIN" }]);
+    const findMany = jest.fn().mockReturnValue([{ role: "SYSTEM_ADMIN" }]);
     const deleteRoleBinding = jest.fn();
 
     // Construct db object for context.
-    const db = {
-      query: { roleBindings },
-      mutation: { deleteRoleBinding }
+    const prisma = {
+      roleBinding: { findMany, delete: deleteRoleBinding }
     };
 
     const vars = {
@@ -88,7 +77,7 @@ describe("deleteSystemRoleBinding", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
   });
 });

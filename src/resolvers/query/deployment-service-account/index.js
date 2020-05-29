@@ -1,6 +1,3 @@
-import fragment from "./fragment";
-import { addFragmentToInfo } from "graphql-binding";
-
 /*
  * Get a single deployment service account
  * @param {Object} parent The result of the parent resolver.
@@ -8,23 +5,13 @@ import { addFragmentToInfo } from "graphql-binding";
  * @param {Object} ctx The graphql context.
  * @return {AuthConfig} The auth config.
  */
-export default async function deploymentServiceAccount(
-  parent,
-  args,
-  ctx,
-  info
-) {
+export default async function deploymentServiceAccount(parent, args, ctx) {
   // Pull out some args.
   const { serviceAccountUuid } = args;
 
-  // Build query structure.
-  const query = { where: { id: serviceAccountUuid } };
-
-  // Run final query
-  const serviceAccount = await ctx.db.query.serviceAccount(
-    query,
-    addFragmentToInfo(info, fragment)
-  );
+  const serviceAccount = await ctx.prisma.serviceAccount.findOne({
+    where: { id: serviceAccountUuid }
+  });
 
   // If we made it here, return the service account.
   return serviceAccount;

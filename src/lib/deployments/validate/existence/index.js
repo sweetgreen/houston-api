@@ -1,4 +1,3 @@
-import { prisma } from "generated/client";
 import { DuplicateDeploymentLabelError } from "errors";
 import { head, get } from "lodash";
 
@@ -10,16 +9,21 @@ import { head, get } from "lodash";
  * https://github.com/prisma/prisma/issues/1300
  */
 export default async function validateExistence(
+  prisma,
   workspaceId,
   label,
   deploymentId
 ) {
   // Query for deployments using label and workspaceId
-  const deployments = await prisma
-    .deployments({
-      where: { label, workspace: { id: workspaceId }, deletedAt: null }
-    })
-    .id();
+  const deployments = await prisma.deployment.findMany({
+    where: {
+      label,
+      workspace: {
+        id: workspaceId
+      },
+      deletedAt: null
+    }
+  });
 
   // Get first.
   const deployment = head(deployments);

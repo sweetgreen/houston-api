@@ -7,10 +7,10 @@ import { inviteQuery } from "../../../lib/invites";
  * @param {Object} ctx The graphql context.
  * @return {[]Invites} A list of invites.
  */
-export default async function invites(parent, args, ctx) {
-  // Build the invite query.
+export default async function inviteTokens(parent, args, ctx) {
+  // Build the users query.
   const query = inviteQuery(args);
 
   // Run final query
-  return await ctx.db.query.inviteTokens({ where: { ...query } });
+  return await ctx.prisma.inviteToken.findMany({ where: { ...query } });
 }

@@ -1,5 +1,3 @@
-import serviceAccountFragment from "rbac/service-account-fragment";
-import { addFragmentToInfo } from "graphql-binding";
 import { pick } from "lodash";
 
 /*
@@ -12,8 +10,7 @@ import { pick } from "lodash";
 export default async function updateDeploymentServiceAccount(
   parent,
   args,
-  ctx,
-  info
+  ctx
 ) {
   // The external facing schema is too loose as JSON.
   // For now, we just pluck out any props that are not in this list.
@@ -23,22 +20,19 @@ export default async function updateDeploymentServiceAccount(
 
   // Get role bindings
   if (role) {
-    const roleBindings = await ctx.db.query.roleBindings(
-      { where: { serviceAccount: where } },
-      "{ id }"
-    );
+    const roleBindings = await ctx.prisma.roleBinding.findMany({
+      where: { serviceAccount: where },
+      select: { id: true }
+    });
 
     // Update the rolebinding if included in payload
     if (roleBindings.length > 0) {
-      ctx.db.mutation.updateRoleBinding({
+      ctx.prisma.roleBinding.update({
         where: { id: roleBindings[0].id },
         data: { role: role }
       });
     }
   }
 
-  return ctx.db.mutation.updateServiceAccount(
-    { where, data },
-    addFragmentToInfo(info, serviceAccountFragment)
-  );
+  return ctx.prisma.serviceAccount.update({ where, data });
 }

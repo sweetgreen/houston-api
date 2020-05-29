@@ -1,16 +1,8 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import bcrypt from "bcryptjs";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import { USER_STATUS_ACTIVE, USER_STATUS_PENDING } from "constants";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const mutation = `
@@ -45,12 +37,12 @@ describe("createToken", () => {
     password: casual.password
   };
   const hash = bcrypt.hash(vars.password, 10);
-  const query = {
+  const user = {
     // The return value for these are set in each test
-    users: jest.fn(),
-    user: jest.fn()
+    findMany: jest.fn(),
+    findOne: jest.fn()
   };
-  const db = { query };
+  const prisma = { user };
 
   test("typical request is successful", async () => {
     const usr = {
@@ -60,8 +52,8 @@ describe("createToken", () => {
     };
 
     // Mock up some db functions.
-    const users = query.users.mockReturnValue([usr]);
-    query.user.mockReturnValue(usr);
+    const users = prisma.user.findMany.mockReturnValue([usr]);
+    prisma.user.findOne.mockReturnValue(usr);
     const cookie = jest.fn();
 
     // Run the graphql mutation.
@@ -69,7 +61,7 @@ describe("createToken", () => {
       schema,
       mutation,
       null,
-      { db, res: { cookie } },
+      { prisma, res: { cookie } },
       vars
     );
 
@@ -89,10 +81,10 @@ describe("createToken", () => {
 
   test("throws error if user not found", async () => {
     // Mock up some db functions.
-    query.users.mockReturnValue([]);
+    prisma.user.findMany.mockReturnValue([]);
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
     expect(res.errors[0].message).toEqual(
       expect.stringMatching(/^The requested resource was not found/)
@@ -104,10 +96,10 @@ describe("createToken", () => {
     const usr = { id: 0, status: "" };
 
     // Mock up some db functions.
-    query.users.mockReturnValue([usr]);
+    prisma.user.findMany.mockReturnValue([usr]);
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
     expect(res.errors[0].message).toEqual(
       expect.stringMatching(/^No password credentials found/)
@@ -119,10 +111,10 @@ describe("createToken", () => {
     const usr = { id: 0, status: "", localCredential: { password: "wrong" } };
 
     // Mock up some db functions.
-    query.users.mockReturnValue([usr]);
+    prisma.user.findMany.mockReturnValue([usr]);
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
     expect(res.errors[0].message).toEqual(
       // The UI expects this to match to show the right message
@@ -139,10 +131,10 @@ describe("createToken", () => {
     };
 
     // Mock up some db functions.
-    query.users.mockReturnValue([usr]);
+    prisma.user.findMany.mockReturnValue([usr]);
 
     // Run the graphql mutation.
-    const res = await graphql(schema, mutation, null, { db }, vars);
+    const res = await graphql(schema, mutation, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
     expect(res.errors[0].message).toEqual(
       // The UI expects this to match to show the right message

@@ -4,10 +4,10 @@
  */
 import "dotenv/config";
 import log from "logger";
-import { prisma } from "generated/client";
 import { generateNamespace } from "deployments/naming";
 import commander from "commander";
 import { generateHelmValues } from "deployments/config";
+import { PrismaClient } from "@prisma/client";
 import config from "config";
 import yargs from "yargs";
 import { DEPLOYMENT_AIRFLOW } from "constants";
@@ -22,7 +22,15 @@ async function upgradeDeployments() {
   log.info(`Starting automatic deployment upgrade to ${desiredVersion}`);
 
   // Build the deployment query.
-  const query = { where: {} };
+  const query = {
+    where: {},
+    select: {
+      id: true,
+      version: true,
+      releaseName: true,
+      workspace: { id: true }
+    }
+  };
 
   if (argv["canary"]) {
     log.info(`Limiting search to canary deployments`);
@@ -31,19 +39,26 @@ async function upgradeDeployments() {
 
   // Find all deployments.
   let deployments = [];
+
+  const prisma = new PrismaClient();
+
   try {
-    const q1 = { where: { ...query.where, deletedAt: null } };
+    const q1 = {
+      where: { ...query.where, deletedAt: null },
+      select: {
+        id: true,
+        version: true,
+        releaseName: true,
+        workspace: { id: true }
+      }
+    };
     log.debug(`Query: ${JSON.stringify(q1)}`);
-    deployments = await prisma
-      .deployments(q1)
-      .$fragment(`{ id releaseName version workspace { id } }`);
+    deployments = await prisma.deployment.findMany(q1);
   } catch (e) {
     // Astronomer 0.10.3 comparability
     log.debug(`Query: ${JSON.stringify(query)}`);
     log.error(`Error from prisma: ${e}`);
-    deployments = await prisma
-      .deployments(query)
-      .$fragment(`{ id releaseName version workspace { id } }`);
+    deployments = await prisma.deployment.findMany(query);
   }
 
   log.info(`Found ${deployments.length} deployments to upgrade.`);
@@ -57,12 +72,10 @@ async function upgradeDeployments() {
     const { version, releaseName } = deployment;
 
     // Update the database with our desired version.
-    const updatedDeployment = await prisma
-      .updateDeployment({
-        where: { releaseName },
-        data: { version: desiredVersion }
-      })
-      .$fragment(`{ id config releaseName extraAu workspace { id } }`);
+    const updatedDeployment = await prisma.deployment.update({
+      where: { releaseName },
+      data: { version: desiredVersion }
+    });
 
     log.info(
       `Applying helm upgrade on ${releaseName}, version ${version} to ${desiredVersion}`
@@ -79,6 +92,8 @@ async function upgradeDeployments() {
       rawConfig: JSON.stringify(generateHelmValues(updatedDeployment))
     });
   }
+
+  await prisma.disconnect();
 
   log.info("Automatic deployment upgrade has been finished!");
 }

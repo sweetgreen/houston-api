@@ -1,8 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import {
   USER_STATUS_ACTIVE,
   USER_STATUS_PENDING,
@@ -25,21 +23,15 @@ mutation confirmEmail($token: String!) {
 }
 `;
 
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
-
 describe("confirmEmail", () => {
   const token = casual.uuid;
 
   describe("when token is invalid", () => {
     test("should return an error", async () => {
       const q = jest.fn().mockReturnValue(null);
-      const db = { query: { email: q } };
+      const prisma = { email: { findOne: q } };
 
-      const res = await graphql(schema, mutation, null, { db }, { token });
+      const res = await graphql(schema, mutation, null, { prisma }, { token });
 
       expect(res.errors).toHaveLength(1);
       expect(res.errors[0]).toHaveProperty("extensions.code", "BAD_USER_INPUT");
@@ -56,13 +48,13 @@ describe("confirmEmail", () => {
           user: { status: USER_STATUS_ACTIVE, id: 0 }
         };
 
-        const updateEmail = jest.fn().mockReturnValue();
-        const db = {
-          query: {
-            email: jest.fn().mockReturnValue(emailRecord),
-            user: jest.fn().mockReturnValue(emailRecord.user)
+        const update = jest.fn().mockReturnValue();
+        const prisma = {
+          email: {
+            findOne: jest.fn().mockReturnValue(emailRecord),
+            update: update
           },
-          mutation: { updateEmail }
+          user: { findOne: jest.fn().mockReturnValue(emailRecord.user) }
         };
 
         const cookie = jest.fn();
@@ -71,13 +63,13 @@ describe("confirmEmail", () => {
           schema,
           mutation,
           null,
-          { db, res: { cookie } },
+          { prisma, res: { cookie } },
           { token }
         );
 
         expect(res).not.toHaveProperty("errors");
 
-        expect(updateEmail).toHaveBeenCalledWith({
+        expect(update).toHaveBeenCalledWith({
           data: { token: null, verified: true },
           where: { token }
         });
@@ -98,18 +90,18 @@ describe("confirmEmail", () => {
           verified: false,
           user: { status: USER_STATUS_PENDING, id: 0 }
         };
-
-        const updateEmail = jest.fn().mockReturnValue();
-        const db = {
-          query: {
-            email: jest.fn().mockReturnValue(emailRecord),
-            // When we query the user,it will have been updated to active
-            user: jest.fn().mockReturnValue({
+        const update = jest.fn().mockReturnValue();
+        const prisma = {
+          email: {
+            findOne: jest.fn().mockReturnValue(emailRecord),
+            update: update
+          },
+          user: {
+            findOne: jest.fn().mockReturnValue({
               ...emailRecord.user,
               status: USER_STATUS_ACTIVE
             })
-          },
-          mutation: { updateEmail }
+          }
         };
 
         const cookie = jest.fn();
@@ -118,13 +110,13 @@ describe("confirmEmail", () => {
           schema,
           mutation,
           null,
-          { db, res: { cookie } },
+          { prisma, res: { cookie } },
           { token }
         );
 
         expect(res).not.toHaveProperty("errors");
 
-        expect(updateEmail).toHaveBeenCalledWith({
+        expect(update).toHaveBeenCalledWith({
           data: {
             token: null,
             verified: true,
@@ -150,13 +142,19 @@ describe("confirmEmail", () => {
           user: { status: USER_STATUS_BLOCKED, id: 0 }
         };
 
-        const db = {
-          query: {
-            email: jest.fn().mockReturnValue(emailRecord)
+        const prisma = {
+          email: {
+            findOne: jest.fn().mockReturnValue(emailRecord)
           }
         };
 
-        const res = await graphql(schema, mutation, null, { db }, { token });
+        const res = await graphql(
+          schema,
+          mutation,
+          null,
+          { prisma },
+          { token }
+        );
 
         expect(res.errors).toHaveLength(1);
         expect(res.errors[0]).toHaveProperty(

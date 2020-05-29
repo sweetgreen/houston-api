@@ -3,8 +3,8 @@ import * as handler from "./handler";
 import * as rbac from "rbac";
 import { authenticateRequest } from "authentication";
 import { decodeJWT } from "jwt";
-import { prisma } from "generated/client";
 import { getCookieName } from "utilities";
+import * as prismaExports from "@prisma/client";
 import cookieParser from "cookie-parser";
 import casual from "casual";
 import supertest from "supertest";
@@ -19,12 +19,7 @@ import {
 } from "constants";
 
 jest.mock("rbac");
-jest.mock("generated/client", () => {
-  return {
-    __esModule: true,
-    prisma: jest.fn().mockName("MockPrisma")
-  };
-});
+
 jest.mock("errors/express", () => {
   // Replace the error catcher with one that just throws, so that errors in tests are reported!
   return { catchAsyncError: fn => fn };
@@ -64,17 +59,27 @@ describe("GET /authorization", () => {
       ]
     };
 
+    const findOne = jest.fn().mockReturnValue({
+      id: casual.uuid
+    });
+
+    jest.spyOn(prismaExports, "PrismaClient").mockImplementation(() => {
+      return {
+        disconnect: jest.fn(),
+        deployment: {
+          findOne: findOne
+        }
+      };
+    });
+
+    prismaExports.prisma = {
+      deployment: {
+        findOne: findOne
+      }
+    };
+
     beforeAll(() => {
       request.set("Cookie", `${getCookieName()}=MOCKED`);
-      prisma.deployment = jest
-        .fn()
-        .mockName("deployment")
-        .mockReturnValue({
-          id: jest
-            .fn()
-            .mockName("id")
-            .mockResolvedValue(deploymentId)
-        });
     });
 
     beforeEach(() => {
@@ -93,8 +98,8 @@ describe("GET /authorization", () => {
       const res = request.get("/");
 
       await expect(res).resolves.toHaveProperty("statusCode", 200);
-      expect(prisma.deployment).toBeCalledWith({
-        releaseName: "imploding-sun-1234"
+      expect(prismaExports.prisma.deployment.findOne).toBeCalledWith({
+        where: { releaseName: "imploding-sun-1234" }
       });
     });
 
@@ -103,8 +108,8 @@ describe("GET /authorization", () => {
 
       const res = request.get("/");
       await expect(res).resolves.toHaveProperty("statusCode", 403);
-      expect(prisma.deployment).toBeCalledWith({
-        releaseName: "imploding-sun-1234"
+      expect(prismaExports.prisma.deployment.findOne).toBeCalledWith({
+        where: { releaseName: "imploding-sun-1234" }
       });
     });
   });
@@ -121,18 +126,27 @@ describe("GET /authorization", () => {
         { role: DEPLOYMENT_ADMIN, deployment: { id: deploymentId } }
       ]
     };
+    const findOne = jest.fn().mockReturnValue({
+      id: casual.uuid
+    });
+
+    jest.spyOn(prismaExports, "PrismaClient").mockImplementation(() => {
+      return {
+        disconnect: jest.fn(),
+        deployment: {
+          findOne: findOne
+        }
+      };
+    });
+
+    prismaExports.prisma = {
+      deployment: {
+        findOne: findOne
+      }
+    };
 
     beforeAll(() => {
       request.set("Cookie", `${getCookieName()}=MOCKED`);
-      prisma.deployment = jest
-        .fn()
-        .mockName("deployment")
-        .mockReturnValue({
-          id: jest
-            .fn()
-            .mockName("id")
-            .mockResolvedValue(deploymentId)
-        });
     });
 
     beforeEach(() => {
@@ -151,8 +165,8 @@ describe("GET /authorization", () => {
       const res = request.get("/");
 
       await expect(res).resolves.toHaveProperty("statusCode", 200);
-      expect(prisma.deployment).toBeCalledWith({
-        releaseName: "imploding-sun-1234"
+      expect(prismaExports.prisma.deployment.findOne).toBeCalledWith({
+        where: { releaseName: "imploding-sun-1234" }
       });
     });
 
@@ -161,8 +175,8 @@ describe("GET /authorization", () => {
 
       const res = request.get("/");
       await expect(res).resolves.toHaveProperty("statusCode", 403);
-      expect(prisma.deployment).toBeCalledWith({
-        releaseName: "imploding-sun-1234"
+      expect(prismaExports.prisma.deployment.findOne).toBeCalledWith({
+        where: { releaseName: "imploding-sun-1234" }
       });
     });
   });

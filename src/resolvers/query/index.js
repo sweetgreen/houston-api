@@ -5,12 +5,11 @@ import deploymentConfig from "./deployment-config";
 import deploymentServiceAccount from "./deployment-service-account";
 import deploymentServiceAccounts from "./deployment-service-accounts";
 import deployments from "./deployments";
-import invites from "./invites";
+import inviteTokens from "./inviteTokens";
 import logs from "./logs";
 import updateAvailable from "./platform-releases";
 import self from "./self";
 import serviceAccounts from "./service-accounts";
-import workspace from "./workspace";
 import workspaceDeployment from "./workspace-deployment";
 import workspaceDeployments from "./workspace-deployments";
 import workspaceInvites from "./workspace-invites";
@@ -18,6 +17,7 @@ import workspaceServiceAccount from "./workspace-service-account";
 import workspaceServiceAccounts from "./workspace-service-accounts";
 import workspaceUser from "./workspace-user";
 import workspaceUsers from "./workspace-users";
+import workspace from "./workspace";
 import workspaces from "./workspaces";
 import users from "./users";
 
@@ -29,12 +29,11 @@ export default {
   deploymentServiceAccount,
   deploymentServiceAccounts,
   deployments,
-  invites,
+  inviteTokens,
   logs,
   updateAvailable,
   self,
   serviceAccounts,
-  workspace,
   workspaceDeployment,
   workspaceDeployments,
   workspaceInvites,
@@ -42,6 +41,7 @@ export default {
   workspaceServiceAccounts,
   workspaceUser,
   workspaceUsers,
+  workspace,
   workspaces,
   users
 };

@@ -43,51 +43,55 @@ describe("Deployoment", () => {
 
   test("deployInfo return an latest and next tags based on dockerImages", async () => {
     const parent = { id: "testId" };
-    const db = {
-      query: {
-        dockerImages: jest
+    const prisma = {
+      dockerImage: {
+        findMany: jest
           .fn()
-          .mockReturnValue([{ tag: "deploy-1" }, { tag: "deploy-2" }]),
-        deployment: jest.fn()
-      }
+          .mockReturnValue([{ tag: "deploy-1" }, { tag: "deploy-2" }])
+      },
+      deployment: { findOne: jest.fn() }
     };
-    const { latest, nextCli } = await deployInfo(parent, {}, { db });
+    const { latest, nextCli } = await deployInfo(parent, {}, { prisma });
     expect(latest).toEqual("deploy-2");
     expect(nextCli).toEqual("deploy-3");
-    expect(db.query.dockerImages.mock.calls).toHaveLength(2);
-    expect(db.query.deployment.mock.calls).toHaveLength(0);
+    expect(prisma.dockerImage.findMany.mock.calls).toHaveLength(2);
+    expect(prisma.deployment.findOne.mock.calls).toHaveLength(0);
   });
 
   test("deployInfo return current and latest and next tags based on dockerImages", async () => {
     const parent = { id: "testId" };
-    const db = {
-      query: {
-        dockerImages: jest
+    const prisma = {
+      dockerImage: {
+        findMany: jest
           .fn()
-          .mockReturnValue([{ tag: "teamcity-r4ws4" }, { tag: "deploy-1" }]),
-        deployment: jest.fn()
-      }
+          .mockReturnValue([{ tag: "teamcity-r4ws4" }, { tag: "deploy-1" }])
+      },
+      deployment: { findOne: jest.fn() }
     };
-    const { latest, nextCli, current } = await deployInfo(parent, {}, { db });
+    const { latest, nextCli, current } = await deployInfo(
+      parent,
+      {},
+      { prisma }
+    );
     expect(latest).toEqual("deploy-1");
     expect(nextCli).toEqual("deploy-2");
     expect(current).toEqual("teamcity-r4ws4");
-    expect(db.query.dockerImages.mock.calls).toHaveLength(2);
-    expect(db.query.deployment.mock.calls).toHaveLength(0);
+    expect(prisma.dockerImage.findMany.mock.calls).toHaveLength(2);
+    expect(prisma.deployment.findOne.mock.calls).toHaveLength(0);
   });
 
   test("deployInfo return an latest and next tags based on default value", async () => {
     const parent = { id: "testId" };
-    const db = {
-      query: {
-        dockerImages: jest.fn().mockReturnValue([]),
-        deployment: jest.fn().mockReturnValue({})
-      }
+    const prisma = {
+      dockerImage: {
+        findMany: jest.fn().mockReturnValue([])
+      },
+      deployment: { findOne: jest.fn().mockReturnValue({}) }
     };
-    const { latest, nextCli } = await deployInfo(parent, {}, { db });
+    const { latest, nextCli } = await deployInfo(parent, {}, { prisma });
     expect(latest).toBeUndefined();
     expect(nextCli).toEqual("deploy-1");
-    expect(db.query.dockerImages.mock.calls).toHaveLength(2);
-    expect(db.query.deployment.mock.calls).toHaveLength(0);
+    expect(prisma.dockerImage.findMany.mock.calls).toHaveLength(2);
+    expect(prisma.deployment.findOne.mock.calls).toHaveLength(0);
   });
 });

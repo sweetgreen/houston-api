@@ -16,11 +16,11 @@ wait_for_it() {
     echo "Received response from: $1 $2"
 }
 
-PRISMA_HOST=$(echo "${PRISMA__ENDPOINT}" | awk -F// '{print $2}' | awk -F: '{print $1}')
-PRISMA_PORT=$(echo "${PRISMA__ENDPOINT}" | awk -F: '{print $3}' | awk -F/ '{print $1}')
+POSTGRES_HOST=$(echo "${DATABASE_URL}" | awk -F@ '{print $2}' | awk -F: '{print $1}')
+POSTGRES_PORT=$(echo "${DATABASE_URL}" | awk -F@ '{print $2}' | awk -F: '{print $2}' | awk -F/ '{print $1}')
 
-if [[ -n $PRISMA_HOST  ]]; then
-    wait_for_it "$PRISMA_HOST" "$PRISMA_PORT"
+if [[ -n $DATABASE_URL  ]]; then
+    wait_for_it "$POSTGRES_HOST" "$POSTGRES_PORT"
 fi
 
 if [[ -n $COMMANDER__HOST  ]]; then

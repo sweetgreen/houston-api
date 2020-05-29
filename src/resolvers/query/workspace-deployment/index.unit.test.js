@@ -1,19 +1,17 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
-  query deployments {
-    deployments {
+  query workspaceDeployment (
+    $workspaceUuid: Uuid!
+    $releaseName: String!
+  ) {
+    workspaceDeployment (
+      workspaceUuid: $workspaceUuid
+      releaseName: $releaseName
+    ) {
       id
       label
       description
@@ -44,18 +42,24 @@ describe("deployments", () => {
     };
 
     // Mock up some db functions.
-    const deployments = jest.fn();
+    const findOne = jest.fn();
 
     // Construct db object for context.
-    const db = {
-      query: {
-        deployments
+    const prisma = {
+      deployment: {
+        findOne
       }
     };
 
+    // Query vars
+    const vars = {
+      workspaceUuid: casual.uuid,
+      releaseName: casual.word
+    };
+
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db, user });
+    const res = await graphql(schema, query, null, { prisma, user }, vars);
     expect(res.errors).toBeUndefined();
-    expect(deployments.mock.calls.length).toBe(1);
+    expect(findOne.mock.calls.length).toBe(1);
   });
 });

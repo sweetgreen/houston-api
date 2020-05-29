@@ -11,7 +11,7 @@ import { first, get, size, startsWith } from "lodash";
  * @param {Object} args The graphql arguments.
  * @param {Object} ctx The graphql context.
  */
-export default async function deleteSystemRoleBinding(parent, args, ctx, info) {
+export default async function deleteSystemRoleBinding(parent, args, ctx) {
   // Pull out some args.
   const { userId, role } = args;
 
@@ -19,28 +19,23 @@ export default async function deleteSystemRoleBinding(parent, args, ctx, info) {
   if (!startsWith(args.role, "SYSTEM")) throw new InvalidRoleError();
 
   // Check if the RoleBinding exists. If not, throw error.
-  const roleBindings = await ctx.db.query.roleBindings(
-    { where: { role, user: { id: userId } } },
-    "{ role, id }"
-  );
+  const roleBindings = await ctx.prisma.roleBinding.findMany({
+    where: { role, user: { id: userId } }
+  });
   if (size(roleBindings) === 0) throw new MissingRoleBindingError();
 
   // Throw error if there are less than 2 users with role SYSTEM_ADMIN.
   if (role === "SYSTEM_ADMIN") {
-    const systemAdmins = await ctx.db.query.roleBindings(
-      { where: { role } },
-      "{ role }"
-    );
+    const systemAdmins = await ctx.prisma.roleBinding.findMany({
+      where: { role }
+    });
     if (systemAdmins.length < 2) throw new NoSystemAdminError();
   }
 
   // Delete RoleBinding.
-  return ctx.db.mutation.deleteRoleBinding(
-    {
-      where: {
-        id: get(first(roleBindings), "id")
-      }
-    },
-    info
-  );
+  return ctx.prisma.roleBinding.delete({
+    where: {
+      id: get(first(roleBindings), "id")
+    }
+  });
 }

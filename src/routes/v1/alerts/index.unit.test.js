@@ -1,6 +1,6 @@
 import router from "./index";
-import * as prismaExports from "generated/client";
 import * as emailExports from "emails";
+import * as prismaExports from "@prisma/client";
 import casual from "casual";
 import request from "supertest";
 import express from "express";
@@ -11,14 +11,17 @@ const app = express().use(router);
 describe("POST /alerts", () => {
   test("alerts are properly mapped to an email", async () => {
     // Set up our spies.
-    jest.spyOn(prismaExports.prisma, "deployment").mockImplementation(() => {
+    jest.spyOn(prismaExports, "PrismaClient").mockImplementation(() => {
       return {
-        alertEmails() {
-          return [casual.email, casual.email];
+        disconnect: jest.fn(),
+        deployment: {
+          findOne: jest.fn().mockReturnValue({
+            id: casual.uuid,
+            alertEmails: [casual.email, casual.email]
+          })
         }
       };
     });
-
     const sendEmail = jest.spyOn(emailExports, "sendEmail");
 
     const res = await request(app)

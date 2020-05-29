@@ -1,13 +1,6 @@
 import * as indexExports from "./index";
-import { prisma } from "generated/client";
+import * as prismaExports from "@prisma/client";
 import nock from "nock";
-
-jest.mock("generated/client", () => {
-  return {
-    __esModule: true,
-    prisma: jest.fn().mockName("MockPrisma")
-  };
-});
 
 describe("getPlatformReleases", () => {
   afterEach(() => {
@@ -67,20 +60,22 @@ describe("updatePlatformReleases", () => {
       .get("/astronomer-platform")
       .reply(200, releasesResponse);
 
-    prisma.platformReleases = jest
-      .fn()
-      .mockName("platformReleases")
-      .mockReturnValue([{ version: "0.0.1" }]);
+    const upsert = jest.fn().mockReturnValue({});
 
-    prisma.upsertPlatformRelease = jest
-      .fn()
-      .mockName("upsertPlatformRelease")
-      .mockReturnValue({});
+    jest.spyOn(prismaExports, "PrismaClient").mockImplementation(() => {
+      return {
+        disconnect: jest.fn(),
+        platformRelease: {
+          findMany: jest.fn(),
+          upsert
+        }
+      };
+    });
 
     await indexExports.updatePlatformReleases(
       "http://updates.test.com/astronomer-platform"
     );
 
-    expect(prisma.upsertPlatformRelease).toHaveBeenCalledTimes(2);
+    expect(upsert).toHaveBeenCalledTimes(2);
   });
 });

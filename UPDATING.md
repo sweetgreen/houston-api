@@ -60,3 +60,24 @@ AUTH__OPENID_CONNECT__AUTH0__ENABLED=true
 AUTH__OPENID_CONNECT__AUTH0__DISCOVERY_URL=https://org.auth0.com
 AUTH__OPENID_CONNECT__AUTH0__CLIENT_ID=$ID
 ```
+
+
+### Prisma 2
+
+Migrate scalarList to native PostgreSQL:
+
+```sql
+ALTER TABLE "houston$default"."Deployment" ADD COLUMN "alertEmails" text[];
+
+UPDATE "houston$default"."Deployment"
+  SET alertEmails = t.alertEmails
+FROM (
+  SELECT "nodeId", array_agg(VALUE ORDER BY position) AS alertEmails
+  FROM "houston$default"."Deployment_alertEmails"
+  GROUP BY "nodeId"
+) t
+where t."nodeId" = "Deployment"."id";
+
+DROP TABLE "houston$default"."Deployment_alertEmails";
+```
+from https://github.com/prisma/prisma/blob/master/docs/upgrade-guides/upgrading-to-preview019.md#only-postgresql

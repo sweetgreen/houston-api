@@ -1,15 +1,7 @@
 import { deploymentsQuery } from "./index";
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
@@ -49,12 +41,12 @@ describe("deployments", () => {
     };
 
     // Mock up some db functions.
-    const deployments = jest.fn();
+    const findMany = jest.fn();
 
     // Construct db object for context.
-    const db = {
-      query: {
-        deployments
+    const prisma = {
+      deployment: {
+        findMany
       }
     };
 
@@ -62,9 +54,9 @@ describe("deployments", () => {
     const vars = { workspaceUuid: casual.uuid };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db, user }, vars);
+    const res = await graphql(schema, query, null, { prisma, user }, vars);
     expect(res.errors).toBeUndefined();
-    expect(deployments.mock.calls.length).toBe(1);
+    expect(findMany.mock.calls.length).toBe(1);
   });
 });
 
@@ -114,10 +106,9 @@ describe("deploymentsQuery", () => {
 
     expect(query).toHaveProperty("where.AND");
     expect(query.where.AND).toHaveLength(2);
-    expect(query.where.AND[0]).toHaveProperty("id_in", [
-      deploymentId1,
-      deploymentId2
-    ]);
+    expect(query.where.AND[0]).toStrictEqual({
+      id: { in: [deploymentId1, deploymentId2] }
+    });
     expect(query.where.AND[1]).toHaveProperty("deletedAt", null);
   });
 });

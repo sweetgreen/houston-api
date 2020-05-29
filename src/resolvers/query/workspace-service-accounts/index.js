@@ -1,6 +1,3 @@
-import fragment from "./fragment";
-import { addFragmentToInfo } from "graphql-binding";
-
 /*
  * Get a list of workspace service accounts
  * @param {Object} parent The result of the parent resolver.
@@ -8,29 +5,18 @@ import { addFragmentToInfo } from "graphql-binding";
  * @param {Object} ctx The graphql context.
  * @return {AuthConfig} The auth config.
  */
-export default async function workspaceServiceAccounts(
-  parent,
-  args,
-  ctx,
-  info
-) {
+export default async function workspaceServiceAccounts(parent, args, ctx) {
   // Pull out some args.
   const { workspaceUuid } = args;
 
-  // Build query structure.
-  const query = {
+  // Run final query
+  const serviceAccounts = await ctx.prisma.serviceAccount.findMany({
     where: {
       roleBinding: {
         workspace: { id: workspaceUuid }
       }
     }
-  };
-
-  // Run final query
-  const serviceAccounts = await ctx.db.query.serviceAccounts(
-    query,
-    addFragmentToInfo(info, fragment)
-  );
+  });
 
   // If we made it here, return the service accounts.
   return serviceAccounts;

@@ -9,12 +9,10 @@ import { track } from "analytics";
  * @return {Deployment} The deleted Deployment.
  */
 export default async function deleteWorkspace(parent, args, ctx) {
-  const deployments = ctx.db.query.deployments(
-    {
-      where: { id: args.workspaceUuid, deletedAt: null }
-    },
-    `{ id }`
-  );
+  const deployments = ctx.prisma.deployment.findMany({
+    where: { id: args.workspaceUuid, deletedAt: null },
+    select: { id: true }
+  });
 
   // Don't delete if there are deployments present
   if (deployments && deployments.length > 0) throw new WorkspaceDeleteError();
@@ -24,11 +22,9 @@ export default async function deleteWorkspace(parent, args, ctx) {
     workspaceId: args.workspaceUuid
   });
 
-  // Delete the record from the database.
-  return await ctx.db.mutation.deleteWorkspace(
-    {
-      where: { id: args.workspaceUuid }
-    },
-    `{ id }`
-  );
+  // Delete the workspace record from the database.
+  return await ctx.prisma.workspace.delete({
+    where: { id: args.workspaceUuid },
+    select: { id: true }
+  });
 }

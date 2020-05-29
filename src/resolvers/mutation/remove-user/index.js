@@ -1,4 +1,3 @@
-import { returnUserFragment, queryUserFragment } from "./fragment";
 import { NoSystemAdminError } from "errors";
 import { find, size } from "lodash";
 import { SYSTEM_ADMIN } from "constants";
@@ -17,10 +16,10 @@ export default async function removeUser(parent, args, ctx) {
   const where = { id: userUuid };
 
   // Get the user we want to remove.
-  const { roleBindings } = await ctx.db.query.user(
-    { where },
-    queryUserFragment
-  );
+  const { roleBindings } = await ctx.prisma.user.findOne({
+    where,
+    include: { roleBindings: true }
+  });
 
   // Determine if this user is a SYSTEM_ADMIN.
   const isAdmin = !!find(roleBindings, ["role", SYSTEM_ADMIN]);
@@ -30,11 +29,11 @@ export default async function removeUser(parent, args, ctx) {
   if (isAdmin) {
     const whereAdmin = { role: SYSTEM_ADMIN, user: { id_not: userUuid } };
     const otherAdminCount = size(
-      await ctx.db.query.roleBindings({ where: whereAdmin })
+      await ctx.prisma.roleBinding.findMany({ where: whereAdmin })
     );
     if (otherAdminCount === 0) throw new NoSystemAdminError();
   }
 
   // Remove the User
-  return ctx.db.mutation.deleteUser({ where }, returnUserFragment);
+  return ctx.prisma.user.delete({ where, select: { id: true } });
 }

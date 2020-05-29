@@ -366,7 +366,7 @@ deployments:
   # Labels specifed here are applied to Airflow deployment namespaces.
   namespaceLabels: {}
 
-  # Enable manual namespace labels 
+  # Enable manual namespace labels
   manualReleaseNames: false
 
   # Log out final helm values whenever they are generated, before deployment.

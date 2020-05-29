@@ -7,10 +7,7 @@
  */
 export default function deleteInviteToken(parent, args, ctx) {
   // Delete the record from the database.
-  return ctx.db.mutation.deleteInviteToken(
-    {
-      where: { id: args.inviteUuid }
-    },
-    `{ id }`
-  );
+  return ctx.prisma.inviteToken.delete({
+    where: { id: args.inviteUuid }
+  });
 }

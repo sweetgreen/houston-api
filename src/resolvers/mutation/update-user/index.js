@@ -7,10 +7,10 @@ import { pick } from "lodash";
  * @param {Object} ctx The graphql context.
  * @return {User} The updated User.
  */
-export default function updateUser(parent, args, ctx, info) {
+export default function updateUser(parent, args, ctx) {
   // The external facing schema is too loose as JSON.
   // For now, we just pluck out any props that are not in this list.
   const data = pick(args.payload, ["fullName"]);
   const where = { id: ctx.user.id };
-  return ctx.db.mutation.updateUser({ where, data }, info);
+  return ctx.prisma.user.update({ where, data });
 }

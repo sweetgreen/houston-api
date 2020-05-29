@@ -12,16 +12,16 @@ import { USER_STATUS_ACTIVE } from "constants";
 export default async function verifyEmail(parent, args, ctx) {
   // Pull out the email address.
   const { email } = args;
-  const users = await ctx.db.query.users(
-    {
-      where: {
-        emails_every: {
+  const users = await ctx.prisma.user.findMany({
+    where: {
+      emails: {
+        every: {
           address: email
         }
       }
     },
-    `{ id }`
-  );
+    select: { id: true }
+  });
 
   // There should be one or none.
   const user = first(users);
@@ -37,7 +37,7 @@ export default async function verifyEmail(parent, args, ctx) {
     },
     status: USER_STATUS_ACTIVE
   };
-  await ctx.db.mutation.updateUser({ where, data });
+  await ctx.prisma.user.update({ where, data });
 
   // Always return true.
   return true;

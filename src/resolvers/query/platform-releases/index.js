@@ -1,6 +1,4 @@
-import fragment from "./fragment";
 import log from "logger";
-import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 import { size, first } from "lodash";
 import semver from "semver";
@@ -11,15 +9,16 @@ import semver from "semver";
  * @param {Object} ctx The graphql context.
  * @return {PlatformRelease} PlatformRelease.
  */
-export default async function updateAvailable(parent, args, ctx, info) {
+export default async function updateAvailable(parent, args, ctx) {
   // Get current helm release version
   const currentVersion = config.get("helm.releaseVersion");
 
   // Get all available versions from database
-  const platformReleases = await ctx.db.query.platformReleases(
-    {},
-    addFragmentToInfo(info, fragment)
-  );
+  const platformReleases = await ctx.prisma.platformRelease.findMany({
+    select: {
+      version: true
+    }
+  });
 
   if (size(platformReleases) === 0) {
     log.info("There are no platform releases in the database");

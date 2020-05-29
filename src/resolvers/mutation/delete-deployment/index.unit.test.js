@@ -1,16 +1,8 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import { generateReleaseName } from "deployments/naming";
 import casual from "casual";
 import config from "config";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const mutation = `
@@ -26,21 +18,21 @@ const mutation = `
 `;
 
 describe("deleteDeployment", () => {
-  let id, updateDeployment, db, commander, vars, user;
+  let id, update, prisma, commander, vars, user;
 
   beforeEach(() => {
     // Create some deployment vars.
     id = casual.uuid;
 
     // Mock up some db functions.
-    updateDeployment = jest.fn().mockReturnValue({
+    update = jest.fn().mockReturnValue({
       id,
       releaseName: generateReleaseName()
     });
 
     // Construct db object for context.
-    db = {
-      mutation: { updateDeployment }
+    prisma = {
+      deployment: { update }
     };
 
     // Mock up a user object for context
@@ -64,19 +56,16 @@ describe("deleteDeployment", () => {
         schema,
         mutation,
         null,
-        { db, commander, user },
+        { prisma, commander, user },
         vars
       );
 
       expect(res.errors).toBeUndefined();
-      expect(updateDeployment).toBeCalledTimes(1);
-      expect(updateDeployment).toBeCalledWith(
-        {
-          data: { deletedAt: expect.any(Date) },
-          where: { id }
-        },
-        expect.anything()
-      );
+      expect(update).toBeCalledTimes(1);
+      expect(update).toBeCalledWith({
+        data: { deletedAt: expect.any(Date) },
+        where: { id }
+      });
       expect(commander.request.mock.calls.length).toBe(1);
       expect(commander.request.mock.calls[0][0]).toBe("deleteDeployment");
       expect(commander.request.mock.calls[0][1].deleteNamespace).toBe(true);
@@ -92,19 +81,16 @@ describe("deleteDeployment", () => {
         schema,
         mutation,
         null,
-        { db, commander, user },
+        { prisma, commander, user },
         vars
       );
 
       expect(res.errors).toBeUndefined();
-      expect(updateDeployment).toBeCalledTimes(1);
-      expect(updateDeployment).toBeCalledWith(
-        {
-          data: { deletedAt: expect.any(Date) },
-          where: { id }
-        },
-        expect.anything()
-      );
+      expect(update).toBeCalledTimes(1);
+      expect(update).toBeCalledWith({
+        data: { deletedAt: expect.any(Date) },
+        where: { id }
+      });
       expect(commander.request.mock.calls.length).toBe(1);
       expect(commander.request.mock.calls[0][0]).toBe("deleteDeployment");
       expect(commander.request.mock.calls[0][1].deleteNamespace).toBe(false);

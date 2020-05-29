@@ -1,5 +1,3 @@
-import fragment from "./fragment";
-import { addFragmentToInfo } from "graphql-binding";
 import crypto from "crypto";
 
 /*
@@ -12,8 +10,7 @@ import crypto from "crypto";
 export default async function createDeploymentServiceAccount(
   parent,
   args,
-  ctx,
-  info
+  ctx
 ) {
   // Pull out some variables.
   const { label, category, deploymentUuid, role } = args;
@@ -28,17 +25,13 @@ export default async function createDeploymentServiceAccount(
       roleBinding: {
         create: {
           role,
-          deployment: {
-            connect: { id: deploymentUuid }
-          }
+          deployment: { connect: { id: deploymentUuid } },
+          user: { connect: { id: ctx.user.id } }
         }
       }
     }
   };
 
   // Run the mutation.
-  return ctx.db.mutation.createServiceAccount(
-    mutation,
-    addFragmentToInfo(info, fragment)
-  );
+  return ctx.prisma.serviceAccount.create(mutation);
 }

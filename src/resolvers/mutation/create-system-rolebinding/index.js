@@ -16,11 +16,11 @@ export default async function createSystemRoleBinding(parent, args, ctx, info) {
 
   // Check if the RoleBinding already exists. If so, return it.
   const where = { role, user: { id: userId } };
-  const exists = await ctx.db.exists.RoleBinding(where);
-  if (exists) throw new DuplicateRoleBindingError();
+  const roleBinding = await ctx.prisma.roleBinding.findOne(where);
+  if (roleBinding) throw new DuplicateRoleBindingError();
 
   // Otherwise, create and return the RoleBinding.
-  return ctx.db.mutation.createRoleBinding(
+  return ctx.prisma.roleBinding.create(
     {
       data: {
         user: { connect: { id: userId } },

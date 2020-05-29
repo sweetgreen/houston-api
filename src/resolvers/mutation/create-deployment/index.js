@@ -1,4 +1,3 @@
-import { deploymentFragment, workspaceFragment } from "./fragment";
 import {
   validateReleaseName,
   generateReleaseName,
@@ -17,7 +16,6 @@ import {
 import validate from "deployments/validate";
 import { track } from "analytics";
 import { WorkspaceSuspendedError, TrialError } from "errors";
-import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 import bcrypt from "bcryptjs";
 import { get, isNull, find, size, merge, isEmpty } from "lodash";
@@ -25,7 +23,8 @@ import { generate as generatePassword } from "generate-password";
 import {
   DEPLOYMENT_AIRFLOW,
   DEPLOYMENT_PROPERTY_EXTRA_AU,
-  AIRFLOW_EXECUTOR_DEFAULT
+  AIRFLOW_EXECUTOR_DEFAULT,
+  DEPLOYMENT_ADMIN
 } from "constants";
 
 /*
@@ -35,7 +34,7 @@ import {
  * @param {Object} ctx The graphql context.
  * @return {Deployment} The newly created Deployment.
  */
-export default async function createDeployment(parent, args, ctx, info) {
+export default async function createDeployment(parent, args, ctx) {
   // Grab default chart
   const defaultChartVersion = config.get("deployments.chart.version");
   const defaultAirflowVersion = defaultAirflowImage().version;
@@ -46,7 +45,10 @@ export default async function createDeployment(parent, args, ctx, info) {
   const executorConfig = find(executors, ["name", executor]);
 
   const where = { id: args.workspaceUuid };
-  const workspace = await ctx.db.query.workspace({ where }, workspaceFragment);
+  const workspace = await ctx.prisma.workspace.findOne({
+    where,
+    include: { deployments: true }
+  });
 
   // Is stripe enabled for the system.
   const stripeEnabled = config.get("stripe.enabled");
@@ -73,7 +75,7 @@ export default async function createDeployment(parent, args, ctx, info) {
   }
 
   // Validate deployment args.
-  await validate(args.workspaceUuid, args);
+  await validate(ctx.prisma, args.workspaceUuid, args);
 
   // Parse args for default versions, falling back to platform versions.
   const version = get(args, "version", defaultChartVersion);
@@ -127,7 +129,11 @@ export default async function createDeployment(parent, args, ctx, info) {
   );
 
   // Create the base mutation.
+  // TODO: watch for JSON prisma2 type to become available
   const mutation = {
+    include: {
+      workspace: true
+    },
     data: {
       label: args.label,
       description: args.description,
@@ -142,15 +148,18 @@ export default async function createDeployment(parent, args, ctx, info) {
         connect: {
           id: args.workspaceUuid
         }
+      },
+      roleBindings: {
+        create: {
+          role: DEPLOYMENT_ADMIN,
+          user: { connect: { id: ctx.user.id } }
+        }
       }
     }
   };
 
   // Run the mutation.
-  const deployment = await ctx.db.mutation.createDeployment(
-    mutation,
-    addFragmentToInfo(info, deploymentFragment)
-  );
+  const deployment = await ctx.prisma.deployment.create(mutation);
 
   // Run the analytics track event
   track(ctx.user.id, "Created Deployment", {

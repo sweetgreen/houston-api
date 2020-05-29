@@ -1,7 +1,7 @@
 import router from "./index";
-import { prisma } from "generated/client";
 import { createJWT, decodeJWT } from "jwt";
 import * as rbac from "rbac";
+import * as prisma from "@prisma/client";
 import bcrypt from "bcryptjs";
 import casual from "casual";
 import supertest from "supertest";
@@ -9,15 +9,18 @@ import express from "express";
 import { DEPLOYMENT_ADMIN } from "constants";
 
 jest.mock("rbac");
-jest.mock("generated/client", () => {
-  return {
-    __esModule: true,
-    prisma: jest.fn().mockName("MockPrisma")
-  };
-});
 jest.mock("errors/express", () => {
   // Replace the error catcher with one that just throws, so that errors in tests are reported!
   return { catchAsyncError: fn => fn };
+});
+
+let deployment = jest.fn();
+
+jest.spyOn(prisma, "PrismaClient").mockImplementation(() => {
+  return {
+    disconnect: jest.fn(),
+    deployment: deployment
+  };
 });
 
 // Create test application.
@@ -67,10 +70,9 @@ describe("POST /registry", () => {
       rbac.hasPermission.mockReturnValue(false);
       rbac.getAuthUser.mockReturnValue(userObject);
       rbac.accesibleDeploymentsWithPermission.mockReturnValue([]);
-
-      prisma.deployment = jest
-        .fn()
-        .mockReturnValue({ id: jest.fn().mockResolvedValue(deploymentId) });
+      deployment = {
+        findOne: jest.fn().mockReturnValue({ id: deploymentId })
+      };
     });
 
     test("works without scope param", async () => {
@@ -168,17 +170,15 @@ describe("POST /registry", () => {
         otherId
       ]);
 
-      prisma.deployments = jest
-        .fn()
-        .mockName("deployments")
-        .mockReturnValueOnce({
-          releaseName: jest
-            .fn()
-            .mockResolvedValue([
-              { releaseName: "imploding-sun-1234" },
-              { releaseName: "gravitational-nova-5678" }
-            ])
-        });
+      deployment = {
+        findOne: jest.fn().mockReturnValue({}),
+        findMany: jest
+          .fn()
+          .mockReturnValue([
+            { releaseName: "imploding-sun-1234" },
+            { releaseName: "gravitational-nova-5678" }
+          ])
+      };
 
       const res = await request
         .get("/")
@@ -213,8 +213,9 @@ describe("POST /registry", () => {
         userObject,
         "deployment.images.pull"
       );
-      expect(prisma.deployments).toBeCalledWith({
-        where: { id_in: [deploymentId, otherId] }
+      expect(deployment.findMany).toBeCalledWith({
+        select: { releaseName: true },
+        where: { id: { in: [deploymentId, otherId] } }
       });
     });
 
@@ -316,9 +317,7 @@ describe("POST /registry", () => {
     const hash = await bcrypt.hash(password, 10);
 
     rbac.getAuthUser.mockReturnValueOnce(undefined);
-    prisma.deployment = jest
-      .fn()
-      .mockReturnValue({ registryPassword: jest.fn().mockResolvedValue(hash) });
+    deployment.findOne = jest.fn().mockReturnValue({ registryPassword: hash });
 
     const res = await request
       .get("/")

@@ -1,15 +1,7 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import { SYSTEM_ADMIN } from "constants";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
@@ -29,13 +21,16 @@ const query = `
 describe("createSystemRoleBinding", () => {
   test("correctly creates a system role binding", async () => {
     // Mock up some db functions.
-    const RoleBinding = jest.fn();
-    const createRoleBinding = jest.fn();
+    const findOne = jest.fn();
+    const create = jest.fn().mockReturnValue({
+      id: casual.uuid,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
 
     // Construct db object for context.
-    const db = {
-      exists: { RoleBinding },
-      mutation: { createRoleBinding }
+    const prisma = {
+      roleBinding: { findOne, create }
     };
 
     const vars = {
@@ -44,19 +39,22 @@ describe("createSystemRoleBinding", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
   });
 
   test("throws error if role binding exists", async () => {
     // Mock up some db functions.
-    const RoleBinding = jest.fn().mockReturnValue(true);
-    const createRoleBinding = jest.fn();
+    const findOne = jest.fn().mockReturnValue(true);
+    const create = jest.fn().mockReturnValue({
+      id: casual.uuid,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
 
     // Construct db object for context.
-    const db = {
-      exists: { RoleBinding },
-      mutation: { createRoleBinding }
+    const prisma = {
+      roleBinding: { findOne, create }
     };
 
     const vars = {
@@ -65,7 +63,7 @@ describe("createSystemRoleBinding", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
   });
 });

@@ -1,5 +1,6 @@
 import { getAuthUser } from "rbac";
 import { getCookieName } from "utilities";
+import { PrismaClient } from "@prisma/client";
 
 /*
  * Express middleware for Authentication. Grabs a JWT
@@ -10,7 +11,7 @@ import { getCookieName } from "utilities";
  * @param {Object} res The express response.
  * @param {Function} next Calls the next middleware.
  */
-export function authenticateRequest() {
+export function authenticateRequest(prisma) {
   return async function(req, res, next) {
     // Set up the session object on every request.
     req.session = {};
@@ -20,7 +21,7 @@ export function authenticateRequest() {
     const token = authHeader || req.cookies[getCookieName()];
 
     // Set the user on the request session if we have one.
-    req.session.user = await getAuthUser(token);
+    req.session.user = await getAuthUser(prisma, token);
 
     // Pass execution downstream.
     next();
@@ -40,9 +41,11 @@ export async function wsOnConnect(connParams) {
     ""
   ).replace("Bearer ", "");
 
+  const prisma = new PrismaClient();
   // Find the user
-  const user = await getAuthUser(token);
+  const user = await getAuthUser(prisma, token);
 
+  await prisma.disconnect();
   // If we have a user, return it in a structure that mimics the normal
   // authentication middleware above. It will get merged into the context
   // and will work just like normal with downstream resolvers, including

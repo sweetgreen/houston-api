@@ -1,15 +1,7 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import { WORKSPACE_EDITOR } from "constants";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 jest.mock("emails");
 
@@ -34,9 +26,9 @@ describe("workspaceUpdateUserRole", () => {
   let updateRoleBinding = jest.fn();
   let updateInviteToken = jest.fn();
   let ctx = {
-    db: {
-      query: { roleBindings: roleBindingsQ, inviteTokens: inviteTokensQ },
-      mutation: { updateRoleBinding, updateInviteToken }
+    prisma: {
+      roleBinding: { findMany: roleBindingsQ, update: updateRoleBinding },
+      inviteToken: { findMany: inviteTokensQ, update: updateInviteToken }
     }
   };
   test("yields NotFound error when user or invite not found", async () => {

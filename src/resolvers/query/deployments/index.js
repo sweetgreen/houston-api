@@ -1,6 +1,3 @@
-import fragment from "./fragment";
-import { addFragmentToInfo } from "graphql-binding";
-
 /*
  * Get list of deployments for a system admin user.
  * @param {Object} parent The result of the parent resolver.
@@ -8,9 +5,6 @@ import { addFragmentToInfo } from "graphql-binding";
  * @param {Object} ctx The graphql context.
  * @return {[]Deployment} List of Deployments.
  */
-export default async function deployments(parent, args, ctx, info) {
-  return await ctx.db.query.deployments(
-    { where: { deletedAt: null } },
-    addFragmentToInfo(info, fragment)
-  );
+export default async function deployments(parent, args, ctx) {
+  return await ctx.prisma.deployment.findMany();
 }

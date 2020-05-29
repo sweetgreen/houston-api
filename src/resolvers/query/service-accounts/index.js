@@ -1,8 +1,6 @@
-import fragment from "./fragment";
 import { hasPermission } from "rbac";
 import { PermissionError, MissingArgumentError } from "errors";
 import { compact, includes } from "lodash";
-import { addFragmentToInfo } from "graphql-binding";
 
 /*
  * Get a list of service accounts.
@@ -13,7 +11,7 @@ import { addFragmentToInfo } from "graphql-binding";
  * @param {Object} ctx The graphql context.
  * @return {AuthConfig} The auth config.
  */
-export default async function serviceAccounts(parent, args, ctx, info) {
+export default async function serviceAccounts(parent, args, ctx) {
   // Pull out some args.
   const { serviceAccountUuid, entityType: upperEntityType, entityUuid } = args;
   const entityType = upperEntityType.toLowerCase();
@@ -68,10 +66,13 @@ export default async function serviceAccounts(parent, args, ctx, info) {
   }
 
   // Run final query
-  const serviceAccounts = await ctx.db.query.serviceAccounts(
+  const serviceAccounts = await ctx.prisma.serviceAccount.findMany({
     query,
-    addFragmentToInfo(info, fragment)
-  );
+    select: {
+      id: true,
+      roleBinding: true
+    }
+  });
 
   // If we made it here, return the service accounts.
   return serviceAccounts;

@@ -17,19 +17,10 @@ import shortid from "shortid";
  */
 export default async function forgotPassword(parent, args, ctx) {
   // Check for user by incoming email arg.
-  const email = await ctx.db.query.email(
-    { where: { address: args.email.toLowerCase() } },
-    `{
-      address
-      user {
-        id
-        localCredential {
-          id
-          resetToken
-        }
-      }
-    }`
-  );
+  const email = await ctx.prisma.email.findOne({
+    where: { address: args.email.toLowerCase() },
+    include: { user: true }
+  });
 
   if (!email) {
     sendEmail(args.email, "forgot-password-no-account", { strict: true });
@@ -48,7 +39,7 @@ export default async function forgotPassword(parent, args, ctx) {
   const resetToken =
     email.user.localCredential.resetToken || shortid.generate();
 
-  await ctx.db.mutation.updateLocalCredential({
+  await ctx.prisma.localCredential.update({
     data: { resetToken: resetToken },
     where: { id: localCredential.id }
   });

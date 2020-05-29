@@ -1,5 +1,4 @@
 import router from "./index";
-import * as exports from "generated/client";
 import request from "supertest";
 import express from "express";
 

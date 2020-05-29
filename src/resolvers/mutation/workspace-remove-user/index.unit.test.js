@@ -1,14 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 jest.mock("emails");
 
@@ -34,12 +26,12 @@ describe("workspaceRemoveUser", () => {
 
     // Mock up some db functions.
     const deleteManyRoleBindings = jest.fn();
-    const workspace = jest.fn();
+    const findOne = jest.fn().mockReturnValue({ id: workspaceUuid });
 
     // Construct db object for context.
-    const db = {
-      query: { workspace },
-      mutation: { deleteManyRoleBindings }
+    const prisma = {
+      workspace: { findOne },
+      roleBindings: { delete: deleteManyRoleBindings }
     };
 
     const vars = {
@@ -48,11 +40,11 @@ describe("workspaceRemoveUser", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
 
     const where = { workspace: { id: workspaceUuid }, user: { id: userUuid } };
     expect(deleteManyRoleBindings).toHaveBeenCalledWith({ where });
-    expect(workspace).toHaveBeenCalled();
+    expect(findOne).toHaveBeenCalled();
   });
 });

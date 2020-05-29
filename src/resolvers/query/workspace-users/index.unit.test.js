@@ -1,14 +1,6 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
@@ -32,21 +24,27 @@ const query = `
 
 describe("workspaceUsers", () => {
   // Mock up some db functions.
-  const users = jest.fn();
+  const findMany = jest.fn().mockReturnValue([
+    {
+      id: casual.uuid,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      emails: [{ address: casual.email }]
+    }
+  ]);
 
   // Construct db object for context.
-  const db = { query: { users } };
+  const prisma = { user: { findMany } };
 
   test("typical request is successful", async () => {
-    // Create vars.
     const vars = {
       workspaceUuid: casual.uuid
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
-    expect(db.query.users.mock.calls).toHaveLength(1);
+    expect(prisma.user.findMany.mock.calls).toHaveLength(1);
   });
 
   test("typical (single user) request is successful", async () => {
@@ -59,8 +57,23 @@ describe("workspaceUsers", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
-    expect(users.mock.calls.length).toBe(1);
+    expect(prisma.user.findMany.mock.calls).toHaveLength(1);
+  });
+
+  test("typical (single user) request is successful", async () => {
+    // Create vars.
+    const vars = {
+      workspaceUuid: casual.uuid,
+      user: {
+        username: casual.username
+      }
+    };
+
+    // Run the graphql mutation.
+    const res = await graphql(schema, query, null, { prisma }, vars);
+    expect(res.errors).toBeUndefined();
+    expect(prisma.user.findMany.mock.calls.length).toBe(1);
   });
 });

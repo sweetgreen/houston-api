@@ -1,5 +1,5 @@
 import { InvalidCredentialsError } from "errors";
-import { prisma } from "generated/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 /*
@@ -14,6 +14,8 @@ export default async function validateDeploymentCredentials(
   password,
   passwordField
 ) {
+  const prisma = new PrismaClient();
+
   // Return false if no password
   if (!password) return false;
 
@@ -21,9 +23,12 @@ export default async function validateDeploymentCredentials(
   if (releaseName.split("-").length !== 3) return false;
 
   // Get the password for this deployment
-  const truePassword = await prisma
-    .deployment({ releaseName })
-    [passwordField]();
+  const truePassword = await prisma.deployment.findOne({
+    where: { releaseName: releaseName },
+    select: { [passwordField]: true }
+  })[passwordField];
+
+  await prisma.disconnect();
 
   // Return false if no result.
   if (!truePassword) return false;

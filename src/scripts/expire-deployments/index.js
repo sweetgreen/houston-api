@@ -4,8 +4,8 @@
 import "dotenv/config";
 import log from "logger";
 import commander from "commander";
-import { prisma } from "generated/client";
 import { generateNamespace } from "deployments/naming";
+import { PrismaClient } from "@prisma/client";
 import config from "config";
 import yargs from "yargs";
 import { map, size } from "lodash";
@@ -30,6 +30,11 @@ async function expireDeployments() {
         stripeCustomerId: null, // And where the workspace does not yet have a stripe customer id
         trialEndsAt_lte: expireDate // And where the workpace trial end date has been exceeded
       }
+    },
+    select: {
+      id: true,
+      releaseName: true,
+      workspace: { id: true, trialEndsAt: true }
     }
   };
 
@@ -40,10 +45,10 @@ async function expireDeployments() {
 
   log.debug(`Query: ${JSON.stringify(query)}`);
 
+  const prisma = new PrismaClient();
+
   // Find all suspended deployments.
-  const deployments = await prisma
-    .deployments(query)
-    .$fragment(`{ id releaseName workspace { id trialEndsAt } }`);
+  const deployments = await prisma.deployment.findMany(query);
 
   const deploymentCount = size(deployments);
 
@@ -72,7 +77,7 @@ async function expireDeployments() {
     log.info(`Soft deleting ${releaseName}`);
 
     // Update the database.
-    await prisma.updateDeployment({
+    await prisma.deployment.update({
       where: { id },
       data: { deletedAt: new Date() }
     });
@@ -84,6 +89,7 @@ async function expireDeployments() {
       deleteNamespace: !config.get("helm.singleNamespace")
     });
   }
+  await prisma.disconnect();
 
   log.info("Soft deletion of expired deployments has been finished!");
 }

@@ -1,7 +1,7 @@
 import { hasPermission } from "rbac";
-import { prisma } from "generated/client";
 import log from "logger";
 import { createJWT } from "jwt";
+import { PrismaClient } from "@prisma/client";
 import { ENTITY_DEPLOYMENT } from "constants";
 import url from "url";
 
@@ -13,6 +13,8 @@ import url from "url";
 export default async function(req, res) {
   const { user } = req.session;
   if (!user) return res.sendStatus(401);
+
+  const prisma = new PrismaClient();
 
   // Parse out some variables.
   const originalUrl = req.get("x-original-url");
@@ -33,9 +35,12 @@ export default async function(req, res) {
   if (matches && subdomain === "deployments") {
     const releaseName = matches[1];
     // Get the deploymentId for the parsed releaseName.
-    const deploymentId = await prisma
-      .deployment({ releaseName: releaseName })
-      .id();
+    const deploymentId = await prisma.deployment.findOne({
+      where: {
+        releaseName: releaseName
+      }
+    }).id;
+    await prisma.disconnect();
 
     // Check if we have deployment level access to it.
     const airflowRoles = mapLocalRolesToAirflow(user, deploymentId);

@@ -1,6 +1,3 @@
-import fragment from "./fragment";
-import { addFragmentToInfo } from "graphql-binding";
-
 /*
  * Get a list of deployment service accounts
  * @param {Object} parent The result of the parent resolver.
@@ -8,12 +5,7 @@ import { addFragmentToInfo } from "graphql-binding";
  * @param {Object} ctx The graphql context.
  * @return {[ServiceAccount]} The service accounts.
  */
-export default async function deploymentServiceAccounts(
-  parent,
-  args,
-  ctx,
-  info
-) {
+export default async function deploymentServiceAccounts(parent, args, ctx) {
   // Pull out some args.
   const { deploymentUuid } = args;
 
@@ -27,10 +19,7 @@ export default async function deploymentServiceAccounts(
   };
 
   // Run final query
-  const serviceAccounts = await ctx.db.query.serviceAccounts(
-    query,
-    addFragmentToInfo(info, fragment)
-  );
+  const serviceAccounts = await ctx.prisma.serviceAccount.findMany(query);
 
   // If we made it here, return the service accounts.
   return serviceAccounts;

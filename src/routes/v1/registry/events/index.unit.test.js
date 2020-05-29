@@ -1,25 +1,12 @@
 import router from "./index";
 import * as postExports from "./post";
-import { prisma } from "generated/client";
 import { generateHelmValues } from "deployments/config";
+import * as prisma from "@prisma/client";
 import casual from "casual";
 import request from "supertest";
 import express from "express";
 import nock from "nock";
 import { DOCKER_REGISTRY_CONTENT_TYPE } from "constants";
-
-jest.mock("generated/client", () => {
-  return {
-    __esModule: true,
-    prisma: jest.fn().mockName("MockPrisma")
-  };
-});
-
-jest.mock("deployments/config", () => {
-  return {
-    generateHelmValues: jest.fn().mockName("generateHelmValues")
-  };
-});
 
 // Create test application.
 const app = express()
@@ -30,35 +17,40 @@ const app = express()
   })
   .use(router);
 
+jest.mock("deployments/config", () => {
+  return {
+    generateHelmValues: jest.fn().mockName("generateHelmValues")
+  };
+});
+
 describe("POST /registry-events", () => {
+  let deployment = jest.fn();
+  let dockerImage = jest.fn();
+  beforeEach(() => {
+    jest.spyOn(prisma, "PrismaClient").mockImplementation(() => {
+      return {
+        disconnect: jest.fn(),
+        deployment: deployment,
+        dockerImage: dockerImage
+      };
+    });
+  });
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
   test("registry events are mapped to a deployment upgrade", async () => {
-    prisma.deployment = jest
-      .fn()
-      .mockName("deployment")
-      .mockReturnValue({
-        $fragment: function() {
-          return {
-            config: {}
-          };
-        }
-      });
-    prisma.updateDeployment = jest
-      .fn()
-      .mockName("updateDeployment")
-      .mockReturnValue({
-        $fragment: function() {
-          return {
-            workspace: { id: casual.uuid },
-            label: casual.word,
-            id: casual.uuid,
-            airflowVersion: "1.10.10"
-          };
-        }
-      });
+    deployment = {
+      findOne: jest.fn().mockReturnValue({
+        config: {}
+      }),
+      update: jest.fn().mockReturnValue({
+        workspace: { id: casual.uuid },
+        label: casual.word,
+        id: casual.uuid,
+        airflowVersion: "1.10.10"
+      })
+    };
 
     const labels = {
         "io.astronomer.docker.airflow.version": "1.10.10"
@@ -71,10 +63,9 @@ describe("POST /registry-events", () => {
       .spyOn(postExports, "extractImageMetadata")
       .mockImplementation(() => ({ labels, env }));
 
-    prisma.upsertDockerImage = jest
-      .fn()
-      .mockName("upsertDockerImage")
-      .mockReturnValue({});
+    dockerImage = {
+      upsert: jest.fn().mockReturnValue({})
+    };
 
     const res = await request(app)
       .post("/")
@@ -98,27 +89,36 @@ describe("POST /registry-events", () => {
 
     const name = "cosmic-dust-1234/airflow:cli-1";
 
-    expect(prisma.deployment).toHaveBeenCalledTimes(1);
-    expect(prisma.deployment).toHaveBeenCalledWith({
-      releaseName: "cosmic-dust-1234"
+    expect(deployment.findOne).toHaveBeenCalledTimes(1);
+    expect(deployment.findOne).toHaveBeenCalledWith({
+      where: { releaseName: "cosmic-dust-1234" },
+      select: {
+        airflowVersion: true,
+        config: true,
+        deletedAt: true
+      }
     });
-    expect(prisma.updateDeployment).toHaveBeenCalledTimes(1);
-    expect(prisma.updateDeployment).toHaveBeenCalledWith(
+
+    expect(deployment.update).toHaveBeenCalledTimes(1);
+    expect(deployment.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           airflowVersion: "1.10.10"
         })
       })
     );
+
     expect(extractImageMetadata).toHaveBeenCalledTimes(1);
+
     expect(generateHelmValues).toHaveBeenCalledTimes(1);
     expect(generateHelmValues).toHaveBeenCalledWith(
       expect.objectContaining({
         airflowVersion: "1.10.10"
       })
     );
-    expect(prisma.upsertDockerImage).toHaveBeenCalledTimes(1);
-    expect(prisma.upsertDockerImage).toHaveBeenCalledWith({
+
+    expect(dockerImage.upsert).toHaveBeenCalledTimes(1);
+    expect(dockerImage.upsert).toHaveBeenCalledWith({
       where: { name },
       update: { labels, env, digest },
       create: {
@@ -130,6 +130,123 @@ describe("POST /registry-events", () => {
         tag: "cli-1"
       }
     });
+
+    expect(res.statusCode).toBe(200);
+  });
+
+  test("return 200 OK if deployment not found for release", async () => {
+    deployment = {
+      findOne: jest.fn().mockReturnValue({}),
+      update: jest.fn().mockReturnValue({
+        workspace: { id: casual.uuid },
+        label: casual.word,
+        id: casual.uuid
+      })
+    };
+
+    const digest =
+      "sha256:907b4a633d31872f7fc9b4cb22998b9de4c25f8cc8f08529ca56c2ace698e541";
+
+    const res = await request(app)
+      .post("/")
+      .set("Content-Type", DOCKER_REGISTRY_CONTENT_TYPE)
+      .send({
+        events: [
+          {
+            id: casual.uuid,
+            action: "push",
+            target: {
+              repository: "cosmic-dust-1234/airflow",
+              tag: "cli-1",
+              digest: digest
+            },
+            request: {
+              host: casual.domain
+            }
+          }
+        ]
+      });
+
+    expect(deployment.findOne).toHaveBeenCalledTimes(1);
+    expect(deployment.update).toHaveBeenCalledTimes(0);
+    expect(res.statusCode).toBe(200);
+  });
+
+  test("return 200 OK if deployment soft-deleted", async () => {
+    deployment = {
+      findOne: jest.fn().mockReturnValue({
+        deletedAt: new Date()
+      }),
+      update: jest.fn().mockReturnValue({
+        workspace: { id: casual.uuid },
+        label: casual.word,
+        id: casual.uuid
+      })
+    };
+
+    const digest =
+      "sha256:907b4a633d31872f7fc9b4cb22998b9de4c25f8cc8f08529ca56c2ace698e541";
+
+    const res = await request(app)
+      .post("/")
+      .set("Content-Type", DOCKER_REGISTRY_CONTENT_TYPE)
+      .send({
+        events: [
+          {
+            id: casual.uuid,
+            action: "push",
+            target: {
+              repository: "cosmic-dust-1234/airflow",
+              tag: "cli-1",
+              digest: digest
+            },
+            request: {
+              host: casual.domain
+            }
+          }
+        ]
+      });
+
+    expect(deployment.findOne).toHaveBeenCalledTimes(1);
+    expect(deployment.update).toHaveBeenCalledTimes(0);
+    expect(res.statusCode).toBe(200);
+  });
+
+  test("return 200 OK if deployment config not found for release", async () => {
+    deployment = {
+      findOne: jest.fn().mockReturnValue({}),
+      update: jest.fn().mockReturnValue({
+        workspace: { id: casual.uuid },
+        label: casual.word,
+        id: casual.uuid
+      })
+    };
+
+    const digest =
+      "sha256:907b4a633d31872f7fc9b4cb22998b9de4c25f8cc8f08529ca56c2ace698e541";
+
+    const res = await request(app)
+      .post("/")
+      .set("Content-Type", DOCKER_REGISTRY_CONTENT_TYPE)
+      .send({
+        events: [
+          {
+            id: casual.uuid,
+            action: "push",
+            target: {
+              repository: "cosmic-dust-1234/airflow",
+              tag: "cli-1",
+              digest: digest
+            },
+            request: {
+              host: casual.domain
+            }
+          }
+        ]
+      });
+
+    expect(deployment.findOne).toHaveBeenCalledTimes(1);
+    expect(deployment.update).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
 
@@ -165,8 +282,8 @@ describe("POST /registry-events", () => {
         ]
       });
 
-    expect(prisma.deployment).toHaveBeenCalledTimes(1);
-    expect(prisma.updateDeployment).toHaveBeenCalledTimes(0);
+    expect(deployment.findOne).toHaveBeenCalledTimes(1);
+    expect(deployment.update).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
 
@@ -202,8 +319,8 @@ describe("POST /registry-events", () => {
         ]
       });
 
-    expect(prisma.deployment).toHaveBeenCalledTimes(1);
-    expect(prisma.updateDeployment).toHaveBeenCalledTimes(0);
+    expect(deployment.findOne).toHaveBeenCalledTimes(1);
+    expect(deployment.update).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
 
@@ -239,8 +356,8 @@ describe("POST /registry-events", () => {
         ]
       });
 
-    expect(prisma.deployment).toHaveBeenCalledTimes(1);
-    expect(prisma.updateDeployment).toHaveBeenCalledTimes(0);
+    expect(deployment.findOne).toHaveBeenCalledTimes(1);
+    expect(deployment.update).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
   test("skip if irrelevent event is sent", async () => {
@@ -262,8 +379,8 @@ describe("POST /registry-events", () => {
         ]
       });
 
-    expect(prisma.deployment).toHaveBeenCalledTimes(0);
-    expect(prisma.updateDeployment).toHaveBeenCalledTimes(0);
+    expect(deployment.findOne).toHaveBeenCalledTimes(0);
+    expect(deployment.update).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
 
@@ -287,8 +404,8 @@ describe("POST /registry-events", () => {
         ]
       });
 
-    expect(prisma.deployment).toHaveBeenCalledTimes(0);
-    expect(prisma.updateDeployment).toHaveBeenCalledTimes(0);
+    expect(deployment.findOne).toHaveBeenCalledTimes(0);
+    expect(deployment.update).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
 });

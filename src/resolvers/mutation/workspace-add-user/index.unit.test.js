@@ -1,15 +1,7 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import { sendEmail } from "emails";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 jest.mock("emails");
 
@@ -40,14 +32,19 @@ describe("workspaceAddUser", () => {
     const inviteTokensConnection = jest
       .fn()
       .mockReturnValue({ aggregate: { count: 0 } });
-    const workspace = jest.fn();
+    const workspace = jest.fn().mockReturnValue({ id: casual.uuid });
     const createRoleBinding = jest.fn();
     const createInviteToken = jest.fn();
 
     // Construct db object for context.
-    const db = {
-      query: { email, inviteTokensConnection, workspace },
-      mutation: { createRoleBinding, createInviteToken }
+    const prisma = {
+      email: { findOne: email },
+      inviteToken: {
+        findMany: inviteTokensConnection,
+        create: createInviteToken
+      },
+      roleBinding: { create: createRoleBinding },
+      workspace: { findOne: workspace }
     };
 
     const vars = {
@@ -56,7 +53,7 @@ describe("workspaceAddUser", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
     expect(email).toHaveBeenCalled();
     expect(createRoleBinding).toHaveBeenCalled();
@@ -70,15 +67,20 @@ describe("workspaceAddUser", () => {
     const email = jest.fn();
     const inviteTokensConnection = jest
       .fn()
-      .mockReturnValue({ aggregate: { count: 1 } });
-    const workspace = jest.fn();
+      .mockReturnValue([{ id: casual.uuid }]);
+    const workspace = jest.fn().mockReturnValue({ id: casual.uuid });
     const createRoleBinding = jest.fn();
     const createInviteToken = jest.fn();
 
     // Construct db object for context.
-    const db = {
-      query: { email, inviteTokensConnection, workspace },
-      mutation: { createRoleBinding, createInviteToken }
+    const prisma = {
+      email: { findOne: email },
+      inviteToken: {
+        findMany: inviteTokensConnection,
+        create: createInviteToken
+      },
+      roleBinding: { create: createRoleBinding },
+      workspace: { findOne: workspace }
     };
 
     const vars = {
@@ -87,7 +89,7 @@ describe("workspaceAddUser", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
 
     expect(res.errors[0].message).toEqual(
@@ -109,9 +111,7 @@ describe("workspaceAddUser", () => {
     };
     // Mock up some db functions.
     const email = jest.fn();
-    const inviteTokensConnection = jest
-      .fn()
-      .mockReturnValue({ aggregate: { count: 0 } });
+    const inviteTokensConnection = jest.fn().mockReturnValue([]);
     const workspace = jest.fn().mockReturnValue({ id: vars.workspaceUuid });
     const createRoleBinding = jest.fn();
     const createInviteToken = jest
@@ -119,13 +119,18 @@ describe("workspaceAddUser", () => {
       .mockReturnValue({ workspace: { label: "joe@example.com's Workspace" } });
 
     // Construct db object for context.
-    const db = {
-      query: { email, inviteTokensConnection, workspace },
-      mutation: { createRoleBinding, createInviteToken }
+    const prisma = {
+      email: { findOne: email },
+      inviteToken: {
+        findMany: inviteTokensConnection,
+        create: createInviteToken
+      },
+      roleBinding: { create: createRoleBinding },
+      workspace: { findOne: workspace }
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db }, vars);
+    const res = await graphql(schema, query, null, { prisma }, vars);
     expect(res.errors).toBeUndefined();
     expect(email).toHaveBeenCalled();
     expect(createRoleBinding).not.toHaveBeenCalled();

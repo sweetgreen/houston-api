@@ -29,7 +29,7 @@ export default async function addCard(parent, args, ctx) {
 
   const where = { id: workspaceUuid };
 
-  const workspace = await ctx.db.mutation.updateWorkspace({
+  const workspace = await ctx.prisma.workspace.update({
     data,
     where
   });

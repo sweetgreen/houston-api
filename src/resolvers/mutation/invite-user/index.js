@@ -9,9 +9,9 @@ export default async function inviteUser(parent, args, ctx) {
   email = email.toLowerCase();
 
   // Check for user by incoming email arg.
-  const emailRow = await ctx.db.query.email(
-    { where: { address: email } },
-    `{ user { id } }`
+  const emailRow = await ctx.prisma.email.findOne(
+    { where: { address: email } }
+    // `{ user { id } }`
   );
 
   if (emailRow) {
@@ -19,28 +19,29 @@ export default async function inviteUser(parent, args, ctx) {
   }
 
   // Check if we have an invite for incoming email and user.
-  const existingInvites = await ctx.db.query.inviteTokensConnection(
+  // it's workaround before https://github.com/prisma/studio/issues/119
+  // TODO: refactor
+  const existingInvites = await ctx.prisma.inviteToken.findMany(
     {
-      where: { email }
-    },
-    `{ aggregate { count } }`
+      where: { email },
+      select: { id: true }
+    }
+    // `{ aggregate { count } }`
   );
-  if (existingInvites.aggregate.count > 0) throw new UserInviteExistsError();
+  if (existingInvites.length > 0) throw new UserInviteExistsError();
 
   const token = shortid.generate();
   // Create the invite token if we didn't already have one.
   // Multi-column unique fields would be nice, but not supported yet
   // https://github.com/prisma/prisma/issues/3405
-  const invite = await ctx.db.mutation.createInviteToken(
-    {
-      data: {
-        email,
-        token,
-        source: INVITE_SOURCE_SYSTEM
-      }
+  const invite = await ctx.prisma.inviteToken.create({
+    data: {
+      email,
+      token,
+      source: INVITE_SOURCE_SYSTEM
     },
-    `{ id, token }`
-  );
+    select: { id: true, token: true }
+  });
 
   sendEmail(email, "user-invite", {
     strict: true,

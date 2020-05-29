@@ -1,27 +1,28 @@
 import "@babel/polyfill";
 import "dotenv/config";
 import resolvers from "./resolvers";
+import { schema as baseSchema } from "./schema";
+import { permissions } from "./schema/permissions";
 import { v1 } from "./routes";
 import log from "logger";
 import directives from "directives";
 import { formatError } from "errors";
-import commander from "commander";
 import { authenticateRequest, wsOnConnect } from "authentication";
+import commander from "commander";
 import config from "config";
+import { PubSub } from "apollo-server";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
-import { Prisma } from "prisma-binding";
-import { importSchema } from "graphql-import";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
-import { PubSub } from "apollo-server";
+import { PrismaClient } from "@prisma/client";
+import { applyMiddleware } from "graphql-middleware";
 import { createServer } from "http";
 
 // Get configuration from config dir and environment.
 const serverConfig = config.get("webserver");
 const corsConfig = config.get("cors");
 const helmConfig = config.get("helm");
-const prismaConfig = config.get("prisma");
 
 // Enable global proxy support for got, axios, and request libs. set
 // GLOBAL_AGENT_HTTPS_PROXY, GLOBAL_AGENT_HTTP_PROXY, or GLOBAL_AGENT_NO_PROXY
@@ -29,9 +30,11 @@ const prismaConfig = config.get("prisma");
 // http_proxy etc variables.
 import "global-agent/bootstrap";
 
+const prisma = new PrismaClient();
+
 // Create express server.
 const app = express();
-app.use(cookieParser(), authenticateRequest());
+app.use(cookieParser(), authenticateRequest(prisma));
 
 // Set up HTTP request logging.
 app.use(
@@ -43,9 +46,11 @@ app.use(
 // Setup REST routes.
 app.use("/v1", v1);
 
+const schema = applyMiddleware(baseSchema, permissions);
+
 // Instantiate a new GraphQL Apollo Server.
 const server = new ApolloServer({
-  typeDefs: [importSchema("./src/schema.graphql")],
+  schema,
   resolvers,
   schemaDirectives: {
     ...directives
@@ -60,16 +65,10 @@ const server = new ApolloServer({
   context: ctx => {
     const context = {
       ...ctx,
-      db: new Prisma({
-        typeDefs: "src/lib/generated/schema/prisma.graphql",
-        endpoint: prismaConfig.endpoint,
-        secret: prismaConfig.secret,
-        debug: prismaConfig.debug
-      }),
+      prisma: prisma,
       pubsub: new PubSub(),
       commander
     };
-
     // If it's a subscription, merge the result of the onConnect function
     // into the context.
     if (ctx.connection) return { ...context, ...ctx.connection.context };

@@ -1,16 +1,8 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import { sendEmail } from "emails";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import { INVITE_SOURCE_SYSTEM } from "constants";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 jest.mock("emails");
 
@@ -31,49 +23,44 @@ describe("inviteUser", () => {
   const vars = { email: casual.email.toLowerCase() };
 
   const emailQuery = jest.fn().mockReturnValue(null);
-  const inviteTokensConnection = jest
-    .fn()
-    .mockReturnValue({ aggregate: { count: 0 } });
-  const createInviteToken = jest.fn();
+  const findMany = jest.fn().mockReturnValue([]);
+  const create = jest.fn().mockReturnValue({ id: casual.uuid });
   // Construct db object for context.
-  const db = {
-    query: { email: emailQuery, inviteTokensConnection },
-    mutation: { createInviteToken }
+  const prisma = {
+    email: { findOne: emailQuery },
+    inviteToken: { create, findMany }
   };
 
   test("when inviting a new user", async () => {
-    const res = await graphql(schema, gql, null, { db }, vars);
+    const res = await graphql(schema, gql, null, { prisma }, vars);
     expect(res).not.toHaveProperty("errors");
 
-    expect(createInviteToken).toHaveBeenCalledWith(
-      {
-        data: {
-          email: vars.email,
-          token: expect.any(String),
-          source: INVITE_SOURCE_SYSTEM
-        }
+    expect(create).toHaveBeenCalledWith({
+      data: {
+        email: vars.email,
+        token: expect.any(String),
+        source: INVITE_SOURCE_SYSTEM
       },
-      // We don't care what fields we select here.
-      expect.any(String)
-    );
+      select: { id: true, token: true }
+    });
 
     expect(sendEmail).toBeCalledWith(vars.email, "user-invite", {
       strict: true,
       UIUrl: "http://app.astronomer.io:5000",
-      token: createInviteToken.mock.calls[0][0].data.token
+      token: create.mock.calls[0][0].data.token
     });
   });
 
   test("when trying to invite an existing user", async () => {
     emailQuery.mockReturnValueOnce({ user: { id: casual.uuid } });
-    const res = await graphql(schema, gql, null, { db }, vars);
+    const res = await graphql(schema, gql, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
     expect(res.errors[0]).toHaveProperty("extensions.code", "DUPLICATE_EMAIL");
   });
 
   test("when trying to invite an existing invite", async () => {
-    inviteTokensConnection.mockReturnValueOnce({ aggregate: { count: 1 } });
-    const res = await graphql(schema, gql, null, { db }, vars);
+    findMany.mockReturnValueOnce([{ id: "test" }]);
+    const res = await graphql(schema, gql, null, { prisma }, vars);
     expect(res.errors).toHaveLength(1);
     expect(res.errors[0]).toHaveProperty(
       "extensions.code",

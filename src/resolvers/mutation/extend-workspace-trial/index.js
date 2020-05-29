@@ -3,7 +3,7 @@ import moment from "moment";
 
 export default async function extendWorkspaceTrial(parent, args, ctx) {
   const { extraDays, workspaceUuid } = args;
-  const getWorkspace = await ctx.db.query.workspace(
+  const getWorkspace = await ctx.prisma.workspace.findOne(
     { where: { id: workspaceUuid } },
     `{ label, trialEndsAt }`
   );
@@ -15,7 +15,7 @@ export default async function extendWorkspaceTrial(parent, args, ctx) {
   const data = { trialEndsAt };
 
   const where = { id: workspaceUuid };
-  const workspace = ctx.db.mutation.updateWorkspace({
+  const workspace = ctx.prisma.workspace.update({
     data,
     where
   });

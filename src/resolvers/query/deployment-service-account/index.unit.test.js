@@ -1,15 +1,7 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
 import { DEPLOYMENT_ADMIN } from "constants";
-
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
 
 // Define our mutation
 const query = `
@@ -41,11 +33,11 @@ describe("deploymentServiceAccount", () => {
     };
 
     // Mock up some db functions.
-    const serviceAccount = jest.fn().mockReturnValue({ id: casual.uuid });
+    const findOne = jest.fn().mockReturnValue({ id: casual.uuid });
 
     // Construct db object for context.
-    const db = {
-      query: { serviceAccount }
+    const prisma = {
+      serviceAccount: { findOne }
     };
 
     const vars = {
@@ -54,9 +46,9 @@ describe("deploymentServiceAccount", () => {
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db, user }, vars);
+    const res = await graphql(schema, query, null, { prisma, user }, vars);
     expect(res.errors).toBeUndefined();
-    expect(serviceAccount.mock.calls.length).toBe(1);
+    expect(findOne.mock.calls.length).toBe(1);
   });
 
   test("request fails if missing an argument", async () => {

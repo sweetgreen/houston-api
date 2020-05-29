@@ -1,4 +1,5 @@
 import { inviteQuery } from "../../../lib/invites";
+
 /*
  * Get a list of invites for a workspace,
  * @param {Object} parent The result of the parent resolver.
@@ -11,7 +12,7 @@ export default async function workspaceInvites(parent, args, ctx) {
   const query = inviteQuery(args);
 
   // Run final query
-  return await ctx.db.query.inviteTokens({
+  return await ctx.prisma.inviteToken.findMany({
     where: {
       workspace: { id: args.workspaceUuid },
       ...query

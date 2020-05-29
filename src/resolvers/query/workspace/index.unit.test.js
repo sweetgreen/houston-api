@@ -1,17 +1,8 @@
-import resolvers from "resolvers";
+import { schema } from "../../../schema";
 import casual from "casual";
 import { graphql } from "graphql";
-import { makeExecutableSchema } from "graphql-tools";
-import { importSchema } from "graphql-import";
-import { WORKSPACE_ADMIN } from "constants";
 
-// Import our application schema
-const schema = makeExecutableSchema({
-  typeDefs: importSchema("src/schema.graphql"),
-  resolvers
-});
-
-// Define our query
+// Define our mutation
 const query = `
   query workspace(
     $workspaceUuid: Uuid!
@@ -19,12 +10,8 @@ const query = `
     workspace(
       workspaceUuid: $workspaceUuid
     ) {
-      id
       users {
         id
-        roleBindings {
-          role
-        }
       }
     }
   }
@@ -32,46 +19,31 @@ const query = `
 
 describe("workspace", () => {
   test("typical request is successful", async () => {
-    const workspaceId = casual.uuid;
-    // Mock up some db functions.
-    const workspace = jest.fn().mockReturnValue({
-      id: workspaceId
-    });
+    const commander = {
+      request: jest.fn()
+    };
 
     const user = {
       id: casual.uuid,
-      roleBindings: [
-        {
-          role: WORKSPACE_ADMIN,
-          workspace: { id: workspaceId }
-        }
-      ]
+      roleBindings: [{ workspace: { id: casual.uuid } }]
     };
 
-    const users = jest.fn().mockReturnValue([user]);
+    // Mock up some db functions.
+    const findOne = jest.fn().mockReturnValue({});
+    const findMany = jest.fn().mockReturnValue([]);
 
     // Construct db object for context.
-    const db = {
-      query: { workspace, users }
+    const prisma = {
+      workspace: { findOne, findMany }
     };
 
     const vars = {
-      workspaceUuid: workspaceId
+      workspaceUuid: casual.uuid
     };
 
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db, user }, vars);
-    expect(res.errors).toBeUndefined();
-    expect(workspace).toHaveBeenCalledTimes(1);
-    expect(res).toHaveProperty(["data", "workspace", "id"], workspaceId);
-  });
-
-  test("request fails if missing an argument", async () => {
-    // Run the graphql mutation.
-    const res = await graphql(schema, query, null, {}, {});
-    expect(res.errors).toHaveLength(1);
-    expect(res.errors[0].message).toEqual(
-      expect.stringContaining("was not provided")
-    );
+    await graphql(schema, query, null, { prisma, commander, user }, vars);
+    expect(prisma.workspace.findOne.mock.calls.length).toBe(1);
+    expect(prisma.workspace.findMany.mock.calls.length).toBe(0);
   });
 });
