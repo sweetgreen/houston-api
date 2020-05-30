@@ -9,8 +9,8 @@ export default function validateProperties(properties) {
     startsWith(name, "DEPLOYMENT_PROPERTY")
   );
 
-  // Throw error if we find an invalid propery.
-  forIn(properties, (val, key) => {
+  // Throw error if we find an invalid property.
+  forIn(properties, (_, key) => {
     if (!includes(allowedProps, key)) {
       throw new InvalidDeploymentError(
         `${key} is not a valid deployment property`
