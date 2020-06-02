@@ -7,7 +7,6 @@ export default queryType({
     t.crud.email();
     t.crud.workspace();
     t.crud.deployment();
-
     //////////////////
     // No RBAC ///////
     //////////////////

@@ -26,7 +26,11 @@ jest.mock("deployments/config", () => {
 describe("POST /registry-events", () => {
   let deployment = jest.fn();
   let dockerImage = jest.fn();
+  let id, label, workspace;
   beforeEach(() => {
+    id = casual.uuid;
+    label = casual.word;
+    workspace = { id: id };
     jest.spyOn(prisma, "PrismaClient").mockImplementation(() => {
       return {
         disconnect: jest.fn(),
@@ -40,15 +44,16 @@ describe("POST /registry-events", () => {
   });
 
   test("registry events are mapped to a deployment upgrade", async () => {
+    const airflowVersion = "1.10.10";
     deployment = {
       findOne: jest.fn().mockReturnValue({
         config: {}
       }),
       update: jest.fn().mockReturnValue({
-        workspace: { id: casual.uuid },
-        label: casual.word,
-        id: casual.uuid,
-        airflowVersion: "1.10.10"
+        workspace,
+        label,
+        id,
+        airflowVersion
       })
     };
 
@@ -138,9 +143,9 @@ describe("POST /registry-events", () => {
     deployment = {
       findOne: jest.fn().mockReturnValue({}),
       update: jest.fn().mockReturnValue({
-        workspace: { id: casual.uuid },
-        label: casual.word,
-        id: casual.uuid
+        workspace,
+        label,
+        id
       })
     };
 
@@ -178,9 +183,9 @@ describe("POST /registry-events", () => {
         deletedAt: new Date()
       }),
       update: jest.fn().mockReturnValue({
-        workspace: { id: casual.uuid },
-        label: casual.word,
-        id: casual.uuid
+        workspace,
+        label,
+        id
       })
     };
 
@@ -216,9 +221,9 @@ describe("POST /registry-events", () => {
     deployment = {
       findOne: jest.fn().mockReturnValue({}),
       update: jest.fn().mockReturnValue({
-        workspace: { id: casual.uuid },
-        label: casual.word,
-        id: casual.uuid
+        workspace,
+        label,
+        id
       })
     };
 
@@ -251,14 +256,15 @@ describe("POST /registry-events", () => {
   });
 
   test("return 200 OK if deployment not found for release", async () => {
-    prisma.deployment = jest
-      .fn()
-      .mockName("deployment")
-      .mockReturnValue({
-        $fragment: function() {
-          return null;
-        }
-      });
+    deployment = {
+      findOne: jest.fn().mockReturnValue({}),
+      update: jest.fn().mockReturnValue({
+        workspace,
+        label,
+        id
+      })
+    };
+
     const digest =
       "sha256:907b4a633d31872f7fc9b4cb22998b9de4c25f8cc8f08529ca56c2ace698e541";
 
@@ -288,14 +294,17 @@ describe("POST /registry-events", () => {
   });
 
   test("return 200 OK if deployment soft-deleted", async () => {
-    prisma.deployment = jest
-      .fn()
-      .mockName("deployment")
-      .mockReturnValue({
-        $fragment: function() {
-          return { deletedAt: new Date() };
-        }
-      });
+    deployment = {
+      findOne: jest.fn().mockReturnValue({
+        deletedAt: new Date()
+      }),
+      update: jest.fn().mockReturnValue({
+        workspace,
+        label,
+        id
+      })
+    };
+
     const digest =
       "sha256:907b4a633d31872f7fc9b4cb22998b9de4c25f8cc8f08529ca56c2ace698e541";
 
@@ -325,14 +334,15 @@ describe("POST /registry-events", () => {
   });
 
   test("return 200 OK if deployment config not found for release", async () => {
-    prisma.deployment = jest
-      .fn()
-      .mockName("deployment")
-      .mockReturnValue({
-        $fragment: function() {
-          return { config: null };
-        }
-      });
+    deployment = {
+      findOne: jest.fn().mockReturnValue({}),
+      update: jest.fn().mockReturnValue({
+        workspace,
+        label,
+        id
+      })
+    };
+
     const digest =
       "sha256:907b4a633d31872f7fc9b4cb22998b9de4c25f8cc8f08529ca56c2ace698e541";
 
@@ -360,6 +370,123 @@ describe("POST /registry-events", () => {
     expect(deployment.update).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
+
+  test("return 200 OK if deployment not found for release", async () => {
+    deployment = {
+      findOne: jest.fn().mockReturnValue({}),
+      update: jest.fn().mockReturnValue({
+        workspace,
+        label,
+        id
+      })
+    };
+
+    const digest =
+      "sha256:907b4a633d31872f7fc9b4cb22998b9de4c25f8cc8f08529ca56c2ace698e541";
+
+    const res = await request(app)
+      .post("/")
+      .set("Content-Type", DOCKER_REGISTRY_CONTENT_TYPE)
+      .send({
+        events: [
+          {
+            id: casual.uuid,
+            action: "push",
+            target: {
+              repository: "cosmic-dust-1234/airflow",
+              tag: "cli-1",
+              digest: digest
+            },
+            request: {
+              host: casual.domain
+            }
+          }
+        ]
+      });
+
+    expect(deployment.findOne).toHaveBeenCalledTimes(1);
+    expect(deployment.update).toHaveBeenCalledTimes(0);
+    expect(res.statusCode).toBe(200);
+  });
+
+  test("return 200 OK if deployment soft-deleted", async () => {
+    deployment = {
+      findOne: jest.fn().mockReturnValue({
+        deletedAt: new Date()
+      }),
+      update: jest.fn().mockReturnValue({
+        workspace,
+        label,
+        id
+      })
+    };
+
+    const digest =
+      "sha256:907b4a633d31872f7fc9b4cb22998b9de4c25f8cc8f08529ca56c2ace698e541";
+
+    const res = await request(app)
+      .post("/")
+      .set("Content-Type", DOCKER_REGISTRY_CONTENT_TYPE)
+      .send({
+        events: [
+          {
+            id: casual.uuid,
+            action: "push",
+            target: {
+              repository: "cosmic-dust-1234/airflow",
+              tag: "cli-1",
+              digest: digest
+            },
+            request: {
+              host: casual.domain
+            }
+          }
+        ]
+      });
+
+    expect(deployment.findOne).toHaveBeenCalledTimes(1);
+    expect(deployment.update).toHaveBeenCalledTimes(0);
+    expect(res.statusCode).toBe(200);
+  });
+
+  test("return 200 OK if deployment config not found for release", async () => {
+    deployment = {
+      findOne: jest.fn().mockReturnValue({}),
+      update: jest.fn().mockReturnValue({
+        workspace,
+        label,
+        id
+      })
+    };
+
+    const digest =
+      "sha256:907b4a633d31872f7fc9b4cb22998b9de4c25f8cc8f08529ca56c2ace698e541";
+
+    const res = await request(app)
+      .post("/")
+      .set("Content-Type", DOCKER_REGISTRY_CONTENT_TYPE)
+      .send({
+        events: [
+          {
+            id: casual.uuid,
+            action: "push",
+            target: {
+              repository: "cosmic-dust-1234/airflow",
+              tag: "cli-1",
+              digest: digest
+            },
+            request: {
+              host: casual.domain
+            }
+          }
+        ]
+      });
+
+    expect(deployment.findOne).toHaveBeenCalledTimes(1);
+    expect(deployment.update).toHaveBeenCalledTimes(0);
+    expect(res.statusCode).toBe(200);
+  });
+
   test("skip if irrelevent event is sent", async () => {
     const res = await request(app)
       .post("/")
