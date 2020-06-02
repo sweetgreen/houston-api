@@ -7,11 +7,12 @@ export const deploymentFragment = `fragment EnsureFields on Deployment {
   airflowVersion
   alertEmails
   workspace { id }
+  rollouts { id }
   createdAt
 }`;
 
 export const workspaceFragment = `{
   stripeCustomerId
   isSuspended
-  deployments {id, deletedAt}
+  deployments { id, deletedAt }
 }`;

@@ -1,5 +1,6 @@
 import "@babel/polyfill";
 import "dotenv/config";
+import "./workers";
 import resolvers from "./resolvers";
 import { v1 } from "./routes";
 import log from "logger";

@@ -1,16 +1,7 @@
 import { deploymentFragment, workspaceFragment } from "./fragment";
+import { validateReleaseName, generateReleaseName } from "deployments/naming";
 import {
-  validateReleaseName,
-  generateReleaseName,
-  generateNamespace,
-  generateDeploymentLabels,
-  generateEnvironmentSecretName
-} from "deployments/naming";
-import { createDatabaseForDeployment } from "deployments/database";
-import {
-  arrayOfKeyValueToObject,
   defaultAirflowImage,
-  generateHelmValues,
   mapPropertiesToDeployment,
   generateDefaultDeploymentConfig
 } from "deployments/config";
@@ -19,14 +10,16 @@ import { track } from "analytics";
 import { WorkspaceSuspendedError, TrialError } from "errors";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
-import bcrypt from "bcryptjs";
 import { get, isNull, find, size, merge, isEmpty } from "lodash";
-import { generate as generatePassword } from "generate-password";
+import nats from "nats";
 import {
-  DEPLOYMENT_AIRFLOW,
   DEPLOYMENT_PROPERTY_EXTRA_AU,
-  AIRFLOW_EXECUTOR_DEFAULT
+  AIRFLOW_EXECUTOR_DEFAULT,
+  ROLLOUT_STATUS_PENDING
 } from "constants";
+
+// Create NATS client.
+const nc = nats.connect();
 
 /*
  * Create a deployment.
@@ -79,22 +72,6 @@ export default async function createDeployment(parent, args, ctx, info) {
   const version = get(args, "version", defaultChartVersion);
   const airflowVersion = get(args, "airflowVersion", defaultAirflowVersion);
 
-  // Generate a unique registry password for this deployment.
-  const registryPassword = generatePassword({ length: 32, numbers: true });
-  const hashedRegistryPassword = await bcrypt.hash(registryPassword, 10);
-
-  // Generate a unique elasticsearch password for this deployment
-  const elasticsearchPassword = generatePassword({ length: 32, numbers: true });
-  const hashedElasticsearchPassword = await bcrypt.hash(
-    elasticsearchPassword,
-    10
-  );
-
-  // Generate a random fernetKey and base64 encode it for this deployment.
-  const fernetKey = new Buffer(
-    generatePassword({ length: 32, numbers: true })
-  ).toString("base64");
-
   // Set release name - either randomly generated or manually
   const isManualNamespace =
     config.get("deployments.manualReleaseNames") && args.releaseName;
@@ -131,16 +108,20 @@ export default async function createDeployment(parent, args, ctx, info) {
     data: {
       label: args.label,
       description: args.description,
-      config: deploymentConfig,
-      version,
-      airflowVersion,
+      config: deploymentConfig, // XXX: Change this, version, airflowVersion to virtual resolvers from "latest" rollout
       releaseName,
-      registryPassword: hashedRegistryPassword,
-      elasticsearchPassword: hashedElasticsearchPassword,
       ...mapPropertiesToDeployment(properties),
       workspace: {
         connect: {
           id: args.workspaceUuid
+        }
+      },
+      rollouts: {
+        create: {
+          version,
+          airflowVersion,
+          config: deploymentConfig,
+          status: ROLLOUT_STATUS_PENDING
         }
       }
     }
@@ -176,57 +157,9 @@ export default async function createDeployment(parent, args, ctx, info) {
   //   `{ id }`
   // );
 
-  // Create the database for this deployment.
-  const {
-    metadataConnection,
-    resultBackendConnection
-  } = await createDatabaseForDeployment(deployment);
-
-  // Create some ad-hoc values to get passed into helm.
-  // These won't be changing so just pass them in on create,
-  // and subsequent helm upgrades will use the --reuse-values option.
-  const data = { metadataConnection, resultBackendConnection };
-  const registry = { connection: { pass: registryPassword } };
-  const elasticsearch = { connection: { pass: elasticsearchPassword } };
-
-  // Combine values together for helm input.
-  const values = {
-    data,
-    registry,
-    elasticsearch,
-    fernetKey
-  };
-
-  // Generate the helm input for the airflow chart (eg: values.yaml).
-  const helmConfig = generateHelmValues(deployment, values);
-
-  // Fire off createDeployment to commander.
-  await ctx.commander.request("createDeployment", {
-    releaseName: releaseName,
-    chart: {
-      name: DEPLOYMENT_AIRFLOW,
-      version: version
-    },
-    namespace: generateNamespace(releaseName),
-    namespaceLabels: generateDeploymentLabels(helmConfig.labels),
-    rawConfig: JSON.stringify(helmConfig)
-  });
-
-  // If we have environment variables, send to commander.
-  // TODO: The createDeployment commander method currently
-  // allows you to pass secrets to get created,
-  // but the implementation does not quite work.
-  // This call can be consolidated once that is fixed up in commander.
-  if (args.env) {
-    await ctx.commander.request("setSecret", {
-      release_name: releaseName,
-      namespace: generateNamespace(releaseName),
-      secret: {
-        name: generateEnvironmentSecretName(releaseName),
-        data: arrayOfKeyValueToObject(args.env)
-      }
-    });
-  }
+  // XXX: There's a better way to get this id. Need to get just the id
+  // of the created rollout without returning all rollouts
+  nc.publish("houston.rollout.created", deployment.rollouts[0].id);
 
   // Return the deployment.
   return deployment;
