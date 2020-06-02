@@ -102,8 +102,7 @@ export async function deployInfo(parent, args, ctx) {
 
   const imagesCreated = await ctx.prisma.dockerImage.findMany({
     where: { deployment: { id: parent.id } },
-    orderBy: { createdAt: "desc" },
-    first: 1
+    orderBy: { createdAt: "desc" }
   });
 
   const current = first(map(imagesCreated, "tag"));

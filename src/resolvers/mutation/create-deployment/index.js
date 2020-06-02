@@ -137,7 +137,7 @@ export default async function createDeployment(parent, args, ctx) {
     data: {
       label: args.label,
       description: args.description,
-      config: deploymentConfig,
+      config: JSON.stringify(deploymentConfig),
       version,
       airflowVersion,
       releaseName,

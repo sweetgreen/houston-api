@@ -361,7 +361,7 @@ type TokenPayload {
 
 type User {
   createdAt: DateTime!
-  emails: [Email!]!
+  emails: [Email!]
   fullName: String
   id: String!
   profile: [UserProp!]!

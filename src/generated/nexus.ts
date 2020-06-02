@@ -3,7 +3,7 @@
  * Do not make changes to this file directly
  */
 
-import * as prisma from "@prisma/client"
+
 import { core } from "@nexus/schema"
 declare global {
   interface NexusGenCustomInputMethods<TypeName extends string> {
@@ -100,7 +100,19 @@ export interface NexusGenRootTypes {
   DeployInfo: { // root type
     current?: string | null; // String
   }
-  Deployment: prisma.Deployment;
+  Deployment: { // root type
+    airflowVersion?: string | null; // String
+    alertEmails: string[]; // [String!]!
+    config?: any | null; // JSON
+    createdAt: any; // DateTime!
+    description?: string | null; // String
+    id: string; // String!
+    label?: string | null; // String
+    releaseName?: string | null; // String
+    status?: string | null; // String
+    updatedAt: any; // DateTime!
+    version?: string | null; // String
+  }
   DeploymentCapabilities: { // root type
     canCreateServiceAccount?: boolean | null; // Boolean
     canDeleteDeployment?: boolean | null; // Boolean
@@ -137,8 +149,24 @@ export interface NexusGenRootTypes {
     type?: string | null; // String
     url?: string | null; // String
   }
-  DockerImage: prisma.DockerImage;
-  Email: prisma.Email;
+  DockerImage: { // root type
+    createdAt: any; // DateTime!
+    digest: string; // String!
+    env: string; // String!
+    id: string; // String!
+    labels: string; // String!
+    name?: string | null; // String
+    tag: string; // String!
+  }
+  Email: { // root type
+    address?: string | null; // String
+    createdAt: any; // DateTime!
+    id: string; // String!
+    primary?: boolean | null; // Boolean
+    token?: string | null; // String
+    updatedAt: any; // DateTime!
+    verified?: boolean | null; // Boolean
+  }
   Invite: { // root type
     assignments: string; // String!
     createdAt: string; // String!
@@ -148,13 +176,49 @@ export interface NexusGenRootTypes {
     updatedAt: string; // String!
     uuid: string; // String!
   }
-  InviteToken: prisma.InviteToken;
-  LocalCredential: prisma.LocalCredential;
+  InviteToken: { // root type
+    createdAt: any; // DateTime!
+    email: string; // String!
+    id: string; // String!
+    role?: string | null; // String
+    token: string; // String!
+    updatedAt: any; // DateTime!
+  }
+  LocalCredential: { // root type
+    createdAt: any; // DateTime!
+    id: string; // String!
+    password?: string | null; // String
+    resetToken?: string | null; // String
+    updatedAt: any; // DateTime!
+  }
   Mutation: {};
-  PlatformRelease: prisma.PlatformRelease;
+  PlatformRelease: { // root type
+    createdAt: any; // DateTime!
+    description?: string | null; // String
+    id: string; // String!
+    level?: string | null; // String
+    releaseDate: any; // DateTime!
+    updatedAt: any; // DateTime!
+    url?: string | null; // String
+    version?: string | null; // String
+  }
   Query: {};
-  RoleBinding: prisma.RoleBinding;
-  ServiceAccount: prisma.ServiceAccount;
+  RoleBinding: { // root type
+    createdAt: any; // DateTime!
+    id: string; // String!
+    role?: string | null; // String
+  }
+  ServiceAccount: { // root type
+    active?: boolean | null; // Boolean
+    apiKey?: string | null; // String
+    category?: string | null; // String
+    createdAt: any; // DateTime!
+    entityUuid?: any | null; // Uuid
+    id: string; // String!
+    label?: string | null; // String
+    lastUsedAt?: any | null; // DateTime
+    updatedAt: any; // DateTime!
+  }
   Subscription: { // root type
     deploymentStatus: NexusGenRootTypes['DeploymentStatus']; // DeploymentStatus!
     log: NexusGenRootTypes['DeploymentLog']; // DeploymentLog!
@@ -169,13 +233,31 @@ export interface NexusGenRootTypes {
     iat?: number | null; // Int
     uuid?: any | null; // Uuid
   }
-  User: prisma.User;
+  User: { // root type
+    createdAt: any; // DateTime!
+    emails?: NexusGenRootTypes['Email'][] | null; // [Email!]
+    fullName?: string | null; // String
+    id: string; // String!
+    status?: string | null; // String
+    updatedAt: any; // DateTime!
+    username?: string | null; // String
+  }
   UserProp: { // root type
     category?: string | null; // String
     key?: string | null; // String
     value?: string | null; // String
   }
-  Workspace: prisma.Workspace;
+  Workspace: { // root type
+    active?: boolean | null; // Boolean
+    createdAt: any; // DateTime!
+    description?: string | null; // String
+    id: string; // String!
+    label?: string | null; // String
+    properties?: any | null; // JSON
+    stripeCustomerId?: string | null; // String
+    trialEndsAt?: string | null; // String
+    updatedAt: any; // DateTime!
+  }
   WorkspaceCapabilities: { // root type
     canCreateDeployment?: boolean | null; // Boolean
     canCreateServiceAccount?: boolean | null; // Boolean
@@ -486,7 +568,7 @@ export interface NexusGenFieldTypes {
   }
   User: { // field return type
     createdAt: any; // DateTime!
-    emails: NexusGenRootTypes['Email'][]; // [Email!]!
+    emails: NexusGenRootTypes['Email'][] | null; // [Email!]
     fullName: string | null; // String
     id: string; // String!
     profile: NexusGenRootTypes['UserProp'][]; // [UserProp!]!

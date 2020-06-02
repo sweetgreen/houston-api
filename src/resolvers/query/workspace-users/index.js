@@ -12,8 +12,10 @@ export default async function workspaceUsers(parent, args, ctx) {
 
   return ctx.prisma.user.findMany({
     where: {
-      roleBindings_some: {
-        workspace: { id: args.workspaceUuid }
+      roleBindings: {
+        some: {
+          workspace: { id: args.workspaceUuid }
+        }
       },
       ...query
     }

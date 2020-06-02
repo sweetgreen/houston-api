@@ -345,7 +345,7 @@ const User = objectType({
   definition(t) {
     t.model.id();
     t.model.username();
-    t.field("emails", { type: "Email", list: true });
+    t.field("emails", { type: "Email", list: true, nullable: true });
     t.model.fullName();
     t.model.status();
     t.field("profile", { type: "UserProp", list: true, resolve: user.profile });
