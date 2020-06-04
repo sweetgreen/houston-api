@@ -5,6 +5,7 @@ import createPoller from "pubsub/poller";
 import config from "config";
 import request from "request-promise-native";
 import moment from "moment";
+import { defaultTo, get } from "lodash";
 
 // Use sample data if prom is not enabled
 const useSample = !config.get("prometheus.enabled");
@@ -25,15 +26,33 @@ export function buildURI(query) {
   )}&time=${now}`;
 }
 
-export async function getMetric(releaseName) {
-  const req = await request({
+export function isNotPending(res) {
+  return defaultTo(get(res, "data.result[0].value.length"), 0) > 1;
+}
+
+export async function prometheusRequest(promQl) {
+  return await request({
     method: "GET",
     json: true,
-    uri: buildURI(`
+    uri: buildURI(promQl)
+  });
+}
+
+export async function getMetric(releaseName) {
+  let metric = null;
+  const res = await prometheusRequest(`
       rate(airflow_scheduler_heartbeat{deployment=~"${releaseName}", type="counter"}[1m])
-    `)
-  }).catch(err => log.debug(err));
-  return { result: req.data ? req.data.result : [] };
+    `).catch(err => log.error(err));
+  if (!res.data || res.status !== "success") {
+    log.error(
+      `Did not get response from prometheus as expected, we expected to find json with path data.result as an array and status = 'success'. Response was: ${res}`
+    );
+    return metric;
+  }
+  if (isNotPending(res)) {
+    metric = res.data.result[0].value[1];
+  }
+  return metric;
 }
 
 // Start the subscription
@@ -42,6 +61,7 @@ export async function subscribe(parent, args, { pubsub }) {
   log.info("parent", parent);
   log.info("args", args);
   let { releaseName } = args;
+  const metric = await getMetric(releaseName);
 
   // Return sample data
   if (useSample) {
@@ -53,13 +73,13 @@ export async function subscribe(parent, args, { pubsub }) {
   // Return promQL data if in production
   return createPoller(
     async publish => {
-      const res = await Promise.resolve(getMetric(releaseName));
-      publish({
-        deploymentStatus: {
-          result:
-            res && res.result && res.result.length ? res.result[0].value[1] : 0
-        }
-      });
+      if (metric) {
+        publish({
+          deploymentStatus: {
+            result: metric
+          }
+        });
+      }
     },
     pubsub,
     interval,
