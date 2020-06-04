@@ -444,7 +444,9 @@ describe("airflowImageForVersion", () => {
   test("returns correct image", () => {
     const version = "1.10.5";
     const image = airflowImageForVersion(version);
-    expect(image.tag).toBe("1.10.5-alpine3.10-onbuild");
+    // We have an exception to run Airflow 1.10.7 migrations
+    // for Airflow version 1.10.5
+    expect(image.version).toBe("1.10.7");
   });
 });
 

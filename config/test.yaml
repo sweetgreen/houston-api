@@ -83,9 +83,10 @@ deployments:
     - version: 1.10.5
       channel: stable
       tag: 1.10.5-alpine3.10-onbuild
-    - version: 1.10.6
-      channel: edge
-      tag: 1.10.6-alpine3.10-onbuild
+    - version: 1.10.7
+      channel: stable
+      tag: 1.10.7-alpine3.10-onbuild
+
 
 # Stripe configuration.
 stripe:

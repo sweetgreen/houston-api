@@ -653,10 +653,16 @@ export function defaultAirflowImage() {
  * @reuturn {String} Default Airflow image.
  */
 export function airflowImageForVersion(version) {
+  let compare_to = version;
+  if (version === "1.10.5") {
+    // We have an exception to run Airflow migrations
+    // for version 1.10.5 with Airflow 1.10.7
+    compare_to = "1.10.7";
+  }
   return first(
     filter(
       airflowImages(),
-      i => i.channel === "stable" && i.version === version
+      i => i.channel === "stable" && i.version === compare_to
     )
   );
 }
