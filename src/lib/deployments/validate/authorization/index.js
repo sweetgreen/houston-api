@@ -20,7 +20,8 @@ export default async function validateDeploymentCredentials(
   if (!password) return false;
 
   // Return false is releaseName doesn't look right
-  if (releaseName.split("-").length !== 3) return false;
+  const pattern = /^(?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63}$/g;
+  if (!pattern.test(releaseName)) return false;
 
   // Get the password for this deployment
   const truePassword = await prisma.deployment.findOne({
