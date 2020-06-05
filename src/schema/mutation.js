@@ -128,13 +128,12 @@ export default mutationType({
       resolve: mutations.deleteWorkspace
     });
 
-    t.field("updateUser", {
+    t.field("updateSelf", {
       type: "User",
       args: {
-        userId: "Uuid",
         payload: arg({ type: "JSON", nullable: true })
       },
-      resolve: mutations.updateUser
+      resolve: mutations.updateSelf
     });
 
     t.field("removeUser", {

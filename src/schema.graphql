@@ -482,8 +482,7 @@ type Mutation {
     workspaceUuid: Uuid
   ): Workspace @auth(permissions: ["workspace.config.delete", "system.workspace.delete"], op: OR)
 
-  updateUser(
-    userId: Uuid,
+  updateSelf(
     payload: JSON!
   ): User @auth
 
