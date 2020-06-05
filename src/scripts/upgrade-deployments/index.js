@@ -27,6 +27,8 @@ async function upgradeDeployments() {
     select: {
       id: true,
       version: true,
+      extraAu: true,
+      airflowVersion: true,
       releaseName: true,
       workspace: { id: true }
     }
@@ -48,6 +50,8 @@ async function upgradeDeployments() {
       select: {
         id: true,
         version: true,
+        extraAu: true,
+        airflowVersion: true,
         releaseName: true,
         workspace: { id: true }
       }
