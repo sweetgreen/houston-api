@@ -62,7 +62,9 @@ async function upgradeDeployments() {
         where: { releaseName },
         data: { version: desiredVersion }
       })
-      .$fragment(`{ id config releaseName extraAu workspace { id } }`);
+      .$fragment(
+        `{ id config releaseName extraAu airflowVersion workspace { id } }`
+      );
 
     log.info(
       `Applying helm upgrade on ${releaseName}, version ${version} to ${desiredVersion}`
