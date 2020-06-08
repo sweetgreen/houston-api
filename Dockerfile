@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM astronomerinc/ap-base:3.11.5-3
+FROM astronomerinc/ap-base:3.12
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
@@ -30,7 +30,7 @@ COPY package*.json ./
 RUN apk add --no-cache --virtual .build-deps \
 		build-base \
 		git \
-		python \
+		python3 \
 	&& apk add --no-cache \
 		nodejs \
 		nodejs-npm \
