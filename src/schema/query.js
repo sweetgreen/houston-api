@@ -22,16 +22,15 @@ export default queryType({
       resolve: queries.authConfig
     });
 
-    ////////////////////
-    // Auth User RBAC //
-    ////////////////////
-
     t.field("appConfig", {
       type: "AppConfig",
       nullable: true,
       resolve: (root, args, context) => queries.appConfig(root, args, context)
     });
 
+    ////////////////////
+    // Auth User RBAC //
+    ////////////////////
     t.field("self", {
       type: "AuthUser",
       resolve: (root, args, context) => queries.self(root, args, context)

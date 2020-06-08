@@ -40,7 +40,6 @@ export const permissions = shield(
       deploymentStatus: isAuth
     },
     Query: {
-      appConfig: isAuth,
       self: isAuth,
       deploymentConfig: isAuth,
       workspaces: isAuth,
