@@ -66,16 +66,16 @@ workflows:
               only: master
       - publish-release-branch:
           requires:
-            - scan
-            - scan-trivy
+            - test
+            - build
           filters:
             branches:
               only: '/release-.*/'
       - approve-release:
           type: approval
           requires:
-            - scan
-            - scan-trivy
+            - test
+            - build
           filters:
             branches:
               only: '/release-.*/'
