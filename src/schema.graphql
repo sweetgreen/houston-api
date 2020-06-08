@@ -307,7 +307,7 @@ type DeploymentStatus {
 # Queries
 #
 type Query {
-  appConfig: AppConfig @auth
+  appConfig: AppConfig
 
   authConfig(
     redirect: String
