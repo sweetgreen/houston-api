@@ -108,7 +108,6 @@ type AuthConfig {
 
 type Invite {
   id: ID!
-  uuid: Uuid @alias(field: "id")
   assignments: String @deprecated
   role: Role!
   email: String
@@ -126,7 +125,6 @@ type UserProp {
 
 type User {
   id: ID!
-  uuid: Uuid @alias(field: "id")
   username: String
   emails: [Email!]!
   fullName: String
@@ -139,7 +137,6 @@ type User {
 
 type Workspace {
   id: ID!
-  uuid: Uuid @alias(field: "id")
   active: Boolean
   description: String
   invites: [Invite!]!
@@ -219,7 +216,6 @@ type DeployInfo {
 # Properties have been moved to top-level fields on Deployment internally.
 type Deployment {
   id: ID!
-  uuid: Uuid @alias(field: "id")
   config: JSON
   env: JSON
   properties: JSON
@@ -259,7 +255,6 @@ type PlatformRelease {
 
 type ServiceAccount {
   id: ID!
-  uuid: Uuid @alias(field: "id")
   apiKey: String
   label: String
   category: String
@@ -276,7 +271,6 @@ type ServiceAccount {
 
 type DeploymentLog {
   id: ID!
-  uuid: Uuid @alias(field: "id")
   timestamp: String
   release: String
   component: String
