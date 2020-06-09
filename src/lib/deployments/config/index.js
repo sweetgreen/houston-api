@@ -396,7 +396,11 @@ export function defaultAirflowTag({ airflowVersion }) {
   // Special case: so that if a user pushes a 1.10.5-based image up, we continue to run the 1.10.7 initContainers.
   // Otherwise run the exactly matching version of the initContainer., remove after 1.10.5 gone
   // TODO: remove this logic in future
-  if (!airflowVersion || airflowVersion === "1.10.5") {
+  if (
+    !airflowVersion ||
+    airflowVersion === "1.10.5" ||
+    airflowVersion === "1.10.6"
+  ) {
     airflowVersion = "1.10.7";
   }
   const versionedTag = (airflowImageForVersion(airflowVersion) || {}).tag;
