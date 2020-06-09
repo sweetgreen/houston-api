@@ -530,6 +530,14 @@ describe("defaultAirflowTag", () => {
     const tag = defaultAirflowTag(deployment);
     expect(tag).toEqual({ defaultAirflowTag: "1.10.7-alpine3.10-onbuild" });
   });
+  test("returns default airflow tag based on airflow version 1.10.6", () => {
+    const deployment = {
+      id: casual.uuid,
+      airflowVersion: "1.10.6"
+    };
+    const tag = defaultAirflowTag(deployment);
+    expect(tag).toEqual({ defaultAirflowTag: "1.10.7-alpine3.10-onbuild" });
+  });
 
   test("returns default airflow tag based on airflow version 1.10.7", () => {
     const deployment = {
