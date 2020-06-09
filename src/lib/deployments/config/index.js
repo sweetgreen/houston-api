@@ -90,6 +90,8 @@ export function ingress(deployment) {
       "authorization, username, email"
   };
 
+  const thisUrl = `${deploymentsUrl()}/${deployment.releaseName}`;
+
   return {
     ingress: {
       baseDomain,
@@ -101,11 +103,11 @@ export function ingress(deployment) {
                if ($host = '${deploymentsSubdomain()}' ) {
                  return 404;
                }
-               proxy_pass ${deploymentsUrl()}/airflow/$request_uri;
+               proxy_pass ${thisUrl}/airflow/$request_uri;
              }`,
           "nginx.ingress.kubernetes.io/configuration-snippet": `
              if ($host = '${airflowSubdomain()}' ) {
-               return 308 ${deploymentsUrl()}/airflow/$request_uri;
+               return 308 ${thisUrl}/airflow/$request_uri;
              }`
         },
         commonAnnotations
@@ -115,7 +117,7 @@ export function ingress(deployment) {
           "nginx.ingress.kubernetes.io/rewrite-target": "/$2;",
           "nginx.ingress.kubernetes.io/configuration-snippet": `
              if ($host = '${flowerSubdomain()}' ) {
-               rewrite ^ ${deploymentsUrl()}/flower permanent;
+               rewrite ^ ${thisUrl}/flower permanent;
              }
              subs_filter_types text/css text/xml text/css;
              sub_filter '="/' '="/${deployment.releaseName}/flower/';
