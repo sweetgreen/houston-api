@@ -1,5 +1,23 @@
-import { users, deployments, invites } from "./index";
+import {
+  users,
+  deployments,
+  invites,
+  workspaceCapabilities,
+  billingEnabled,
+  paywallEnabled
+} from "./index";
 import casual from "casual";
+
+function createMockUser() {
+  const id = casual.uuid;
+  const workspace = { id };
+  const role = "WORKSPACE_VIEWER";
+  const roleBindings = [{ role, workspace }];
+  return {
+    id,
+    roleBindings
+  };
+}
 
 describe("Workspace", () => {
   test("users returns an empty array", () => {
@@ -38,5 +56,57 @@ describe("Workspace", () => {
     };
     invites(parent, {}, { prisma });
     expect(prisma.inviteToken.findMany.mock.calls).toHaveLength(1);
+  });
+
+  test("should return array of flags with workspace capabilities", () => {
+    const parent = { id: casual.uuid };
+    const user = createMockUser();
+
+    const result = workspaceCapabilities(parent, {}, { user });
+    const resultArray = Object.keys(result);
+    expect(resultArray).toHaveLength(12);
+  });
+
+  test("should return true if billing is enabled", () => {
+    const billing = billingEnabled();
+    expect(billing).toBeTruthy();
+  });
+
+  test("should return true if a user is blocked from viewing their workspace", async () => {
+    const parent = { id: casual.uuid };
+    const trialEndsAt = new Date();
+    const isSuspended = true;
+
+    const workspace = {
+      trialEndsAt,
+      isSuspended
+    };
+
+    const prisma = {
+      workspace: { findOne: jest.fn().mockReturnValue(workspace) }
+    };
+    const paywallEnabledValue = await paywallEnabled(parent, {}, { prisma });
+    expect(prisma.workspace.findOne.mock.calls).toHaveLength(1);
+    expect(paywallEnabledValue).toBeTruthy();
+  });
+
+  test("should return false if a user is not blocked from viewing their workspace", async () => {
+    const id = casual.uuid;
+    const parent = { id };
+    const trialEndsAt = new Date();
+    const isSuspended = false;
+    const stripeCustomerId = id;
+    const workspace = {
+      trialEndsAt,
+      isSuspended,
+      stripeCustomerId
+    };
+
+    const prisma = {
+      workspace: { findOne: jest.fn().mockReturnValue(workspace) }
+    };
+    const paywallEnabledValue = await paywallEnabled(parent, {}, { prisma });
+    expect(prisma.workspace.findOne.mock.calls).toHaveLength(1);
+    expect(paywallEnabledValue).toBeFalsy();
   });
 });
