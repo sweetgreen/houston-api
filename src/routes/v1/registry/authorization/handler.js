@@ -6,11 +6,10 @@ import {
 import log from "logger";
 import { createDockerJWT } from "registry/jwt";
 import validateDeploymentCredentials from "deployments/validate/authorization";
-import { ACTIONS, VALID_RELEASE_NAME } from "deployments/validate/docker-tag";
-import { PrismaClient } from "@prisma/client";
+import { ACTIONS } from "deployments/validate/docker-tag";
 import config from "config";
 import { compact, isArray, find, includes } from "lodash";
-import { ENTITY_DEPLOYMENT } from "constants";
+import { ENTITY_DEPLOYMENT, VALID_DOCKER_IMAGE_NAME } from "constants";
 
 // List of expected registry codes.
 const REGISTRY_CODES = {
@@ -218,7 +217,7 @@ export function parseScope(scope) {
  * @param {String} scope The user scope.
  */
 export function releaseNameFromImage(image) {
-  const matches = VALID_RELEASE_NAME.exec(image);
+  const matches = VALID_DOCKER_IMAGE_NAME.exec(image);
   if (matches) return matches.groups.releaseName;
 }
 

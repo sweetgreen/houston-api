@@ -14,26 +14,23 @@ import config from "config";
 
 describe("deployments naming", () => {
   describe("validateReleaseName", () => {
-    test("returns when valid", () => {
-      const helmConfig = config.get("helm");
-      const validReleaseName = validateReleaseName(helmConfig.releaseName);
-
-      expect(validReleaseName).toBeTruthy();
-    });
-
     test("throws when release name is invalid", () => {
       expect(() => {
-        const invalidConfig = config.get("helm");
-        invalidConfig.releaseName = "This shouldn't work";
-        validateReleaseName(invalidConfig.releaseName);
+        const releaseName = "This shouldn't work";
+        validateReleaseName(releaseName);
       }).toThrow();
     });
 
     test("throws when prefix and release name length is greater the maximum length", () => {
       expect(() => {
-        const invalidConfig = config.get("helm");
-        invalidConfig.releaseName = `${generateReleaseName()}-some-extra-characters-that-are-too-long-and-go-over-the-max-char-limit`;
-        validateReleaseName(invalidConfig.releaseName);
+        const releaseName = `${generateReleaseName()}-some-extra-characters-that-are-too-long-and-go-over-the-max-char-limit`;
+        validateReleaseName(releaseName);
+      }).toThrow();
+    });
+
+    test("throws when used reserved docker registry repository name for base airflow images as release namer", () => {
+      expect(() => {
+        validateReleaseName("base-images");
       }).toThrow();
     });
   });
