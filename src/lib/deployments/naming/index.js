@@ -17,6 +17,10 @@ export function validateReleaseName(name) {
   const pattern = /^(?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63}$/g;
   if (!pattern.test(name)) throw new InvalidReleaseName();
 
+  // Reserved repository in docker registry for base airflow images
+  if (name === "base-images")
+    throw new InvalidReleaseName("base-images is reserved name");
+
   // Test total char length
   const prefix = config.get("helm.releaseNamespace");
 

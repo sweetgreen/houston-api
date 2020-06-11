@@ -2,7 +2,7 @@ import { hasPermission } from "rbac";
 import { prisma } from "generated/client";
 import log from "logger";
 import { createJWT } from "jwt";
-import { ENTITY_DEPLOYMENT } from "constants";
+import { ENTITY_DEPLOYMENT, RELEASE_NAME_AIRFLOW_PATTERN } from "constants";
 import url from "url";
 
 /*
@@ -29,7 +29,7 @@ export default async function(req, res) {
   }
 
   // Check if we're accessing a deployment level service.
-  const matches = path.match(/^\/([\w]+-[\w]+-[\d]+)\/(airflow|flower)/);
+  const matches = path.match(RELEASE_NAME_AIRFLOW_PATTERN);
   if (matches && subdomain === "deployments") {
     const releaseName = matches[1];
     // Get the deploymentId for the parsed releaseName.
