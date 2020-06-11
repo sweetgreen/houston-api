@@ -4,6 +4,7 @@ import card from "./card";
 import deploymentConfig from "./deployment-config";
 import deploymentServiceAccount from "./deployment-service-account";
 import deploymentServiceAccounts from "./deployment-service-accounts";
+import deploymentVariables from "./deployment-variables";
 import deployments from "./deployments";
 import invites from "./invites";
 import logs from "./logs";
@@ -28,6 +29,7 @@ export default {
   deploymentConfig,
   deploymentServiceAccount,
   deploymentServiceAccounts,
+  deploymentVariables,
   deployments,
   invites,
   logs,

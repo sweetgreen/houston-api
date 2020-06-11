@@ -1,3 +1,4 @@
+
 # import DateTime from "./lib/generated/schema/prisma.graphql"
 
 #
@@ -212,12 +213,28 @@ type DeployInfo {
   next: String @deprecated @alias(field: "nextCli")
 }
 
+type EnvironmentVariable {
+  releaseName: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  key: String,
+  value: String,
+  isSecret: Boolean,
+}
+
+type DeploymentVariablesResponse {
+  deploymentUuid: ID!
+  releaseName: String!
+  environmentVariables: [EnvironmentVariable!]!
+}
+
 # Deployment properties are only to support the legacy API.
 # Properties have been moved to top-level fields on Deployment internally.
 type Deployment {
   id: ID!
   config: JSON
-  env: JSON
+  env: JSON @deprecated # backwards capability
+  environmentVariables: [EnvironmentVariable]
   properties: JSON
   urls: [DeploymentUrl]
   description: String
@@ -328,6 +345,11 @@ type Query {
   ): DeploymentConfig @auth
 
   deployments: [Deployment] @auth(permissions:["system.deployments.get"])
+
+  deploymentVariables(
+    workspaceUuid: Uuid! # used for RBAC only
+    releaseName: String!
+  ): DeploymentVariablesResponse @auth(permissions: ["workspace.deployments.get", "system.deployments.get"], op: OR)
 
   # New ServiceAccount (singlton) scoped query
   deploymentServiceAccount(
@@ -594,6 +616,12 @@ type Mutation {
   deleteSystemServiceAccount(
     serviceAccountUuid: Uuid!
   ): ServiceAccount @auth(permissions: ["system.serviceAccounts.delete"], op: OR)
+
+  updateDeploymentVariables(
+    deploymentUuid: Uuid!
+    releaseName: String!
+    payload: JSON!
+  ): DeploymentVariablesResponse @auth(permissions: ["deployment.config.update", "system.deployments.update"], op: OR)
 
   createSystemRoleBinding(
     userId: ID!

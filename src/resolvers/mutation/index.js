@@ -30,6 +30,7 @@ import updateCard from "./update-card";
 import updateDeployment from "./update-deployment";
 import updateSelf from "./update-self";
 import updateServiceAccount from "./update-service-account";
+import updateDeploymentVariables from "./update-deployment-variables";
 import updateDeploymentServiceAccount from "./update-deployment-service-account";
 import updateWorkspaceServiceAccount from "./update-workspace-service-account";
 import updateWorkspace from "./update-workspace";
@@ -72,6 +73,7 @@ export default {
   updateDeployment,
   updateSelf,
   updateServiceAccount,
+  updateDeploymentVariables,
   updateDeploymentServiceAccount,
   updateWorkspaceServiceAccount,
   updateWorkspace,
