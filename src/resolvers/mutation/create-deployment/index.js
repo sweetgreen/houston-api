@@ -150,8 +150,9 @@ export default async function createDeployment(parent, args, ctx, info) {
   //   `{ id }`
   // );
 
-  // XXX: There's a better way to get this id. Need to get just the id
-  // of the created rollout without returning all rollouts
+  // Send event that a new deployment was created.
+  // An async worker will pick this job up and ensure
+  // the changes are propagated.
   nc.publish("houston.deployment.created", deployment.id);
 
   // Return the deployment.
