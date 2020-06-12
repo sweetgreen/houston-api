@@ -7,7 +7,6 @@ export const deploymentFragment = `fragment EnsureFields on Deployment {
   airflowVersion
   alertEmails
   workspace { id }
-  rollouts { id }
   createdAt
 }`;
 
