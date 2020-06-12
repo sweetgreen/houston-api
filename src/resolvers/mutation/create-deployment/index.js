@@ -11,15 +11,14 @@ import { WorkspaceSuspendedError, TrialError } from "errors";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 import { get, isNull, find, size, merge, isEmpty } from "lodash";
-import nats from "nats";
+import nats from "node-nats-streaming";
 import {
   DEPLOYMENT_PROPERTY_EXTRA_AU,
-  AIRFLOW_EXECUTOR_DEFAULT,
-  ROLLOUT_STATUS_PENDING
+  AIRFLOW_EXECUTOR_DEFAULT
 } from "constants";
 
 // Create NATS client.
-const nc = nats.connect();
+const nc = nats.connect("test-cluster", "create-deployment");
 
 /*
  * Create a deployment.
@@ -108,20 +107,14 @@ export default async function createDeployment(parent, args, ctx, info) {
     data: {
       label: args.label,
       description: args.description,
-      config: deploymentConfig, // XXX: Change this, version, airflowVersion to virtual resolvers from "latest" rollout
+      version,
+      airflowVersion,
+      config: deploymentConfig,
       releaseName,
       ...mapPropertiesToDeployment(properties),
       workspace: {
         connect: {
           id: args.workspaceUuid
-        }
-      },
-      rollouts: {
-        create: {
-          version,
-          airflowVersion,
-          config: deploymentConfig,
-          status: ROLLOUT_STATUS_PENDING
         }
       }
     }
@@ -159,7 +152,7 @@ export default async function createDeployment(parent, args, ctx, info) {
 
   // XXX: There's a better way to get this id. Need to get just the id
   // of the created rollout without returning all rollouts
-  nc.publish("houston.rollout.created", deployment.rollouts[0].id);
+  nc.publish("houston.deployment.created", deployment.id);
 
   // Return the deployment.
   return deployment;

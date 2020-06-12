@@ -15,8 +15,12 @@ import { TrialError } from "errors";
 import config from "config";
 import { addFragmentToInfo } from "graphql-binding";
 import { get, isEmpty, merge, pick } from "lodash";
+import nats from "nats";
 import crypto from "crypto";
 import { DEPLOYMENT_AIRFLOW } from "constants";
+
+// Create NATS client.
+const nc = nats.connect();
 
 /*
  * Update a deployment.
@@ -140,6 +144,8 @@ export default async function updateDeployment(parent, args, ctx, info) {
     env: args.env,
     payload: args.payload
   });
+
+  nc.publish("houston.deployment.updated", deployment.id);
 
   // Return the updated deployment object.
   return updatedDeployment;

@@ -27,7 +27,7 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
   nats:
-    image: nats
+    image: nats-streaming
     restart: always
     ports:
     - 4222:4222

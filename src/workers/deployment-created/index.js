@@ -8,35 +8,45 @@ import {
 import { generateHelmValues } from "deployments/config";
 import bcrypt from "bcryptjs";
 import { generate as generatePassword } from "generate-password";
-import nats from "nats";
-import {
-  DEPLOYMENT_AIRFLOW,
-  ROLLOUT_STATUS_STARTED,
-  ROLLOUT_STATUS_DEPLOYED
-} from "constants";
+import nats from "node-nats-streaming";
+import { DEPLOYMENT_AIRFLOW } from "constants";
 
 // Create NATS client.
-const nc = nats.connect();
+const nc = nats.connect("test-cluster", "deployment-created");
+
+// Attach handler
+nc.on("connect", function() {
+  // Create subscription options
+  const opts = nc.subscriptionOptions();
+  opts.setDeliverAllAvailable();
+  opts.setManualAckMode(true);
+  opts.setAckWait(60 * 1000);
+  opts.setDurableName("deployment-created");
+
+  // Subscribe and assign event handler
+  const sub = nc.subscribe("houston.deployment.created", opts);
+  sub.on("message", function(msg) {
+    deploymentCreated(msg).catch(err => console.log(err));
+  });
+});
 
 /*
  * Handle a deployment rollout creation.
  */
-nc.subscribe("houston.rollout.created", async function(msg) {
+export async function deploymentCreated(msg) {
+  // Grab the deploymentId from the message.
+  const id = msg.getData();
+
   // Update the status in the datbase and grab some information.
-  const { version, deployment } = await prisma
-    .updateRollout({
-      where: { id: msg },
-      data: { status: ROLLOUT_STATUS_STARTED }
-    })
-    .$fragment(
-      `{ id, version, config, deployment { id, releaseName, extraAu, workspace { id } } }`
-    );
+  const deployment = await prisma
+    .deployment({ id })
+    .$fragment(`{ id, releaseName, version, extraAu, workspace { id } }`);
 
   // Notify that we've started the process.
-  nc.publish("houston.rollout.started", msg);
+  nc.publish("houston.deployment.rollout.started", id);
 
-  // Grab the releaseName of the deployment.
-  const releaseName = deployment.id;
+  // Grab the releaseName and version of the deployment.
+  const { releaseName, version } = deployment;
 
   // Create the database for this deployment.
   const {
@@ -106,19 +116,17 @@ nc.subscribe("houston.rollout.created", async function(msg) {
   await new Promise(r => setTimeout(r, 10000));
 
   // Update the status of the rollout, and some deployment details.
-  await prisma.updateRollout({
-    where: { id: msg },
+  await prisma.updateDeployment({
+    where: { id },
     data: {
-      status: ROLLOUT_STATUS_DEPLOYED,
-      deployment: {
-        update: {
-          registryPassword: hashedRegistryPassword,
-          elasticsearchPassword: hashedElasticsearchPassword
-        }
-      }
+      registryPassword: hashedRegistryPassword,
+      elasticsearchPassword: hashedElasticsearchPassword
     }
   });
 
   // Notify that we've deployed the rollout
-  nc.publish("houston.rollout.deployed", msg);
-});
+  nc.publish("houston.deployment.rollout.deployed", id);
+  msg.ack();
+
+  throw new Error("fucked up");
+}

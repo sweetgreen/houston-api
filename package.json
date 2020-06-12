@@ -59,6 +59,7 @@
     "ms": "^2.1.1",
     "nats": "^1.4.9",
     "node-forge": "^0.9.1",
+    "node-nats-streaming": "^0.3.2",
     "openid-client": "^2.5.0",
     "pg": "^7.18.2",
     "pg-connection-string": "^2.0.0",

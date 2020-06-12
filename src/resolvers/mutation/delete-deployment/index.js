@@ -3,6 +3,10 @@ import { track } from "analytics";
 import { generateNamespace } from "deployments/naming";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
+import nats from "nats";
+
+// Create NATS client.
+const nc = nats.connect();
 
 /*
  * Delete a deployment.

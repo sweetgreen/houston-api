@@ -16,15 +16,6 @@ enum InviteSource {
   WORKSPACE
 }
 
-enum RolloutStatus {
-  PENDING
-  STARTED
-  DEPLOYED
-  WAITING
-  COMPLETE
-  FAILED
-}
-
 type User {
   id: ID! @id
   username: String @unique
@@ -145,19 +136,7 @@ type Deployment {
   updatedAt: DateTime! @updatedAt
   deletedAt: DateTime
   images: [DockerImage!] @relation(name: "DeploymentDockerImages", onDelete: CASCADE)
-  rollouts: [Rollout!] @relation(name: "DeploymentRollouts", onDelete: CASCADE)
   canary: Boolean
-}
-
-type Rollout {
-  id: ID! @id
-  deployment: Deployment! @relation(name: "DeploymentRollouts")
-  config: Json!
-  version: String!
-  airflowVersion: String!
-  status: RolloutStatus
-  createdAt: DateTime! @createdAt
-  updatedAt: DateTime! @updatedAt
 }
 
 type DockerImage {

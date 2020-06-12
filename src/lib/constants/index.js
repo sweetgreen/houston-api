@@ -52,10 +52,3 @@ export const DOCKER_REGISTRY_CONTENT_TYPE =
 
 export const MEDIATYPE_DOCKER_MANIFEST_V2 =
   "application/vnd.docker.distribution.manifest.v2+json";
-
-export const ROLLOUT_STATUS_PENDING = "PENDING";
-export const ROLLOUT_STATUS_STARTED = "STARTED";
-export const ROLLOUT_STATUS_DEPLOYED = "DEPLOYED";
-export const ROLLOUT_STATUS_COMPLETE = "COMPLETE";
-export const ROLLOUT_STATUS_WAITING = "WAITING";
-export const ROLLOUT_STATUS_FAILED = "FAILED";
