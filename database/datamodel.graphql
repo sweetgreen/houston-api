@@ -117,7 +117,6 @@ type Workspace {
   trialEndsAt: DateTime
 }
 
-# XXX: Need to deal with config, version, airflowVersion since they are moved to DeploymentRollout
 type Deployment {
   id: ID! @id
   config: Json
