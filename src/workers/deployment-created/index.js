@@ -127,6 +127,4 @@ export async function deploymentCreated(msg) {
   // Notify that we've deployed the rollout
   nc.publish("houston.deployment.rollout.deployed", id);
   msg.ack();
-
-  throw new Error("fucked up");
 }
