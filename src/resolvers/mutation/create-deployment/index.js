@@ -107,9 +107,9 @@ export default async function createDeployment(parent, args, ctx, info) {
     data: {
       label: args.label,
       description: args.description,
+      config: deploymentConfig,
       version,
       airflowVersion,
-      config: deploymentConfig,
       releaseName,
       ...mapPropertiesToDeployment(properties),
       workspace: {
