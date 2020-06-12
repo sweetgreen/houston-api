@@ -126,5 +126,10 @@ export async function deploymentCreated(msg) {
 
   // Notify that we've deployed the rollout
   nc.publish("houston.deployment.rollout.deployed", id);
+
+  /// XXX: Remove me, uncomment to simulate an error
+  throw new Error("whoa");
+
+  // Ack the message
   msg.ack();
 }
