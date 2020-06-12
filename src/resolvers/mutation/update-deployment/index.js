@@ -15,12 +15,12 @@ import { TrialError } from "errors";
 import config from "config";
 import { addFragmentToInfo } from "graphql-binding";
 import { get, isEmpty, merge, pick } from "lodash";
-import nats from "nats";
+import nats from "node-nats-streaming";
 import crypto from "crypto";
 import { DEPLOYMENT_AIRFLOW } from "constants";
 
 // Create NATS client.
-const nc = nats.connect();
+const nc = nats.connect("test-cluster", "update-deployment");
 
 /*
  * Update a deployment.
@@ -145,6 +145,9 @@ export default async function updateDeployment(parent, args, ctx, info) {
     payload: args.payload
   });
 
+  // Send event that a new deployment was created.
+  // An async worker will pick this job up and ensure
+  // the changes are propagated.
   nc.publish("houston.deployment.updated", deployment.id);
 
   // Return the updated deployment object.
