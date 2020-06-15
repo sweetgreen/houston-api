@@ -7,6 +7,7 @@ import log from "logger";
 import { createDockerJWT } from "registry/jwt";
 import validateDeploymentCredentials from "deployments/validate/authorization";
 import { ACTIONS } from "deployments/validate/docker-tag";
+import { PrismaClient } from "@prisma/client";
 import config from "config";
 import { compact, isArray, find, includes } from "lodash";
 import { ENTITY_DEPLOYMENT, VALID_DOCKER_IMAGE_NAME } from "constants";

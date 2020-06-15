@@ -1,6 +1,7 @@
 import { hasPermission } from "rbac";
 import log from "logger";
 import { createJWT } from "jwt";
+import { PrismaClient } from "@prisma/client";
 import { ENTITY_DEPLOYMENT, RELEASE_NAME_AIRFLOW_PATTERN } from "constants";
 import url from "url";
 
