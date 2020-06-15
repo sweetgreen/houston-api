@@ -102,7 +102,7 @@ export const permissions = shield(
       )
     },
     Mutation: {
-      updateUser: isAuth,
+      updateSelf: isAuth,
       deleteInviteToken: isAuth,
       createServiceAccount: isAuth,
       updateServiceAccount: isAuth,
