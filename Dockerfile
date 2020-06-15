@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:12.16.3-buster
+FROM astronomerinc/ap-base:3.12
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
-ARG DEBIAN_FRONTEND=noninteractive
 ARG BUILD_NUMBER=-1
 LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.module="astronomer"
@@ -24,14 +23,20 @@ LABEL io.astronomer.docker.component="houston-api"
 
 WORKDIR /houston
 
-ENV LANG=C.UTF-8
-ENV DATABASE_URL postgresql://
-
 # Copy in the package.json to install dependencies
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN apk add --no-cache --virtual .build-deps \
+		build-base \
+		git \
+		python3 \
+	&& apk add --no-cache \
+		nodejs \
+		nodejs-npm \
+		openssl \
+	&& npm install \
+	&& apk del .build-deps
 
 # Copy in the source and build the application
 COPY . .
