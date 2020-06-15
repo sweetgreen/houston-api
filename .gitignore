@@ -8,4 +8,3 @@ docker-compose.override.yml
 yarn.lock
 
 telepresence.log
-package-lock.json
