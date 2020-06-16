@@ -5,7 +5,7 @@ import {
 } from "deployments/naming";
 import log from "logger";
 import knex from "knex";
-import { clone, isString, merge } from "lodash";
+import { clone, first, isString, merge } from "lodash";
 import config from "config";
 import passwordGenerator from "generate-password";
 import { parse } from "pg-connection-string";
@@ -155,8 +155,14 @@ export function createConnection(config) {
  * @param {Object} conn An existing database connection.
  * @param {String} name Name for the new database.
  */
-export function createDatabase(conn, name) {
-  return conn.raw(`CREATE DATABASE ${name}`);
+export async function createDatabase(conn, name) {
+  const results = await conn.raw(
+    `SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname = '${name}')`
+  );
+  const exists = first(results.rows).exists;
+  if (!exists) {
+    await conn.raw(`CREATE DATABASE ${name}`);
+  }
 }
 
 /*
@@ -177,16 +183,33 @@ export async function createSchema(
   creator,
   allowRootAccess
 ) {
-  // Create a new limited access user, with random password.
-  await conn.raw(
-    `CREATE USER ${user} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION CONNECTION LIMIT -1 ENCRYPTED PASSWORD '${password}';`
+  // Check if user exists
+  const userExistsResult = await conn.raw(
+    `SELECT EXISTS(SELECT usename FROM pg_user WHERE usename = '${user}')`
   );
+  const userExists = first(userExistsResult.rows).exists;
+
+  // Create a new limited access user, with random password.
+  if (!userExists) {
+    await conn.raw(
+      `CREATE USER ${user} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION CONNECTION LIMIT -1 ENCRYPTED PASSWORD '${password}';`
+    );
+  }
 
   // Grant the privleges of the new user to our root user (the one running these commands).
   await conn.raw(`GRANT ${user} TO ${creator}`);
 
-  // Create a new schema, granting the new user access.
-  await conn.raw(`CREATE SCHEMA ${schema} AUTHORIZATION ${user}`);
+  // Check if schema exists
+  const schemaExistsResult = await conn.raw(
+    `SELECT EXISTS(SELECT schema_name FROM information_schema.schemata WHERE schema_name = '${schema}')`
+  );
+  const schemaExists = first(schemaExistsResult.rows).exists;
+
+  // Create a new limited access user, with random password.
+  if (!schemaExists) {
+    // Create a new schema, granting the new user access.
+    await conn.raw(`CREATE SCHEMA ${schema} AUTHORIZATION ${user}`);
+  }
 
   // Assign privleges to the new user.
   await conn.raw(

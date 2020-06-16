@@ -1,6 +1,7 @@
 import { prisma } from "generated/client";
 import { createDatabaseForDeployment } from "deployments/database";
 import commander from "commander";
+import log from "logger";
 import {
   generateNamespace,
   generateDeploymentLabels
@@ -128,8 +129,9 @@ export async function deploymentCreated(msg) {
   nc.publish("houston.deployment.rollout.deployed", id);
 
   /// XXX: Remove me, uncomment to simulate an error
-  throw new Error("whoa");
+  // throw new Error("whoa");
 
   // Ack the message
   msg.ack();
+  log.info(`Deployment ${releaseName} successfully created`);
 }
