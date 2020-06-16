@@ -7,3 +7,4 @@ src/lib/generated/
 docker-compose.override.yml
 
 telepresence.log
+package-lock.json

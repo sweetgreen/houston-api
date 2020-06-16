@@ -35,16 +35,17 @@ RUN apk add --no-cache --virtual .build-deps \
 		nodejs \
 		nodejs-npm \
 		openssl \
-	&& npm install \
+		yarn \
+	&& yarn install \
 	&& apk del .build-deps
 
 # Copy in the source and build the application
 COPY . .
-RUN npm run build
+RUN yarn build
 
 EXPOSE 8871
 
 # Wrap with entrypoint
 ENTRYPOINT ["/houston/bin/entrypoint"]
 
-CMD ["npm", "run", "serve"]
+CMD ["yarn", "serve"]
