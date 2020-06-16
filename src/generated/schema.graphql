@@ -114,12 +114,17 @@ type DeploymentConfig {
 }
 
 type DeploymentLog {
-  result: JSON!
+  component: String
+  id: String!
+  level: String
+  message: String
+  release: String
+  timestamp: String
 }
 
 type DeploymentMetric {
   label: String
-  result: JSON!
+  result: JSON
 }
 
 type DeploymentStatus {
@@ -288,6 +293,7 @@ type Query {
   deploymentServiceAccounts(deploymentUuid: Uuid!): [ServiceAccount!]
   email(where: EmailWhereUniqueInput!): Email
   invites(invite: InviteSearch): [Invite!]
+  logs(component: String, deploymentUuid: Uuid!, search: String, timestamp: String): [DeploymentLog!]
   self: AuthUser!
   serviceAccounts(entityType: EntityType!, entityUuid: Uuid, serviceAccountUuid: Uuid): [ServiceAccount!]
   updateAvailable: PlatformRelease

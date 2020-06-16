@@ -237,10 +237,17 @@ export default queryType({
         queries.deploymentServiceAccounts(root, args, context)
     });
 
-    // FIXME: Resolve without a type (data is on Elastic)
-    // t.field("logs", {
-    //   resolve: queries.logs
-    //   // TODO: @auth(permissions: ["deployment.logs.get", "system.deployments.logs"], op: OR)
-    // });
+    t.field("logs", {
+      type: "DeploymentLog",
+      list: true,
+      nullable: true,
+      args: {
+        deploymentUuid: arg({ type: "Uuid", required: true }),
+        component: stringArg({ nullable: true }),
+        timestamp: stringArg({ nullable: true }),
+        search: stringArg({ nullable: true })
+      },
+      resolve: (root, args, context) => queries.logs(root, args, context)
+    });
   }
 });

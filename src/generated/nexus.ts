@@ -136,11 +136,16 @@ export interface NexusGenRootTypes {
     singleNamespace: boolean; // Boolean!
   }
   DeploymentLog: { // root type
-    result: any; // JSON!
+    component?: string | null; // String
+    id: string; // String!
+    level?: string | null; // String
+    message?: string | null; // String
+    release?: string | null; // String
+    timestamp?: string | null; // String
   }
   DeploymentMetric: { // root type
     label?: string | null; // String
-    result: any; // JSON!
+    result?: any | null; // JSON
   }
   DeploymentStatus: { // root type
     result: any; // JSON!
@@ -392,11 +397,16 @@ export interface NexusGenFieldTypes {
     singleNamespace: boolean; // Boolean!
   }
   DeploymentLog: { // field return type
-    result: any; // JSON!
+    component: string | null; // String
+    id: string; // String!
+    level: string | null; // String
+    message: string | null; // String
+    release: string | null; // String
+    timestamp: string | null; // String
   }
   DeploymentMetric: { // field return type
     label: string | null; // String
-    result: any; // JSON!
+    result: any | null; // JSON
   }
   DeploymentStatus: { // field return type
     result: any; // JSON!
@@ -514,6 +524,7 @@ export interface NexusGenFieldTypes {
     deploymentServiceAccounts: NexusGenRootTypes['ServiceAccount'][] | null; // [ServiceAccount!]
     email: NexusGenRootTypes['Email'] | null; // Email
     invites: NexusGenRootTypes['Invite'][] | null; // [Invite!]
+    logs: NexusGenRootTypes['DeploymentLog'][] | null; // [DeploymentLog!]
     self: NexusGenRootTypes['AuthUser']; // AuthUser!
     serviceAccounts: NexusGenRootTypes['ServiceAccount'][] | null; // [ServiceAccount!]
     updateAvailable: NexusGenRootTypes['PlatformRelease'] | null; // PlatformRelease
@@ -837,6 +848,12 @@ export interface NexusGenArgTypes {
     }
     invites: { // args
       invite?: NexusGenInputs['InviteSearch'] | null; // InviteSearch
+    }
+    logs: { // args
+      component?: string | null; // String
+      deploymentUuid: any; // Uuid!
+      search?: string | null; // String
+      timestamp?: string | null; // String
     }
     serviceAccounts: { // args
       entityType: NexusGenEnums['EntityType']; // EntityType!

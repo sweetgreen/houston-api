@@ -541,7 +541,12 @@ const DeploymentStatus = objectType({
 const DeploymentLog = objectType({
   name: "DeploymentLog",
   definition(t) {
-    t.field("result", { type: "JSON" });
+    t.string("id");
+    t.string("component", { nullable: true });
+    t.string("timestamp", { nullable: true });
+    t.string("release", { nullable: true });
+    t.string("level", { nullable: true });
+    t.string("message", { nullable: true });
   }
 });
 

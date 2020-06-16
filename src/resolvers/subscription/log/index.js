@@ -47,6 +47,8 @@ export async function subscribe(parent, args, ctx, { pubsub }) {
               publish({ log: formatLogDocument(log) });
               gt = moment(log._source["@timestamp"]);
             });
+          } else {
+            log.debug(`Got 0 hits in subscription query`);
           }
         })
         .catch(e => log.debug(e));
