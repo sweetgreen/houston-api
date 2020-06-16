@@ -2,6 +2,8 @@ import deploymentStatus from "../resolvers/subscription/deployment-status";
 import deploymentLogs from "../resolvers/subscription/log";
 import deploymentMetrics from "../resolvers/subscription/metrics";
 
+import { PubSub } from "graphql-subscriptions";
+
 import { arg, intArg, stringArg, subscriptionField } from "@nexus/schema";
 
 const DeploymentStatus = subscriptionField("deploymentStatus", {
@@ -10,7 +12,9 @@ const DeploymentStatus = subscriptionField("deploymentStatus", {
     releaseName: stringArg()
   },
   subscribe: (parent, args, context) => {
-    return deploymentStatus.subscribe(parent, args, context);
+    return deploymentStatus.subscribe(parent, args, context, {
+      pubsub: new PubSub()
+    });
   }
 });
 
@@ -23,7 +27,9 @@ const DeploymentLogs = subscriptionField("log", {
     search: stringArg({ nullable: true })
   },
   subscribe: (parent, args, context) => {
-    return deploymentLogs.subscribe(parent, args, context);
+    return deploymentLogs.subscribe(parent, args, context, {
+      pubsub: new PubSub()
+    });
   }
 });
 
@@ -36,7 +42,9 @@ const DeploymentMetrics = subscriptionField("metrics", {
     step: intArg({ nullable: true })
   },
   subscribe: (parent, args, context) => {
-    return deploymentMetrics.subscribe(parent, args, context);
+    return deploymentMetrics.subscribe(parent, args, context, {
+      pubsub: new PubSub()
+    });
   }
 });
 

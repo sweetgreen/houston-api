@@ -5,13 +5,14 @@ import { get } from "lodash";
 import config from "config";
 import moment from "moment";
 
-export async function subscribe(parent, args, { db, pubsub }) {
+export async function subscribe(parent, args, ctx, { pubsub }) {
   log.info("Starting log subscription");
 
-  let { releaseName } = await db.query.deployment(
-    { where: { id: args.deploymentUuid } },
-    `{ releaseName }`
-  );
+  // Get the release name of the current deployment
+  const { releaseName } = await ctx.prisma.deployment.findOne({
+    where: { id: args.deploymentUuid },
+    select: { releaseName: true }
+  });
 
   const component = args.component;
   const searchPhrase = get(args, "search");

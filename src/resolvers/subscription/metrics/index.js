@@ -17,12 +17,12 @@ export function buildURI(query) {
 }
 
 // Start the subscription to poll PromQL metrics
-export async function subscribe(parent, args, { db, pubsub }) {
+export async function subscribe(parent, args, ctx, { pubsub }) {
   // Get the release name of the current deployment
-  let { releaseName } = await db.query.deployment(
-    { where: { id: args.deploymentUuid } },
-    `{ releaseName }`
-  );
+  const { releaseName } = await ctx.prisma.deployment.findOne({
+    where: { id: args.deploymentUuid },
+    select: { releaseName: true }
+  });
 
   // Poll interval
   const interval = config.get("prometheus.pollInterval");

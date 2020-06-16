@@ -56,12 +56,10 @@ export async function getMetric(releaseName) {
 }
 
 // Start the subscription
-export async function subscribe(parent, args, { pubsub }) {
-  log.info("subscribe(parent, args, { pubsub })");
+export async function subscribe(parent, args, ctx, { pubsub }) {
+  log.info("subscribe(parent, args, ctx, { pubsub })");
   log.info("parent", parent);
   log.info("args", args);
-  let { releaseName } = args;
-  const metric = await getMetric(releaseName);
 
   // Return sample data
   if (useSample) {
@@ -69,6 +67,9 @@ export async function subscribe(parent, args, { pubsub }) {
       publish({ deploymentStatus: { result: samplePromise } });
     }, pubsub);
   }
+
+  let { releaseName } = args;
+  const metric = await getMetric(releaseName);
 
   // Return promQL data if in production
   return createPoller(
