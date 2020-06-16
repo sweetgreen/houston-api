@@ -1,6 +1,6 @@
 import config from "config";
 import { createLogger, format, transports } from "winston";
-const { combine, colorize, timestamp, printf, splat } = format;
+const { combine, colorize, errors, timestamp, printf, splat } = format;
 
 const baseFormatter = combine(
   format(info => {
@@ -8,14 +8,20 @@ const baseFormatter = combine(
     return info;
   })(),
   splat(),
+  errors({ stack: true }),
   timestamp({
     format: "YYYY-MM-DDTHH:mm:ss"
   })
 );
 
-const printer = printf(
-  info => `${info.timestamp} ${info.level} ${info.message}`
-);
+const printer = printf(function(info) {
+  // If we have an error object, make the stack trace the message.
+  // TODO: Also support a message with the error object.
+  info.message = info.stack ? info.stack : info.message;
+
+  // Return the final format.
+  return `${info.timestamp} ${info.level} ${info.message}`;
+});
 
 const isProd = process.env.NODE_ENV === "production";
 const formatter = isProd

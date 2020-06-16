@@ -27,7 +27,7 @@ nc.on("connect", function() {
   // Subscribe and assign event handler
   const sub = nc.subscribe("houston.deployment.created", opts);
   sub.on("message", function(msg) {
-    deploymentCreated(msg).catch(err => console.log(err));
+    deploymentCreated(msg).catch(err => log.error(err));
   });
 });
 
