@@ -22,7 +22,7 @@ import { DEPLOYMENT_AIRFLOW } from "constants";
  * @return [EnvironmentVariablePayload] The variable payload.
  */
 export default async function updateDeploymentVariables(parent, args, ctx) {
-  const { config, deploymentUuid, env, releaseName, payload } = args;
+  const { deploymentUuid, releaseName, payload } = args;
 
   const namespace = generateNamespace(releaseName);
   const secretName = generateEnvironmentSecretName(releaseName);
@@ -101,10 +101,8 @@ export default async function updateDeploymentVariables(parent, args, ctx) {
   });
 
   // Run the analytics track event
-  track(ctx.user.id, "Updated Deployment", {
+  track(ctx.user.id, "Updated Deployment Variables", {
     deploymentId: deploymentUuid,
-    config,
-    env,
     payload
   });
 
