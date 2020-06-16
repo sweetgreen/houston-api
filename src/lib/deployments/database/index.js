@@ -49,14 +49,14 @@ export async function createDatabaseForDeployment(deployment) {
   log.info(`Creating database ${dbName}`);
 
   // Create the new deployment database.
-  await createDatabase(rootConn, dbName);
+  await ensureDatabase(rootConn, dbName);
 
   // Connect to the newly created database.
   const deploymentCfg = merge(clone(parsedConn), { database: dbName });
   const deploymentDb = createConnection(deploymentCfg);
 
   // Create schema for airflow metadata.
-  await createSchema(
+  await ensureUserAndSchema(
     deploymentDb,
     dbName,
     airflowSchemaName,
@@ -67,7 +67,7 @@ export async function createDatabaseForDeployment(deployment) {
   );
 
   // Create schema for celery result backend.
-  await createSchema(
+  await ensureUserAndSchema(
     deploymentDb,
     dbName,
     celerySchemaName,
@@ -155,7 +155,7 @@ export function createConnection(config) {
  * @param {Object} conn An existing database connection.
  * @param {String} name Name for the new database.
  */
-export async function createDatabase(conn, name) {
+export async function ensureDatabase(conn, name) {
   const results = await conn.raw(
     `SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname = '${name}')`
   );
@@ -166,7 +166,44 @@ export async function createDatabase(conn, name) {
 }
 
 /*
- * Create a schema with new user/role.
+ * Create a new user in the database if it does not already exist.
+ * @param {Object} conn An existing database connection.
+ * @param {String} name Name for the new user.
+ * @param {String} password The users new password.
+ */
+export async function ensureUser(conn, user, password) {
+  // Check if user exists
+  const result = await conn.raw(
+    `SELECT EXISTS(SELECT usename FROM pg_user WHERE usename = '${user}')`
+  );
+  const exists = first(result.rows).exists;
+  if (!exists) {
+    await conn.raw(
+      `CREATE USER ${user} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION CONNECTION LIMIT -1 ENCRYPTED PASSWORD '${password}';`
+    );
+  }
+}
+
+/*
+ * Create a new schema if it does not already exist.
+ * @param {Object} conn An existing database connection.
+ * @param {String} schema The name of the desired schema.
+ * @param {String} user The user authorized to this schema.
+ */
+export async function ensureSchema(conn, schema, user) {
+  // Check if schema exists
+  const result = await conn.raw(
+    `SELECT EXISTS(SELECT schema_name FROM information_schema.schemata WHERE schema_name = '${schema}')`
+  );
+  const exists = first(result.rows).exists;
+  if (!exists) {
+    // Create a new schema, granting the new user access.
+    await conn.raw(`CREATE SCHEMA ${schema} AUTHORIZATION ${user}`);
+  }
+}
+
+/*
+ * Create a schema with new user/role, if they do not exist.
  * @param {Object} conn An existing database connection.
  * @param {String} database Name of the deployments database.
  * @param {String} schema Name of the schema to create.
@@ -174,7 +211,7 @@ export async function createDatabase(conn, name) {
  * @param {String} password The password for the new user.
  * @param {String} creator The root user.
  */
-export async function createSchema(
+export async function ensureUserAndSchema(
   conn,
   database,
   schema,
@@ -183,33 +220,14 @@ export async function createSchema(
   creator,
   allowRootAccess
 ) {
-  // Check if user exists
-  const userExistsResult = await conn.raw(
-    `SELECT EXISTS(SELECT usename FROM pg_user WHERE usename = '${user}')`
-  );
-  const userExists = first(userExistsResult.rows).exists;
-
-  // Create a new limited access user, with random password.
-  if (!userExists) {
-    await conn.raw(
-      `CREATE USER ${user} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION CONNECTION LIMIT -1 ENCRYPTED PASSWORD '${password}';`
-    );
-  }
+  // Create the database user.
+  await ensureUser(conn, user, password);
 
   // Grant the privleges of the new user to our root user (the one running these commands).
   await conn.raw(`GRANT ${user} TO ${creator}`);
 
-  // Check if schema exists
-  const schemaExistsResult = await conn.raw(
-    `SELECT EXISTS(SELECT schema_name FROM information_schema.schemata WHERE schema_name = '${schema}')`
-  );
-  const schemaExists = first(schemaExistsResult.rows).exists;
-
-  // Create a new limited access user, with random password.
-  if (!schemaExists) {
-    // Create a new schema, granting the new user access.
-    await conn.raw(`CREATE SCHEMA ${schema} AUTHORIZATION ${user}`);
-  }
+  // Ensure the schmea is created.
+  await ensureSchema(conn, schema, user);
 
   // Assign privleges to the new user.
   await conn.raw(
