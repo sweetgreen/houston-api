@@ -549,7 +549,7 @@ const DeploymentMetric = objectType({
   name: "DeploymentMetric",
   definition(t) {
     t.string("label", { nullable: true });
-    t.field("result", { type: "JSON" });
+    t.field("result", { nullable: true, type: "JSON" });
   }
 });
 
