@@ -37,7 +37,7 @@ export async function request(...args) {
     const req = new client.Request(...args);
     const res = await req.exec();
 
-    if !(res.response.result.success) {
+    if (!res.response.result.success) {
       throw `Error calling commander: ${res.response.result.message}`;
     }
 
