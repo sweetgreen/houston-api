@@ -37,6 +37,10 @@ export async function request(...args) {
     const req = new client.Request(...args);
     const res = await req.exec();
 
+    if !(res.response.result.success) {
+      throw `Error calling commander: ${res.response.result.message}`;
+    }
+
     const result = method === "#getSecret" ? res.response.result : res.response;
     log.info(`Response from ${method}: ${JSON.stringify(result)}`);
 
