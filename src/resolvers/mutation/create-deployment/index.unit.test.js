@@ -28,7 +28,6 @@ const mutation = `
     $description: String
     $version: String
     $config: JSON
-    $env: JSON
     $properties: JSON
     $cloudRole: String
   ) {
@@ -39,13 +38,16 @@ const mutation = `
       description: $description
       version: $version
       config: $config
-      env: $env
       properties: $properties
       cloudRole: $cloudRole
     ) {
         id
         config
-        env
+        environmentVariables {
+          key
+          value
+          isSecret
+        }
         urls {
           type
           url

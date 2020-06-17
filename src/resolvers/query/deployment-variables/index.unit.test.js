@@ -20,8 +20,9 @@ const query = `
       workspaceUuid: $workspaceUuid
       releaseName: $releaseName
     ) {
-      deploymentUuid
-      releaseName
+      key
+      value
+      isSecret
     }
   }
 `;

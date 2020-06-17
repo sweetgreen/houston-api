@@ -30,7 +30,9 @@ const query = `
       createdAt
       updatedAt
       config
-      env
+      environmentVariables {
+        key
+      }
       properties
     }
   }

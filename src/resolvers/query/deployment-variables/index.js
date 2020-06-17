@@ -6,21 +6,8 @@ import { objectToArrayOfKeyValue } from "deployments/config";
 
 import { get, orderBy, includes, map } from "lodash";
 
-/*
- * Get list of deployment environment variables
- * @param {Object} parent The result of the parent resolver.
- * @param {Object} args The graphql arguments.
- * @param {Object} ctx The graphql context.
- * @return [EnvironmentVariablePayload] The variable payload.
- */
-export default async function deploymentVariables(parent, args, ctx) {
+export async function extractVariables(parent, args, ctx) {
   const { releaseName } = args;
-
-  // Get variable keys and metadata from Postgres
-  const { id } = await ctx.db.query.deployment(
-    { where: { releaseName } },
-    "{ id }"
-  );
 
   const namespace = generateNamespace(releaseName);
   const secretName = generateEnvironmentSecretName(releaseName);
@@ -55,9 +42,16 @@ export default async function deploymentVariables(parent, args, ctx) {
 
   const environmentVariables = orderBy(vars, ["key"], ["asc"]);
 
-  return {
-    releaseName,
-    deploymentUuid: id,
-    environmentVariables
-  };
+  return environmentVariables;
+}
+
+/*
+ * Get list of deployment environment variables
+ * @param {Object} parent The result of the parent resolver.
+ * @param {Object} args The graphql arguments.
+ * @param {Object} ctx The graphql context.
+ * @return [EnvironmentVariablePayload] The variable payload.
+ */
+export default async function deploymentVariables(parent, args, ctx) {
+  return extractVariables(parent, args, ctx);
 }

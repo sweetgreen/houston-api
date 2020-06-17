@@ -24,7 +24,11 @@ const mutation = `
     ) {
         id
         config
-        env
+        environmentVariables {
+          key
+          value
+          isSecret
+        }
         urls {
           type
           url

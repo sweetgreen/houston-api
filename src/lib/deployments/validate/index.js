@@ -1,4 +1,4 @@
-import validateEnvironment from "./environment";
+// import validateEnvironment from "./environment";
 import validateResources from "./resources";
 import validateProperties from "./properties";
 import validateExistence from "./existence";
@@ -16,8 +16,8 @@ export default async function validate(workspaceId, args, deployment = {}) {
   // and will be be populated for an update.
   const deploymentId = deployment.id;
 
-  // Validate environment variables.
-  validateEnvironment(args.env);
+  // // Validate environment variables.
+  // validateEnvironment(args.env);
 
   // Get list of valid executors in the system.
   const { executors } = config.get("deployments");
