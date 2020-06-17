@@ -136,7 +136,7 @@ model Workspace {
 
 model Deployment {
   id                    String        @default(cuid()) @id
-  config                String?
+  config                Json?
   description           String?
   label                 String?
   registryPassword      String?
@@ -161,8 +161,8 @@ model DockerImage {
   // Even though we only "need" the tag, to make it a unique string that we can
   // create/update by we include repository in this too.
   name       String?     @unique
-  labels     String
-  env        String
+  labels     Json
+  env        Json
   tag        String
   digest     String
   deployment Deployment  @relation(fields: [deploymentId], name: "DeploymentDockerImages")

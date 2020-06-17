@@ -83,7 +83,7 @@ export default async function updateDeployment(parent, args, ctx) {
   // Create the update statement.
   const where = { id: args.deploymentUuid };
   const data = merge({}, updatablePayload, {
-    config: JSON.stringify(mungedArgs.config),
+    config: mungedArgs.config,
     ...mapPropertiesToDeployment(mungedArgs.properties)
   });
 

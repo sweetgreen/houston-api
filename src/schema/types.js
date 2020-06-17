@@ -495,8 +495,8 @@ const DockerImage = objectType({
   definition(t) {
     t.model.id();
     t.model.name();
-    t.model.labels();
-    t.model.env();
+    t.field("labels", { type: "JSON" });
+    t.field("env", { type: "JSON" });
     t.model.tag();
     t.model.digest();
     t.model.deployment();

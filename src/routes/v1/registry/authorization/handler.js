@@ -74,8 +74,10 @@ export default async function(req, res) {
     "registryPassword"
   );
 
+  const prisma = new PrismaClient();
+
   // Look up the requesting User or Service Account.
-  const user = await getAuthUser(authPassword);
+  const user = await getAuthUser(prisma, authPassword);
   const userId = isDeploymentAuth ? "registry" : user ? user.id : null;
   if (!userId) return sendError(res, REGISTRY_CODES.DENIED, "Access denied");
 
@@ -86,8 +88,6 @@ export default async function(req, res) {
 
   // Pull out the scope variable.
   const scope = req.query.scope;
-
-  const prisma = new PrismaClient();
 
   // Scope will not exist on a docker login (astro auth login).
   // It will exist for a code push (docker push) and when deployment pods

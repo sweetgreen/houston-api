@@ -27,7 +27,8 @@ export default async function validateDeploymentCredentials(
     where: { releaseName: releaseName },
     select: { [passwordField]: true }
   });
-  const truePassword = deployment[passwordField];
+
+  const truePassword = deployment ? deployment[passwordField] : null;
   await prisma.disconnect();
 
   // Return false if no result.

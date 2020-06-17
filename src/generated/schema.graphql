@@ -136,18 +136,13 @@ type DeploymentUrl {
   url: String
 }
 
-input DeploymentWhereUniqueInput {
-  id: String
-  releaseName: String
-}
-
 type DockerImage {
   createdAt: DateTime!
   deployment: Deployment!
   digest: String!
-  env: String!
+  env: JSON!
   id: String!
-  labels: String!
+  labels: JSON!
   name: String
   tag: String!
 }
@@ -161,12 +156,6 @@ type Email {
   updatedAt: DateTime!
   user: User!
   verified: Boolean
-}
-
-input EmailWhereUniqueInput {
-  address: String
-  id: String
-  token: String
 }
 
 enum EntityType {
@@ -286,12 +275,10 @@ type Query {
   appConfig: AppConfig
   authConfig(duration: Int, extras: JSON, inviteToken: String, redirect: String): AuthConfig!
   card(stripeCustomerId: String, workspaceUuid: Uuid!): Card!
-  deployment(where: DeploymentWhereUniqueInput!): Deployment
   deploymentConfig(deploymentUuid: Uuid, type: String, version: String, workspaceUuid: Uuid): DeploymentConfig!
   deployments: [Deployment!]
   deploymentServiceAccount(deploymentUuid: Uuid!, serviceAccountUuid: Uuid!): ServiceAccount!
   deploymentServiceAccounts(deploymentUuid: Uuid!): [ServiceAccount!]
-  email(where: EmailWhereUniqueInput!): Email
   invites(invite: InviteSearch): [Invite!]
   logs(component: String, deploymentUuid: Uuid!, search: String, timestamp: String): [DeploymentLog!]
   self: AuthUser!
@@ -424,8 +411,4 @@ type WorkspaceCapabilities {
   canUpdateServiceAccount: Boolean
   canUpdateUser: Boolean
   canUpdateWorkspace: Boolean
-}
-
-input WorkspaceWhereUniqueInput {
-  id: String
 }

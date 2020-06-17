@@ -116,7 +116,7 @@ export default async function(req, res) {
           releaseName: true,
           extraAu: true,
           version: true,
-          workspace: { id: true },
+          workspace: { select: { id: true } },
           airflowVersion: true
         }
       });

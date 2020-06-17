@@ -81,9 +81,9 @@ export default mutationType({
         description: stringArg({ nullable: true }),
         version: stringArg({ nullable: true }),
         airflowVersion: stringArg({ nullable: true }),
-        config: arg({ type: "JSON", nullable: true }),
-        env: arg({ type: "JSON", nullable: true }),
-        properties: arg({ type: "JSON", nullable: true }),
+        config: jsonArg({ nullable: true }),
+        env: jsonArg({ nullable: true }),
+        properties: jsonArg({ nullable: true }),
         cloudRole: stringArg({ nullable: true })
       },
       resolve: (root, args, context) =>
@@ -131,7 +131,7 @@ export default mutationType({
     t.field("updateSelf", {
       type: "User",
       args: {
-        payload: arg({ type: "JSON", nullable: true })
+        payload: jsonArg({ nullable: true })
       },
       resolve: mutations.updateSelf
     });
@@ -200,7 +200,7 @@ export default mutationType({
       type: "Workspace",
       args: {
         workspaceUuid: "Uuid",
-        payload: "JSON"
+        payload: jsonArg({ nullable: true })
       },
       resolve: mutations.updateWorkspace
     });
@@ -271,7 +271,7 @@ export default mutationType({
       type: "ServiceAccount",
       args: {
         serviceAccountUuid: "Uuid",
-        payload: "JSON"
+        payload: jsonArg()
       },
       resolve: mutations.updateServiceAccount
     });
@@ -281,7 +281,7 @@ export default mutationType({
       args: {
         serviceAccountUuid: "Uuid",
         workspaceUuid: "Uuid",
-        payload: "JSON"
+        payload: jsonArg()
       },
       resolve: mutations.updateWorkspaceServiceAccount
     });
@@ -291,7 +291,7 @@ export default mutationType({
       args: {
         serviceAccountUuid: "Uuid",
         deploymentUuid: "Uuid",
-        payload: "JSON"
+        payload: jsonArg()
       },
       resolve: mutations.updateDeploymentServiceAccount
     });
