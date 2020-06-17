@@ -106,11 +106,17 @@ export default async function updateDeploymentVariables(parent, args, ctx) {
     payload
   });
 
+  const cleanedVars = map(updatedVariables, variable => ({
+    key: variable.key,
+    value: variable.isSecret ? "" : variable.value,
+    isSecret: variable.isSecret
+  }));
+
   // Return final result
   return {
     releaseName,
     deploymentUuid,
-    environmentVariables: orderBy(updatedVariables, ["key"], ["asc"])
+    environmentVariables: orderBy(cleanedVars, ["key"], ["asc"])
   };
 }
 
