@@ -1,11 +1,6 @@
 import { extractVariables } from "../../query/deployment-variables";
 import { hasPermission } from "rbac";
-// import {
-//   generateNamespace,
-//   generateEnvironmentSecretName
-// } from "deployments/naming";
 import {
-  // objectToArrayOfKeyValue,
   mapDeploymentToProperties,
   findLatestTag,
   generateNextTag
@@ -45,26 +40,6 @@ export function urls(parent) {
 
   return urls;
 }
-
-// /*
-//  * Return a properly formatted list of environment variables.
-//  * @param {Object} parent The result of the parent resolver.
-//  * @param {Object} args The graphql arguments.
-//  * @param {Object} ctx The graphql context.
-//  * @return {[]Object} The environment variables.
-//  */
-// export async function env(parent, args, ctx) {
-//   const { releaseName } = parent;
-//
-//   // Query commander for the environment variables.
-//   const envs = await ctx.commander.request("getSecret", {
-//     namespace: generateNamespace(releaseName),
-//     name: generateEnvironmentSecretName(releaseName)
-//   });
-//
-//   // Transform the returned object into an array.
-//   return objectToArrayOfKeyValue(get(envs, "secret.data"));
-// }
 
 /*
  * Return a properly formatted list of environment variables.
