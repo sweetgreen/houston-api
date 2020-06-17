@@ -4,7 +4,7 @@ import * as constants from "constants";
 
 // Validate component resources
 export default function validateProperties(properties) {
-  // Filter down whitelisted deployment properties.
+  // Filter down allowlisted deployment properties.
   const allowedProps = filter(constants, (_, name) =>
     startsWith(name, "DEPLOYMENT_PROPERTY")
   );
