@@ -21,7 +21,7 @@ nc.on("connect", function() {
   const opts = nc.subscriptionOptions();
   opts.setDeliverAllAvailable();
   opts.setManualAckMode(true);
-  opts.setAckWait(60 * 1000);
+  opts.setAckWait(300 * 1000);
   opts.setDurableName("deployment-created");
 
   // Subscribe and assign event handler
@@ -98,23 +98,6 @@ export async function deploymentCreated(msg) {
     namespaceLabels: generateDeploymentLabels(helmConfig.labels),
     rawConfig: JSON.stringify(helmConfig)
   });
-
-  // If we have environment variables, send to commander.
-  // TODO: The createDeployment commander method currently
-  // allows you to pass secrets to get created,
-  // but the implementation does not quite work.
-  // This call can be consolidated once that is fixed up in commander.
-  // await commander.request("setSecret", {
-  //   release_name: releaseName,
-  //   namespace: generateNamespace(releaseName),
-  //   secret: {
-  //     name: generateEnvironmentSecretName(releaseName),
-  //     data: arrayOfKeyValueToObject(args.env)
-  //   }
-  // });
-
-  // XXX: Remove me, just a simulation of commander
-  await new Promise(r => setTimeout(r, 10000));
 
   // Update the status of the rollout, and some deployment details.
   await prisma.updateDeployment({
