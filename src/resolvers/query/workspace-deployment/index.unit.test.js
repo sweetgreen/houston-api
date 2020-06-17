@@ -32,6 +32,8 @@ const query = `
       config
       environmentVariables {
         key
+        value
+        isSecret
       }
       properties
     }
