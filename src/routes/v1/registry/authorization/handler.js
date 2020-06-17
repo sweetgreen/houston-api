@@ -124,9 +124,9 @@ export default async function(req, res) {
         // This path is for a code push.
         if (!isDeploymentAuth) {
           // Look up deploymentId by releaseName.
-          const deploymentId = await prisma.deployment.findOne({
+          const { id } = await prisma.deployment.findOne({
             where: { releaseName: releaseName }
-          }).id;
+          });
 
           // Check if the User or Service Account has permission to update this deployment.
           const permission = isPushAction
@@ -136,7 +136,7 @@ export default async function(req, res) {
             user,
             permission,
             ENTITY_DEPLOYMENT.toLowerCase(),
-            deploymentId
+            id
           );
 
           if (!allowed) {

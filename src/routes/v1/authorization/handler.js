@@ -35,15 +35,15 @@ export default async function(req, res) {
   if (matches && subdomain === "deployments") {
     const releaseName = matches[1];
     // Get the deploymentId for the parsed releaseName.
-    const deploymentId = await prisma.deployment.findOne({
+    const { id } = await prisma.deployment.findOne({
       where: {
         releaseName: releaseName
       }
-    }).id;
+    });
     await prisma.disconnect();
 
     // Check if we have deployment level access to it.
-    const airflowRoles = mapLocalRolesToAirflow(user, deploymentId);
+    const airflowRoles = mapLocalRolesToAirflow(user, id);
 
     // Prepare audience based on https://tools.ietf.org/html/rfc7519#section-4.1.3
     const audience = [hostname, releaseName].join("/");

@@ -107,7 +107,7 @@ export function checkSystemPermission(user, permission) {
  */
 export async function getUserWithRoleBindings(prisma, id) {
   if (id) {
-    const user = prisma.user.findOne({
+    const user = await prisma.user.findOne({
       where: { id },
       include: {
         roleBindings: {

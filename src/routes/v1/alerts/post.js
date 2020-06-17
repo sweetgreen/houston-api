@@ -20,9 +20,11 @@ export default async function(req, res) {
       log.info(`Sending email alerts for ${releaseName}`);
 
       // Get a list of emails to send alerts to.
-      const emails = await prisma.deployment.findOne({
+      const deployment = await prisma.deployment.findOne({
         where: { releaseName: releaseName }
-      }).alertEmails;
+      });
+
+      const emails = deployment.alertEmails;
 
       // Bail if we have no emails to send.
       if (!emails) return;

@@ -23,11 +23,11 @@ export default async function validateDeploymentCredentials(
   if (!RELEASE_NAME_PATTERN.test(releaseName)) return false;
 
   // Get the password for this deployment
-  const truePassword = await prisma.deployment.findOne({
+  const deployment = await prisma.deployment.findOne({
     where: { releaseName: releaseName },
     select: { [passwordField]: true }
-  })[passwordField];
-
+  });
+  const truePassword = deployment[passwordField];
   await prisma.disconnect();
 
   // Return false if no result.
