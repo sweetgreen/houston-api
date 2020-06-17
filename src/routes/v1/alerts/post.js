@@ -17,11 +17,15 @@ export default async function(req, res) {
   await Promise.all(
     alerts.map(async alert => {
       const releaseName = alert.labels.deployment;
+
+      // Bail if no releaseName found
+      if (!releaseName) return;
+
       log.info(`Sending email alerts for ${releaseName}`);
 
       // Get a list of emails to send alerts to.
       const deployment = await prisma.deployment.findOne({
-        where: { releaseName: releaseName }
+        where: { releaseName }
       });
 
       const emails = deployment.alertEmails;
