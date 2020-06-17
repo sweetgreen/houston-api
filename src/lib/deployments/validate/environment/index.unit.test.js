@@ -18,17 +18,19 @@ describe("When valid environment variables are passed", () => {
     });
 
     test("when env is uppercase", () => {
-      const goodEnvs = [{ key: "A", value: "" }];
+      const goodEnvs = [{ key: "A", value: "", isSecret: false }];
       expect(validateEnvironment(goodEnvs)).toBeUndefined();
     });
 
     test("when env is uppercase and uses underscores", () => {
-      const goodEnvs = [{ key: "GOOD_VARIABLE", value: "" }];
+      const goodEnvs = [{ key: "GOOD_VARIABLE", value: "", isSecret: false }];
       expect(validateEnvironment(goodEnvs)).toBeUndefined();
     });
 
     test("when env is uppercase and starts and ends with underscores", () => {
-      const goodEnvs = [{ key: "_STARTS_ENDS_UNDERSCORES_", value: "" }];
+      const goodEnvs = [
+        { key: "_STARTS_ENDS_UNDERSCORES_", value: "", isSecret: false }
+      ];
       expect(validateEnvironment(goodEnvs)).toBeUndefined();
     });
   });
@@ -37,64 +39,80 @@ describe("When valid environment variables are passed", () => {
 describe("When invalid environment variables are passed", () => {
   test("it throws an error for helm overrides", () => {
     expect(() => {
-      const badEnvs = [{ key: "AIRFLOW__CORE__EXECUTOR", value: "" }];
+      const badEnvs = [
+        { key: "AIRFLOW__CORE__EXECUTOR", value: "", isSecret: false }
+      ];
       validateEnvironment(badEnvs);
     }).toThrow();
   });
 
   test("it throws an error for invalid key formats", () => {
     expect(() => {
-      const badEnvs = [{ key: "", value: "" }];
+      const badEnvs = [{ key: "", value: "", isSecret: false }];
       validateEnvironment(badEnvs);
     }).toThrow();
 
     expect(() => {
-      const badEnvs = [{ key: "_", value: "test" }];
+      const badEnvs = [{ key: "_", value: "test", isSecret: false }];
       validateEnvironment(badEnvs);
     }).toThrow();
 
     expect(() => {
-      const badEnvs = [{ key: "__", value: "test" }];
+      const badEnvs = [{ key: "__", value: "test", isSecret: false }];
       validateEnvironment(badEnvs);
     }).toThrow();
 
     expect(() => {
       const badEnvs = [
-        { key: "OTHER_SPECIAL_CHARS_!@#$%^&*()", value: "test" }
+        {
+          key: "OTHER_SPECIAL_CHARS_!@#$%^&*()",
+          value: "test",
+          isSecret: false
+        }
       ];
       validateEnvironment(badEnvs);
     }).toThrow();
 
     expect(() => {
-      const badEnvs = [{ key: "ALL_UPPERCASE_EXCEPT_LAST_LETTEr", value: "" }];
-      validateEnvironment(badEnvs);
-    }).toThrow();
-
-    expect(() => {
-      const badEnvs = [{ key: "SELECT * FROM INVALID_KEY;", value: "" }];
-      validateEnvironment(badEnvs);
-    }).toThrow();
-
-    expect(() => {
-      const badEnvs = [{ key: "invalid_lowercase", value: "" }];
-      validateEnvironment(badEnvs);
-    }).toThrow();
-
-    expect(() => {
-      const badEnvs = [{ key: "UPPCASE WITH SPACES", value: "" }];
-      validateEnvironment(badEnvs);
-    }).toThrow();
-
-    expect(() => {
-      const badEnvs = [{ key: "STARTS_VALID_ENDS INVALID", value: "" }];
+      const badEnvs = [
+        { key: "ALL_UPPERCASE_EXCEPT_LAST_LETTEr", value: "", isSecret: false }
+      ];
       validateEnvironment(badEnvs);
     }).toThrow();
 
     expect(() => {
       const badEnvs = [
-        { key: "ONE_VALID", value: "" },
-        { key: "TWO_VALID", value: "" },
-        { key: "LAST IS INVALID", value: "" }
+        { key: "SELECT * FROM INVALID_KEY;", value: "", isSecret: false }
+      ];
+      validateEnvironment(badEnvs);
+    }).toThrow();
+
+    expect(() => {
+      const badEnvs = [
+        { key: "invalid_lowercase", value: "", isSecret: false }
+      ];
+      validateEnvironment(badEnvs);
+    }).toThrow();
+
+    expect(() => {
+      const badEnvs = [
+        { key: "UPPCASE WITH SPACES", value: "", isSecret: false }
+      ];
+      validateEnvironment(badEnvs);
+    }).toThrow();
+
+    expect(() => {
+      const badEnvs = [
+        { key: "STARTS_VALID_ENDS INVALID", value: "", isSecret: false }
+      ];
+      validateEnvironment(badEnvs);
+    }).toThrow();
+
+    expect(() => {
+      const badEnvs = [
+        { key: "ONE_VALID", value: "", isSecret: false },
+        { key: "TWO_VALID", value: "", isSecret: false },
+        { key: "LAST IS INVALID", value: "", isSecret: false }
       ];
       validateEnvironment(badEnvs);
     }).toThrow();
