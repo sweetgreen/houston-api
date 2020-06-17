@@ -15,7 +15,8 @@ import {
   deploymentOverrides,
   mapCustomEnvironmentVariables,
   airflowImages,
-  platform
+  platform,
+  defaultAirflowTag
 } from "./index";
 import { generateReleaseName } from "deployments/naming";
 import casual from "casual";
@@ -476,5 +477,74 @@ describe("airflowImages", () => {
       { tag: "1.10.7-alpine3.10-onbuild", version: "1.10.7" },
       { tag: "1.10.10-alpine3.10-onbuild", version: "1.10.10" }
     ]);
+  });
+});
+
+describe("defaultAirflowTag", () => {
+  beforeAll(() => {
+    config.deployments.images = [
+      {
+        version: "1.10.7",
+        channel: "stable",
+        tag: "1.10.7-alpine3.10-onbuild"
+      },
+      {
+        version: "1.10.6",
+        channel: "stable",
+        tag: "1.10.6-alpine3.10-onbuild"
+      },
+      {
+        version: "1.10.5",
+        channel: "stable",
+        tag: "1.10.5-alpine3.10-onbuild"
+      },
+      {
+        version: "1.10.10",
+        channel: "stable",
+        tag: "1.10.10-alpine3.10-onbuild"
+      }
+    ];
+  });
+
+  test("returns default airflow tag based on airflow version 1.10.7 when no airflowVersion provided", () => {
+    const deployment = {
+      id: casual.uuid
+    };
+    const tag = defaultAirflowTag(deployment);
+    expect(tag).toEqual({ defaultAirflowTag: "1.10.7-alpine3.10-onbuild" });
+  });
+
+  test("returns default airflow tag based on airflow version 1.10.10", () => {
+    const deployment = {
+      id: casual.uuid,
+      airflowVersion: "1.10.10"
+    };
+    const tag = defaultAirflowTag(deployment);
+    expect(tag).toEqual({ defaultAirflowTag: "1.10.10-alpine3.10-onbuild" });
+  });
+  test("returns default airflow tag based on airflow version 1.10.5", () => {
+    const deployment = {
+      id: casual.uuid,
+      airflowVersion: "1.10.5"
+    };
+    const tag = defaultAirflowTag(deployment);
+    expect(tag).toEqual({ defaultAirflowTag: "1.10.7-alpine3.10-onbuild" });
+  });
+  test("returns default airflow tag based on airflow version 1.10.6", () => {
+    const deployment = {
+      id: casual.uuid,
+      airflowVersion: "1.10.6"
+    };
+    const tag = defaultAirflowTag(deployment);
+    expect(tag).toEqual({ defaultAirflowTag: "1.10.7-alpine3.10-onbuild" });
+  });
+
+  test("returns default airflow tag based on airflow version 1.10.7", () => {
+    const deployment = {
+      id: casual.uuid,
+      airflowVersion: "1.10.7"
+    };
+    const tag = defaultAirflowTag(deployment);
+    expect(tag).toEqual({ defaultAirflowTag: "1.10.7-alpine3.10-onbuild" });
   });
 });

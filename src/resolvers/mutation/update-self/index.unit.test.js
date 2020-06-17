@@ -12,10 +12,10 @@ const schema = makeExecutableSchema({
 
 // Define our mutation
 const mutation = `
-  mutation updateUser(
+  mutation updateSelf(
     $payload: JSON!
   ) {
-    updateUser(
+    updateSelf(
       payload: $payload,
     ) {
       id
@@ -28,7 +28,7 @@ const mutation = `
   }
 `;
 
-describe("updateUser", () => {
+describe("updateSelf", () => {
   test("typical request is successful", async () => {
     // Mock up a user.
     const user = { id: casual.uuid };

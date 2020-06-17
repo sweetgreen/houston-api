@@ -1,3 +1,4 @@
+import { VALID_DOCKER_IMAGE_NAME } from "constants";
 /*
  * List of potential actions reported by the docker registry.
  */
@@ -7,8 +8,6 @@ export const ACTIONS = {
   MOUNT: "mount",
   DELETE: "delete"
 };
-
-export const VALID_RELEASE_NAME = /^(?<releaseName>[a-z]+-[a-z]+-[0-9]{0,4})\/airflow$/;
 
 /*
  * Handle webhooks from the docker registry.
@@ -20,6 +19,8 @@ export default function isValidTaggedDeployment(ev) {
     ev.action === ACTIONS.PUSH &&
     ev.target.tag.length > 0 &&
     ev.target.tag !== "latest" &&
-    VALID_RELEASE_NAME.test(ev.target.repository)
+    // Reserved repository in docker registry for base airflow images
+    ev.target.repository !== "base-images/airflow" &&
+    VALID_DOCKER_IMAGE_NAME.test(ev.target.repository)
   );
 }

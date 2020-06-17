@@ -17,7 +17,7 @@ jest.mock("emails");
 const query = `
   mutation removeUser($userUuid: Uuid!) {
     removeUser(userUuid: $userUuid) {
-      id: uuid
+      id
     }
   }
 `;

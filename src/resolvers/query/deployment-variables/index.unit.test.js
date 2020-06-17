@@ -12,31 +12,21 @@ const schema = makeExecutableSchema({
 
 // Define our mutation
 const query = `
-  query deployments {
-    deployments {
-      id
-      label
-      description
-      type
+  query deploymentVariables(
+    $workspaceUuid: Uuid!
+    $releaseName: String!
+  ) {
+    deploymentVariables(
+      workspaceUuid: $workspaceUuid
+      releaseName: $releaseName
+    ) {
+      deploymentUuid
       releaseName
-      version
-      workspace {
-        id
-      }
-      urls {
-        type
-        url
-      }
-      createdAt
-      updatedAt
-      config
-      env
-      properties
     }
   }
 `;
 
-describe("deployments", () => {
+describe("deploymentVariables", () => {
   test("typical request is successful", async () => {
     const user = {
       id: casual.uuid,
@@ -44,18 +34,34 @@ describe("deployments", () => {
     };
 
     // Mock up some db functions.
-    const deployments = jest.fn();
+    const deployment = jest.fn().mockReturnValue({ id: casual.uuid });
 
     // Construct db object for context.
     const db = {
       query: {
-        deployments
+        deployment
       }
     };
 
+    // Create mock commander client.
+    const commander = {
+      request: jest.fn().mockReturnValue([{ id: casual.uuid }])
+    };
+
+    const vars = {
+      workspaceUuid: casual.uuid,
+      releaseName: casual.uuid
+    };
+
     // Run the graphql mutation.
-    const res = await graphql(schema, query, null, { db, user });
+    const res = await graphql(
+      schema,
+      query,
+      null,
+      { db, commander, user },
+      vars
+    );
     expect(res.errors).toBeUndefined();
-    expect(deployments.mock.calls.length).toBe(1);
+    expect(deployment.mock.calls.length).toBe(1);
   });
 });

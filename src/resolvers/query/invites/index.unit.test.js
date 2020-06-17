@@ -18,7 +18,7 @@ const query = `
     invites(
       invite: $invite
     ) {
-      id: uuid
+      id
       email
       role
       createdAt

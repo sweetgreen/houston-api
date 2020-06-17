@@ -26,7 +26,7 @@ const query = `
       releaseName
       version
       workspace {
-        id: uuid
+        id
       }
       urls {
         type

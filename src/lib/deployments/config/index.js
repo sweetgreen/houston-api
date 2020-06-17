@@ -90,6 +90,8 @@ export function ingress(deployment) {
       "authorization, username, email"
   };
 
+  const thisUrl = `${deploymentsUrl()}/${deployment.releaseName}`;
+
   return {
     ingress: {
       baseDomain,
@@ -101,11 +103,11 @@ export function ingress(deployment) {
                if ($host = '${deploymentsSubdomain()}' ) {
                  return 404;
                }
-               proxy_pass ${deploymentsUrl()}/airflow/$request_uri;
+               proxy_pass ${thisUrl}/airflow/$request_uri;
              }`,
           "nginx.ingress.kubernetes.io/configuration-snippet": `
              if ($host = '${airflowSubdomain()}' ) {
-               return 308 ${deploymentsUrl()}/airflow/$request_uri;
+               return 308 ${thisUrl}/airflow/$request_uri;
              }`
         },
         commonAnnotations
@@ -115,7 +117,7 @@ export function ingress(deployment) {
           "nginx.ingress.kubernetes.io/rewrite-target": "/$2;",
           "nginx.ingress.kubernetes.io/configuration-snippet": `
              if ($host = '${flowerSubdomain()}' ) {
-               rewrite ^ ${deploymentsUrl()}/flower permanent;
+               rewrite ^ ${thisUrl}/flower permanent;
              }
              subs_filter_types text/css text/xml text/css;
              sub_filter '="/' '="/${deployment.releaseName}/flower/';
@@ -391,6 +393,16 @@ export function platform(deployment) {
  * @return {Object} Helm values.
  */
 export function defaultAirflowTag({ airflowVersion }) {
+  // Special case: so that if a user pushes a 1.10.5-based image up, we continue to run the 1.10.7 initContainers.
+  // Otherwise run the exactly matching version of the initContainer., remove after 1.10.5 gone
+  // TODO: remove this logic in future
+  if (
+    !airflowVersion ||
+    airflowVersion === "1.10.5" ||
+    airflowVersion === "1.10.6"
+  ) {
+    airflowVersion = "1.10.7";
+  }
   const versionedTag = (airflowImageForVersion(airflowVersion) || {}).tag;
   const defaultAirflowTag = versionedTag
     ? versionedTag

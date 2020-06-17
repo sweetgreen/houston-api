@@ -28,10 +28,11 @@ import resetPassword from "./reset-password";
 import suspendWorkspace from "./suspend-workspace";
 import updateCard from "./update-card";
 import updateDeployment from "./update-deployment";
+import updateSelf from "./update-self";
 import updateServiceAccount from "./update-service-account";
+import updateDeploymentVariables from "./update-deployment-variables";
 import updateDeploymentServiceAccount from "./update-deployment-service-account";
 import updateWorkspaceServiceAccount from "./update-workspace-service-account";
-import updateUser from "./update-user";
 import updateWorkspace from "./update-workspace";
 import upgradeDeployment from "./upgrade-deployment";
 import verifyEmail from "./verify-email";
@@ -70,10 +71,11 @@ export default {
   suspendWorkspace,
   updateCard,
   updateDeployment,
+  updateSelf,
   updateServiceAccount,
+  updateDeploymentVariables,
   updateDeploymentServiceAccount,
   updateWorkspaceServiceAccount,
-  updateUser,
   updateWorkspace,
   upgradeDeployment,
   verifyEmail,
