@@ -29,7 +29,7 @@ const InviteSearch = inputObjectType({
 const UserSearch = inputObjectType({
   name: "UserSearch",
   definition(t) {
-    t.field("usereUuid", { type: "Uuid", nullable: true });
+    t.field("userUuid", { type: "Uuid", nullable: true });
     t.string("username", { nullable: true });
     t.string("email", { nullable: true });
     t.string("fullName", { nullable: true });
