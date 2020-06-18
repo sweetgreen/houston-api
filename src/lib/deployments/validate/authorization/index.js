@@ -1,3 +1,4 @@
+import log from "logger";
 import { InvalidCredentialsError } from "errors";
 import { prisma } from "generated/client";
 import bcrypt from "bcryptjs";
@@ -15,10 +16,18 @@ export default async function validateDeploymentCredentials(
   passwordField
 ) {
   // Return false if no password
-  if (!password) return false;
+  if (!password) {
+    log.error("no password provided");
+    return false;
+  }
 
   // Return false is releaseName doesn't look right
-  if (!RELEASE_NAME_PATTERN.test(releaseName)) return false;
+  if (!RELEASE_NAME_PATTERN.test(releaseName)) {
+    log.error(
+      `release name ${releaseName} does not match the RELEASE_NAME_PATTERN`
+    );
+    return false;
+  }
 
   // Get the password for this deployment
   const truePassword = await prisma
@@ -26,7 +35,10 @@ export default async function validateDeploymentCredentials(
     [passwordField]();
 
   // Return false if no result.
-  if (!truePassword) return false;
+  if (!truePassword) {
+    log.error(`No password found in DB for release name ${releaseName}`);
+    return false;
+  }
 
   // Check the password
   const valid = await bcrypt.compare(password, truePassword);
