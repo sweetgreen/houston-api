@@ -1,23 +1,12 @@
 import { queryFragment, responseFragment } from "./fragments";
 import { track } from "analytics";
 import validate from "deployments/validate";
-import {
-  arrayOfKeyValueToObject,
-  generateHelmValues,
-  mapPropertiesToDeployment,
-  mapCustomEnvironmentVariables
-} from "deployments/config";
-import {
-  generateEnvironmentSecretName,
-  generateNamespace
-} from "deployments/naming";
+import { mapPropertiesToDeployment } from "deployments/config";
 import { TrialError } from "errors";
 import config from "config";
 import { addFragmentToInfo } from "graphql-binding";
 import { get, isEmpty, merge, pick } from "lodash";
 import nats from "node-nats-streaming";
-import crypto from "crypto";
-import { DEPLOYMENT_AIRFLOW } from "constants";
 
 // Create NATS client.
 const nc = nats.connect("test-cluster", "update-deployment");
@@ -30,9 +19,10 @@ const nc = nats.connect("test-cluster", "update-deployment");
  * @return {Deployment} The updated Deployment.
  */
 export default async function updateDeployment(parent, args, ctx, info) {
+  const { cloudRole, config: argsConfig, deploymentUuid, env, payload } = args;
   // Get the deployment first.
   const deployment = await ctx.db.query.deployment(
-    { where: { id: args.deploymentUuid } },
+    { where: { id: deploymentUuid } },
     queryFragment
   );
 
@@ -47,11 +37,7 @@ export default async function updateDeployment(parent, args, ctx, info) {
   // schema of this mutation. The UI should also not send non-updatable
   // properties up in the payload.
   // Until we fix these, pick out the args we allow updating on.
-  const updatablePayload = pick(args.payload, [
-    "label",
-    "description",
-    "version"
-  ]);
+  const updatablePayload = pick(payload, ["label", "description", "version"]);
 
   const serviceAccountAnnotations = {};
 
@@ -62,8 +48,8 @@ export default async function updateDeployment(parent, args, ctx, info) {
   const originalConfig = get(deployment, "config", {});
 
   // Generate the service account annotations.
-  if (args.cloudRole && serviceAccountAnnotationKey) {
-    serviceAccountAnnotations[serviceAccountAnnotationKey] = args.cloudRole;
+  if (cloudRole && serviceAccountAnnotationKey) {
+    serviceAccountAnnotations[serviceAccountAnnotationKey] = cloudRole;
   }
 
   const deploymentConfig = merge(
@@ -79,7 +65,7 @@ export default async function updateDeployment(parent, args, ctx, info) {
   // Once we fix the updateDeployment schema to match, we can skip this.
   const mungedArgs = merge({}, updatablePayload, {
     config: deploymentConfig,
-    env: args.env,
+    env,
     properties: get(args, "payload.properties", {})
   });
 
@@ -87,7 +73,7 @@ export default async function updateDeployment(parent, args, ctx, info) {
   await validate(deployment.workspace.id, mungedArgs, deployment);
 
   // Create the update statement.
-  const where = { id: args.deploymentUuid };
+  const where = { id: deploymentUuid };
   const data = merge({}, updatablePayload, {
     config: mungedArgs.config,
     ...mapPropertiesToDeployment(mungedArgs.properties)
@@ -99,56 +85,27 @@ export default async function updateDeployment(parent, args, ctx, info) {
     addFragmentToInfo(info, responseFragment)
   );
 
-  // If we're syncing to kubernetes, fire updates to commander.
-  if (args.sync) {
-    // Set any environment variables.
-    await ctx.commander.request("setSecret", {
-      releaseName: updatedDeployment.releaseName,
-      namespace: generateNamespace(updatedDeployment.releaseName),
-      secret: {
-        name: generateEnvironmentSecretName(updatedDeployment.releaseName),
-        data: arrayOfKeyValueToObject(args.env)
-      }
-    });
-
-    // Map the user input env vars to a format that the helm chart expects.
-    const values = mapCustomEnvironmentVariables(updatedDeployment, args.env);
-
-    // Add an annotation to Airflow pods to inform pods to restart when
-    // secrets have been changed
-    const buf = Buffer.from(JSON.stringify(args.env));
-    const hash = crypto
-      .createHash("sha512")
-      .update(buf)
-      .digest("hex");
-
-    // This annotation is a sha512 hash of the user-provided Airflow environment variables
-    values.airflowPodAnnotations = { "checksum/airflow-secrets": hash };
-
-    // Update the deployment, passing in our custom env vars.
-    await ctx.commander.request("updateDeployment", {
-      releaseName: updatedDeployment.releaseName,
-      chart: {
-        name: DEPLOYMENT_AIRFLOW,
-        version: updatedDeployment.version
-      },
-      namespace: generateNamespace(updatedDeployment.releaseName),
-      rawConfig: JSON.stringify(generateHelmValues(updatedDeployment, values))
-    });
-  }
-
   // Run the analytics track event
   track(ctx.user.id, "Updated Deployment", {
-    deploymentId: args.deploymentUuid,
-    config: args.config,
-    env: args.env,
-    payload: args.payload
+    deploymentId: deploymentUuid,
+    config: argsConfig,
+    env,
+    payload
   });
 
   // Send event that a new deployment was created.
   // An async worker will pick this job up and ensure
   // the changes are propagated.
-  nc.publish("houston.deployment.updated", deployment.id);
+  // Include any new env vars passed in the args
+  const msg = {
+    id: deployment.id,
+    env
+  };
+  const msgJson = JSON.stringify(msg);
+
+  // Can only publish Uint8Array|string|Buffer
+  // JSON.stringify seems like the best option for this use case
+  nc.publish("houston.deployment.updated", msgJson);
 
   // Return the updated deployment object.
   return updatedDeployment;

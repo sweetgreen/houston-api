@@ -38,7 +38,7 @@ export async function deploymentCreated(msg) {
   // Grab the deploymentId from the message.
   const id = msg.getData();
 
-  // Update the status in the datbase and grab some information.
+  // Update the status in the database and grab some information.
   const deployment = await prisma
     .deployment({ id })
     .$fragment(`{ id, releaseName, version, extraAu, workspace { id } }`);
