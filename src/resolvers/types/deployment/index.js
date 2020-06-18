@@ -1,10 +1,10 @@
-import { extractVariables } from "../../query/deployment-variables";
 import { hasPermission } from "rbac";
 import {
   mapDeploymentToProperties,
   findLatestTag,
   generateNextTag
 } from "deployments/config";
+import { extractVariables } from "deployments/environment-variables";
 import { first, map } from "lodash";
 import config from "config";
 import {
