@@ -1,3 +1,4 @@
+import { ncFactory } from "../factory";
 import { prisma } from "generated/client";
 import { createDatabaseForDeployment } from "deployments/database";
 import commander from "commander";
@@ -9,27 +10,16 @@ import {
 import { generateHelmValues } from "deployments/config";
 import bcrypt from "bcryptjs";
 import { generate as generatePassword } from "generate-password";
-import nats from "node-nats-streaming";
 import { DEPLOYMENT_AIRFLOW } from "constants";
 
+const clusterID = "test-cluster";
+const clientID = "deployment-variables-updated";
+const subject = "houston.deployment.variables.updated";
+const messageHandler = function(msg) {
+  deploymentCreated(msg).catch(err => log.error(err));
+};
 // Create NATS client.
-const nc = nats.connect("test-cluster", "deployment-created");
-
-// Attach handler
-nc.on("connect", function() {
-  // Create subscription options
-  const opts = nc.subscriptionOptions();
-  opts.setDeliverAllAvailable();
-  opts.setManualAckMode(true);
-  opts.setAckWait(300 * 1000);
-  opts.setDurableName("deployment-created");
-
-  // Subscribe and assign event handler
-  const sub = nc.subscribe("houston.deployment.created", opts);
-  sub.on("message", function(msg) {
-    deploymentCreated(msg).catch(err => log.error(err));
-  });
-});
+const nc = ncFactory(clusterID, clientID, subject, messageHandler);
 
 /*
  * Handle a deployment rollout creation.

@@ -1,29 +1,18 @@
+import { ncFactory } from "../factory";
 import { prisma } from "generated/client";
 import commander from "commander";
 import log from "logger";
 import { generateNamespace } from "deployments/naming";
-import nats from "node-nats-streaming";
 import config from "config";
 
+const clusterID = "test-cluster";
 const clientID = "deployment-deleted";
+const subject = "houston.deployment.deleted";
+const messageHandler = function(msg) {
+  deploymentDeleted(msg).catch(err => log.error(err));
+};
 // Create NATS client.
-const nc = nats.connect("test-cluster", clientID);
-
-// Attach handler
-nc.on("connect", function() {
-  // Create subscription options
-  const opts = nc.subscriptionOptions();
-  opts.setDeliverAllAvailable();
-  opts.setManualAckMode(true);
-  opts.setAckWait(300 * 1000);
-  opts.setDurableName(clientID);
-
-  // Subscribe and assign event handler
-  const sub = nc.subscribe("houston.deployment.deleted", opts);
-  sub.on("message", function(msg) {
-    deploymentDeleted(msg).catch(err => log.error(err));
-  });
-});
+const nc = ncFactory(clusterID, clientID, subject, messageHandler);
 
 /*
  * Handle a deployment deletion.
