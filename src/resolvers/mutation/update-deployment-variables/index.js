@@ -1,4 +1,3 @@
-import { queryFragment } from "./fragments";
 import {
   generateEnvironmentSecretName,
   generateNamespace
@@ -6,123 +5,109 @@ import {
 import { track } from "analytics";
 import {
   arrayOfKeyValueToObject,
-  objectToArrayOfKeyValue,
-  generateHelmValues,
-  mapCustomEnvironmentVariables
+  objectToArrayOfKeyValue
 } from "deployments/config";
 import { find, get, merge, orderBy, filter, map } from "lodash";
-import crypto from "crypto";
-import { DEPLOYMENT_AIRFLOW } from "constants";
+import nats from "node-nats-streaming";
+import { DEPLOYMENT_VARS_UPDATED } from "constants";
 
-/*
+// Create NATS client.
+const nc = nats.connect("test-cluster", "update-deployment-variables");
+
+/**
  * Update a deployment's environment variables
- * @param {Object} parent The result of the parent resolver.
+ * @param {Object} _ The result of the parent resolver.
  * @param {Object} args The graphql arguments.
  * @param {Object} ctx The graphql context.
  * @return [EnvironmentVariablePayload] The variable payload.
  */
-export default async function updateDeploymentVariables(parent, args, ctx) {
-  const { config, deploymentUuid, env, releaseName, payload } = args;
-
-  const namespace = generateNamespace(releaseName);
-  const secretName = generateEnvironmentSecretName(releaseName);
-
-  // Get Deployment Variables
-  const response = await ctx.commander.request("getSecret", {
-    namespace,
-    name: secretName
-  });
-
-  // Get current env variables from commander response
-  const currentVariables = objectToArrayOfKeyValue(
-    get(response, "secret.data", {})
+export default async function updateDeploymentVariables(_, args, ctx) {
+  const { deploymentUuid, releaseName } = args;
+  const { commander } = ctx;
+  const environmentVariables = await updateEnvironmentVariables(
+    args,
+    commander
   );
+  const msg = formatNcMsg(deploymentUuid, environmentVariables);
 
-  // Build payload array for commander
-  const newVariables = payload.map(variable => ({
-    key: variable.key,
-    value: variable.value,
-    isSecret: variable.isSecret
-  }));
-
-  // Merge current env variables and new variables
-  const updatedVariables = await mergeEnvVariables(
-    currentVariables,
-    newVariables
-  );
-
-  // Create array of secret keys as k8s annotations
-  const annotations = map(
-    filter(updatedVariables, { isSecret: true }),
-    i => i.key
-  );
-
-  // Send variable values to commander
-  await ctx.commander.request("setSecret", {
-    release_name: releaseName,
-    namespace: namespace,
-    secret: {
-      name: secretName,
-      data: arrayOfKeyValueToObject(updatedVariables),
-      annotations: { "astronomer.io/hide-from-ui": JSON.stringify(annotations) }
-    }
-  });
-
-  // Get the deployment first.
-  const deployment = await ctx.db.query.deployment(
-    { where: { id: deploymentUuid } },
-    queryFragment
-  );
-
-  // Map the user input env vars to a format that the helm chart expects.
-  const values = mapCustomEnvironmentVariables(deployment, updatedVariables);
-
-  // Add an annotation to Airflow pods to inform pods to restart when
-  // secrets have been changed
-  const buf = Buffer.from(JSON.stringify(updatedVariables));
-
-  const hash = crypto
-    .createHash("sha512")
-    .update(buf)
-    .digest("hex");
-
-  // This annotation is a sha512 hash of the user-provided Airflow environment variables
-  values.airflowPodAnnotations = { "checksum/airflow-secrets": hash };
-
-  // Update the deployment, passing in our custom env vars.
-  await ctx.commander.request("updateDeployment", {
-    releaseName: deployment.releaseName,
-    chart: {
-      name: DEPLOYMENT_AIRFLOW,
-      version: deployment.version
-    },
-    namespace,
-    rawConfig: JSON.stringify(generateHelmValues(deployment, values))
-  });
-
+  nc.publish(DEPLOYMENT_VARS_UPDATED, msg);
   // Run the analytics track event
   track(ctx.user.id, "Updated Deployment", {
-    deploymentId: deploymentUuid,
-    config,
-    env,
-    payload
+    deploymentId: deploymentUuid
   });
 
   // Return final result
   return {
     releaseName,
     deploymentUuid,
-    environmentVariables: orderBy(updatedVariables, ["key"], ["asc"])
+    environmentVariables
   };
 }
 
-/*
+/**
+ * Update a deployment's environment variables
+ * @param {Object} args The graphql arguments.
+ * @param {Object} ctx The graphql context.
+ */
+async function updateEnvironmentVariables(args, commander) {
+  const { releaseName, payload } = args;
+  const namespace = generateNamespace(releaseName);
+  const secretName = generateEnvironmentSecretName(releaseName);
+  const existingVariablesQuery = {
+    namespace,
+    name: secretName
+  };
+  const commanderVariables = await getCommanderVariables(
+    commander,
+    existingVariablesQuery
+  );
+  const newEnvVariables = formatPayloadVariables(payload);
+  const updatedVariables = mergeEnvVariables(
+    commanderVariables,
+    newEnvVariables
+  );
+  const environmentVariables = sortVariables(updatedVariables);
+  const secret = generateSecret(secretName, environmentVariables);
+  const setVariablesQuery = {
+    release_name: releaseName,
+    namespace,
+    secret
+  };
+
+  // Send variable values to commander
+  await commander.request("setSecret", setVariablesQuery);
+
+  return environmentVariables;
+}
+
+/**
+ * Gets the Commander Variables if any exist
+ * @param  {Object} commander graphql commander
+ * @param  {Object} getReq commander request object
+ */
+async function getCommanderVariables(commander, getSecret) {
+  const currentVariables = await commander.request("getSecret", getSecret);
+  const variables = get(currentVariables, "secret.data", {});
+  // Get current env variables from commander response
+  return objectToArrayOfKeyValue(variables);
+}
+
+/**
+ * Sort variables by ascending keys
+ * @param  {Object} variables
+ * @return {Object} Ascending order environment variables.
+ */
+function sortVariables(variables) {
+  return orderBy(variables, ["key"], ["asc"]);
+}
+
+/**
  * Merge env variables before store in k8s annotations
  * @param {Object} currentVariables current environment variables.
  * @param {Object} newVariables new environment variables.
  * @return {Object} Merged environment variables.
  */
-export async function mergeEnvVariables(currentVariables, newVariables) {
+export function mergeEnvVariables(currentVariables, newVariables) {
   // Start with the list of incoming variables, since that defines the intended structure.
   return newVariables.map(function(v) {
     // If this variable is marked as a secret and does not have a value defined,
@@ -131,11 +116,65 @@ export async function mergeEnvVariables(currentVariables, newVariables) {
     if (isSecret && !value) {
       const serverVar = find(currentVariables, { key });
       // Return the new patched env var object.
-      // If the value is not found in the existing serverVars, default to an empty string.
+      // If the value is not found in the existing serverVariables, default to an empty string.
       const newValue = get(serverVar, "value", "");
-      const existingVars = { value: newValue };
-      return merge({}, v, existingVars);
+      const existingVariables = { value: newValue };
+      return merge({}, v, existingVariables);
     }
     return v;
   });
+}
+
+/**
+ * Maps the user payload
+ * @param  {Object} payload submitted user payload
+ * @return {[]Object} mapped key, value and isSecret objects
+ */
+function formatPayloadVariables(payload) {
+  return payload.map(variable => ({
+    key: variable.key,
+    value: variable.value,
+    isSecret: variable.isSecret
+  }));
+}
+/**
+ * @param  {String} secretName
+ * @param  {Object} environmentVariables
+ * @return {Object} The secret for commander
+ */
+function generateSecret(secretName, environmentVariables) {
+  const annotations = generateAnnotations(environmentVariables);
+  const data = arrayOfKeyValueToObject(environmentVariables);
+
+  return {
+    name: secretName,
+    data,
+    annotations
+  };
+}
+
+/**
+ * Generate annotations for k8s
+ * @param  {Object} envVariables
+ * @return {Object} The annotations object
+ */
+function generateAnnotations(envVariables) {
+  const isSecret = { isSecret: true };
+  const annotations = map(filter(envVariables, isSecret), i => i.key);
+
+  return { "astronomer.io/hide-from-ui": JSON.stringify(annotations) };
+}
+
+/**
+ * @param  {String} id
+ * @param  {Object} environmentVariables
+ * @return {String} Message to publish to NATS
+ */
+function formatNcMsg(id, environmentVariables) {
+  const msg = {
+    id,
+    environmentVariables
+  };
+
+  return JSON.stringify(msg);
 }
