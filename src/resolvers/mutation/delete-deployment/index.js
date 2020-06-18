@@ -1,12 +1,10 @@
 import fragment from "./fragment";
 import { track } from "analytics";
-import { generateNamespace } from "deployments/naming";
 import { addFragmentToInfo } from "graphql-binding";
-import config from "config";
-import nats from "nats";
+import nats from "node-nats-streaming";
 
 // Create NATS client.
-const nc = nats.connect();
+const nc = nats.connect("test-cluster", "delete-deployment");
 
 /*
  * Delete a deployment.
@@ -15,29 +13,26 @@ const nc = nats.connect();
  * @param {Object} ctx The graphql context.
  * @return {Deployment} The deleted Deployment.
  */
-export default async function deleteDeployment(parent, args, ctx, info) {
+export default async function deleteDeployment(_, args, ctx, info) {
+  const { deploymentUuid: deploymentId } = args;
   // Soft delete the record from the database.
   const deployment = await ctx.db.mutation.updateDeployment(
     {
-      where: { id: args.deploymentUuid },
+      where: { id: deploymentId },
       data: { deletedAt: new Date() }
     },
     addFragmentToInfo(info, fragment)
   );
+  const { id, label, releaseName } = deployment;
 
   // Run the analytics track event
   track(ctx.user.id, "Deleted Deployment", {
-    deploymentId: args.deploymentUuid,
-    label: deployment.label,
-    releaseName: deployment.releaseName
+    deploymentId,
+    label,
+    releaseName
   });
 
-  // Delete deployment from helm.
-  await ctx.commander.request("deleteDeployment", {
-    releaseName: deployment.releaseName,
-    namespace: generateNamespace(deployment.releaseName),
-    deleteNamespace: !config.get("helm.singleNamespace")
-  });
+  nc.publish("houston.deployment.deleted", id);
 
   return deployment;
 }
