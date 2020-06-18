@@ -214,9 +214,6 @@ type DeployInfo {
 }
 
 type EnvironmentVariable {
-  releaseName: String!
-  createdAt: DateTime!
-  updatedAt: DateTime!
   key: String,
   value: String,
   isSecret: Boolean,
