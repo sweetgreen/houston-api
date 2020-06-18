@@ -13,8 +13,8 @@ import { generate as generatePassword } from "generate-password";
 import { DEPLOYMENT_AIRFLOW } from "constants";
 
 const clusterID = "test-cluster";
-const clientID = "deployment-variables-updated";
-const subject = "houston.deployment.variables.updated";
+const clientID = "deployment-created";
+const subject = "houston.deployment.created";
 const messageHandler = function(msg) {
   deploymentCreated(msg).catch(err => log.error(err));
 };
