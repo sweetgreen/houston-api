@@ -19,10 +19,10 @@ import { DEPLOYMENT_AIRFLOW } from "constants";
  * @param {Object} parent The result of the parent resolver.
  * @param {Object} args The graphql arguments.
  * @param {Object} ctx The graphql context.
- * @return [EnvironmentVariablePayload] The variable payload.
+ * @return [EnvironmentVariable] The environmentVariables.
  */
 export default async function updateDeploymentVariables(parent, args, ctx) {
-  const { deploymentUuid, releaseName, payload } = args;
+  const { deploymentUuid, releaseName, environmentVariables } = args;
 
   const namespace = generateNamespace(releaseName);
   const secretName = generateEnvironmentSecretName(releaseName);
@@ -39,7 +39,7 @@ export default async function updateDeploymentVariables(parent, args, ctx) {
   );
 
   // Build payload array for commander
-  const newVariables = payload.map(variable => ({
+  const newVariables = environmentVariables.map(variable => ({
     key: variable.key,
     value: variable.value,
     isSecret: variable.isSecret
@@ -102,8 +102,7 @@ export default async function updateDeploymentVariables(parent, args, ctx) {
 
   // Run the analytics track event
   track(ctx.user.id, "Updated Deployment Variables", {
-    deploymentId: deploymentUuid,
-    payload
+    deploymentId: deploymentUuid
   });
 
   // Remove secret values from response
@@ -113,10 +112,10 @@ export default async function updateDeploymentVariables(parent, args, ctx) {
     isSecret: variable.isSecret
   }));
 
-  const environmentVariables = orderBy(cleanedVars, ["key"], ["asc"]);
+  const envVars = orderBy(cleanedVars, ["key"], ["asc"]);
 
   // Return final result
-  return environmentVariables;
+  return envVars;
 }
 
 /*

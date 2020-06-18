@@ -17,12 +17,12 @@ const mutation = `
   mutation updateDeploymentVariables(
     $deploymentUuid: Uuid!,
     $releaseName: String!,
-    $payload: JSON!
+    $environmentVariables: [UpdatedEnvironmentVariable!]!
   ) {
   updateDeploymentVariables(
     deploymentUuid: $deploymentUuid,
     releaseName: $releaseName,
-    payload: $payload
+    environmentVariables: $environmentVariables
   ) {
     key
     value
@@ -57,7 +57,7 @@ describe("updateDeploymentVariables", () => {
     const vars = {
       deploymentUuid,
       releaseName,
-      payload: [
+      environmentVariables: [
         { key: "AIRFLOW__CLI__ENDPOINT_URL", value: "true", isSecret: false }
       ]
     };
@@ -74,14 +74,16 @@ describe("updateDeploymentVariables", () => {
     expect(res.errors).toBeUndefined();
     expect(deployment.mock.calls.length).toBe(1);
     expect(commander.request.mock.calls.length).toBe(3);
-    expect(res.data.updateDeploymentVariables[0].key).toBe(vars.payload[0].key);
+    expect(res.data.updateDeploymentVariables[0].key).toBe(
+      vars.environmentVariables[0].key
+    );
   });
 
   test("typical request is successful with isSecret true", async () => {
     const vars = {
       deploymentUuid,
       releaseName,
-      payload: [
+      environmentVariables: [
         { key: "AIRFLOW__CLI__ENDPOINT_TEST", value: "true", isSecret: false },
         {
           key: "AIRFLOW__CLI__ENDPOINT_URL",

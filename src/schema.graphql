@@ -60,6 +60,12 @@ input UserSearch {
   fullName: String
 }
 
+input UpdatedEnvironmentVariable {
+  key: String,
+  value: String,
+  isSecret: Boolean,
+}
+
 #
 # Types
 #
@@ -608,7 +614,7 @@ type Mutation {
   updateDeploymentVariables(
     deploymentUuid: Uuid!
     releaseName: String!
-    payload: JSON!
+    environmentVariables: [UpdatedEnvironmentVariable!]!
   ): [EnvironmentVariable] @auth(permissions: ["deployment.config.update", "system.deployments.update"], op: OR)
 
   createSystemRoleBinding(
