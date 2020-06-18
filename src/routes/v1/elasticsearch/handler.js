@@ -1,3 +1,4 @@
+import log from "logger";
 import validateDeploymentCredentials from "deployments/validate/authorization";
 
 /*
@@ -8,6 +9,9 @@ import validateDeploymentCredentials from "deployments/validate/authorization";
 export default async function(req, res) {
   const authorization = req.get("authorization");
   if (!authorization || authorization.substr(0, 5) !== "Basic") {
+    log.warn(
+      `Did not find 'Basic' in authorization header, we are looking for basic HTTP auth`
+    );
     return res.sendStatus(401);
   }
 
@@ -26,5 +30,6 @@ export default async function(req, res) {
 
   // If the password matches, return OK, else Unauthorized.
   if (isDeploymentValid) return res.sendStatus(200);
+  log.warn(`We did not find the deployment to be valid, returning 401`);
   return res.sendStatus(401);
 }
