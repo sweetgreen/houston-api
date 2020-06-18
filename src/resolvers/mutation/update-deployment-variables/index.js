@@ -106,18 +106,17 @@ export default async function updateDeploymentVariables(parent, args, ctx) {
     payload
   });
 
+  // Remove secret values from response
   const cleanedVars = map(updatedVariables, variable => ({
     key: variable.key,
     value: variable.isSecret ? "" : variable.value,
     isSecret: variable.isSecret
   }));
 
+  const environmentVariables = orderBy(cleanedVars, ["key"], ["asc"]);
+
   // Return final result
-  return {
-    releaseName,
-    deploymentUuid,
-    environmentVariables: orderBy(cleanedVars, ["key"], ["asc"])
-  };
+  return environmentVariables;
 }
 
 /*

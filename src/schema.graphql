@@ -219,12 +219,6 @@ type EnvironmentVariable {
   isSecret: Boolean,
 }
 
-type DeploymentVariablesResponse {
-  deploymentUuid: ID!
-  releaseName: String!
-  environmentVariables: [EnvironmentVariable!]!
-}
-
 # Deployment properties are only to support the legacy API.
 # Properties have been moved to top-level fields on Deployment internally.
 type Deployment {
@@ -615,7 +609,7 @@ type Mutation {
     deploymentUuid: Uuid!
     releaseName: String!
     payload: JSON!
-  ): DeploymentVariablesResponse @auth(permissions: ["deployment.config.update", "system.deployments.update"], op: OR)
+  ): [EnvironmentVariable] @auth(permissions: ["deployment.config.update", "system.deployments.update"], op: OR)
 
   createSystemRoleBinding(
     userId: ID!

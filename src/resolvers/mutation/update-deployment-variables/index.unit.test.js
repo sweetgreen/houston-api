@@ -14,15 +14,19 @@ const schema = makeExecutableSchema({
 
 // Define our mutation
 const mutation = `
-  mutation updateDeploymentVariables($deploymentUuid: Uuid!, $releaseName: String!, $payload: JSON!) {
-  updateDeploymentVariables(deploymentUuid: $deploymentUuid, releaseName: $releaseName, payload: $payload) {
-    deploymentUuid
-    releaseName
-    environmentVariables {
-      key
-      value
-      isSecret
-    }
+  mutation updateDeploymentVariables(
+    $deploymentUuid: Uuid!,
+    $releaseName: String!,
+    $payload: JSON!
+  ) {
+  updateDeploymentVariables(
+    deploymentUuid: $deploymentUuid,
+    releaseName: $releaseName,
+    payload: $payload
+  ) {
+    key
+    value
+    isSecret
   }
 }`;
 
@@ -70,9 +74,7 @@ describe("updateDeploymentVariables", () => {
     expect(res.errors).toBeUndefined();
     expect(deployment.mock.calls.length).toBe(1);
     expect(commander.request.mock.calls.length).toBe(3);
-    expect(res.data.updateDeploymentVariables.deploymentUuid).toBe(
-      deploymentUuid
-    );
+    expect(res.data.updateDeploymentVariables[0].key).toBe(vars.payload[0].key);
   });
 
   test("typical request is successful with isSecret true", async () => {
@@ -80,9 +82,9 @@ describe("updateDeploymentVariables", () => {
       deploymentUuid,
       releaseName,
       payload: [
-        { key: "AIRFLOW__CLI__ENDPOINT_URL", value: "true", isSecret: false },
+        { key: "AIRFLOW__CLI__ENDPOINT_TEST", value: "true", isSecret: false },
         {
-          key: "AIRFLOW__CLI__ENDPOINT_TEST",
+          key: "AIRFLOW__CLI__ENDPOINT_URL",
           value: "true",
           isSecret: true
         }
@@ -101,9 +103,7 @@ describe("updateDeploymentVariables", () => {
     expect(res.errors).toBeUndefined();
     expect(deployment.mock.calls.length).toBe(1);
     expect(commander.request.mock.calls.length).toBe(3);
-    expect(res.data.updateDeploymentVariables.deploymentUuid).toBe(
-      deploymentUuid
-    );
+    expect(res.data.updateDeploymentVariables[1].isSecret).toBe(true);
   });
 });
 
