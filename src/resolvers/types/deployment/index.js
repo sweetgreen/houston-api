@@ -49,7 +49,7 @@ export function urls(parent) {
  * @return {[]Object} The environment variables.
  */
 export async function environmentVariables(parent, args, ctx) {
-  return extractVariables(parent, args, ctx);
+  return extractVariables(parent, { releaseName: parent.releaseName }, ctx);
 }
 
 /*
