@@ -2,6 +2,7 @@ import fragment from "./fragment";
 import { track } from "analytics";
 import { addFragmentToInfo } from "graphql-binding";
 import nats from "node-nats-streaming";
+import { DEPLOYMENT_DELETED } from "constants";
 
 // Create NATS client.
 const nc = nats.connect("test-cluster", "delete-deployment");
@@ -32,7 +33,7 @@ export default async function deleteDeployment(_, args, ctx, info) {
     releaseName
   });
 
-  nc.publish("houston.deployment.deleted", id);
+  nc.publish(DEPLOYMENT_DELETED, id);
 
   return deployment;
 }

@@ -4,10 +4,11 @@ import commander from "commander";
 import log from "logger";
 import { generateNamespace } from "deployments/naming";
 import config from "config";
+import { DEPLOYMENT_DELETED } from "constants";
 
 const clusterID = "test-cluster";
 const clientID = "deployment-deleted";
-const subject = "houston.deployment.deleted";
+const subject = DEPLOYMENT_DELETED;
 const messageHandler = function(msg) {
   deploymentDeleted(msg).catch(err => log.error(err));
 };

@@ -10,11 +10,11 @@ import {
 import { generateHelmValues } from "deployments/config";
 import bcrypt from "bcryptjs";
 import { generate as generatePassword } from "generate-password";
-import { DEPLOYMENT_AIRFLOW } from "constants";
+import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_CREATED } from "constants";
 
 const clusterID = "test-cluster";
 const clientID = "deployment-created";
-const subject = "houston.deployment.created";
+const subject = DEPLOYMENT_CREATED;
 const messageHandler = function(msg) {
   deploymentCreated(msg).catch(err => log.error(err));
 };

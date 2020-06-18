@@ -13,8 +13,9 @@ import config from "config";
 import { get, isNull, find, size, merge, isEmpty } from "lodash";
 import nats from "node-nats-streaming";
 import {
-  DEPLOYMENT_PROPERTY_EXTRA_AU,
-  AIRFLOW_EXECUTOR_DEFAULT
+  AIRFLOW_EXECUTOR_DEFAULT,
+  DEPLOYMENT_CREATED,
+  DEPLOYMENT_PROPERTY_EXTRA_AU
 } from "constants";
 
 // Create NATS client.
@@ -153,7 +154,7 @@ export default async function createDeployment(parent, args, ctx, info) {
   // Send event that a new deployment was created.
   // An async worker will pick this job up and ensure
   // the changes are propagated.
-  nc.publish("houston.deployment.created", deployment.id);
+  nc.publish(DEPLOYMENT_CREATED, deployment.id);
 
   // Return the deployment.
   return deployment;

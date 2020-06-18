@@ -56,3 +56,8 @@ export const MEDIATYPE_DOCKER_MANIFEST_V2 =
 export const RELEASE_NAME_PATTERN = /^(?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63}$/g;
 export const RELEASE_NAME_AIRFLOW_PATTERN = /^\/((?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63})\/(airflow|flower)/;
 export const VALID_DOCKER_IMAGE_NAME = /^(?<releaseName>(?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63})\/airflow$/;
+
+export const DEPLOYMENT_CREATED = "houston.deployment.created";
+export const DEPLOYMENT_DELETED = "houston.deployment.deleted";
+export const DEPLOYMENT_UPDATED = "houston.deployment.updated";
+export const DEPLOYMENT_VARS_UPDATED = "houston.deployment.variables.updated";

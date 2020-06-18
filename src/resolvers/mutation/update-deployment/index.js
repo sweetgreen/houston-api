@@ -7,6 +7,7 @@ import config from "config";
 import { addFragmentToInfo } from "graphql-binding";
 import { get, isEmpty, merge, pick } from "lodash";
 import nats from "node-nats-streaming";
+import { DEPLOYMENT_UPDATED } from "constants";
 
 // Create NATS client.
 const nc = nats.connect("test-cluster", "update-deployment");
@@ -105,7 +106,7 @@ export default async function updateDeployment(parent, args, ctx, info) {
 
   // Can only publish Uint8Array|string|Buffer
   // JSON.stringify seems like the best option for this use case
-  nc.publish("houston.deployment.updated", msgJson);
+  nc.publish(DEPLOYMENT_UPDATED, msgJson);
 
   // Return the updated deployment object.
   return updatedDeployment;

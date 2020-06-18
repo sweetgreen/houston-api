@@ -13,11 +13,11 @@ import {
 } from "deployments/naming";
 import config from "config";
 import crypto from "crypto";
-import { DEPLOYMENT_AIRFLOW } from "constants";
+import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_UPDATED } from "constants";
 
 const clusterID = "test-cluster";
 const clientID = "deployment-updated";
-const subject = "houston.deployment.updated";
+const subject = DEPLOYMENT_UPDATED;
 const messageHandler = function(msg) {
   deploymentUpdated(msg).catch(err => log.error(err));
 };
