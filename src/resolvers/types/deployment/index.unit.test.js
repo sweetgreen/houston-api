@@ -1,4 +1,4 @@
-import { urls, env, properties, deployInfo } from "./index";
+import { urls, environmentVariables, properties, deployInfo } from "./index";
 import { generateReleaseName } from "deployments/naming";
 import { AIRFLOW_EXECUTOR_DEFAULT } from "constants";
 
@@ -20,7 +20,7 @@ describe("Deployoment", () => {
     expect(theUrls[1].url).toEqual(expect.stringContaining(releaseName));
   });
 
-  test("env correctly returns envs", async () => {
+  test("environmentVariables correctly returns environmentVariabless", async () => {
     const releaseName = generateReleaseName();
     const parent = { releaseName };
 
@@ -31,8 +31,8 @@ describe("Deployoment", () => {
       })
     };
 
-    const envs = await env(parent, {}, { commander });
-    expect(envs).toHaveLength(1);
+    const enVars = await environmentVariables(parent, {}, { commander });
+    expect(enVars).toHaveLength(1);
   });
 
   test("properties correctly returns properties", async () => {

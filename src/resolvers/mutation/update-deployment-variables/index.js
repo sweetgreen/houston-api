@@ -19,10 +19,10 @@ const nc = nats.connect("test-cluster", "update-deployment-variables");
  * @param {Object} _ The result of the parent resolver.
  * @param {Object} args The graphql arguments.
  * @param {Object} ctx The graphql context.
- * @return [EnvironmentVariablePayload] The variable payload.
+ * @return [EnvironmentVariable] The environmentVariables.
  */
 export default async function updateDeploymentVariables(_, args, ctx) {
-  const { deploymentUuid, releaseName } = args;
+  const { deploymentUuid } = args;
   const { commander } = ctx;
   const environmentVariables = await updateEnvironmentVariables(
     args,
@@ -31,17 +31,17 @@ export default async function updateDeploymentVariables(_, args, ctx) {
   const msg = formatNcMsg(deploymentUuid, environmentVariables);
 
   nc.publish(DEPLOYMENT_VARS_UPDATED, msg);
+
+  // Remove secret values from response
+  const cleanedVars = removeSecrets(environmentVariables);
+
   // Run the analytics track event
-  track(ctx.user.id, "Updated Deployment", {
+  track(ctx.user.id, "Updated Deployment Variables", {
     deploymentId: deploymentUuid
   });
 
   // Return final result
-  return {
-    releaseName,
-    deploymentUuid,
-    environmentVariables
-  };
+  return cleanedVars;
 }
 
 /**
@@ -130,13 +130,14 @@ export function mergeEnvVariables(currentVariables, newVariables) {
  * @param  {Object} payload submitted user payload
  * @return {[]Object} mapped key, value and isSecret objects
  */
-function formatPayloadVariables(payload) {
-  return payload.map(variable => ({
+function formatPayloadVariables(environmentVariables) {
+  return environmentVariables.map(variable => ({
     key: variable.key,
     value: variable.value,
     isSecret: variable.isSecret
   }));
 }
+
 /**
  * @param  {String} secretName
  * @param  {Object} environmentVariables
@@ -177,4 +178,23 @@ function formatNcMsg(id, environmentVariables) {
   };
 
   return JSON.stringify(msg);
+}
+
+/**
+ * Remove env var value is key is secret
+ * @param  {Object} environmentVariables
+ * @return cleaned list of env vars
+ */
+function removeSecrets(environmentVariables) {
+  return map(environmentVariables, variable => {
+    const key = variable.key;
+    const value = variable.isSecret ? "" : variable.value;
+    const isSecret = variable.isSecret;
+
+    return {
+      key,
+      value,
+      isSecret
+    };
+  });
 }
