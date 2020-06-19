@@ -11,8 +11,12 @@ import {
   mapCustomEnvironmentVariables
 } from "deployments/config";
 import { find, get, merge, orderBy, filter, map } from "lodash";
+import nats from "node-nats-streaming";
 import crypto from "crypto";
-import { DEPLOYMENT_AIRFLOW } from "constants";
+import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_VARS_UPDATED } from "constants";
+
+// Create NATS client.
+const nc = nats.connect("test-cluster", "update-deployment-variables");
 
 /*
  * Update a deployment's environment variables
@@ -21,7 +25,7 @@ import { DEPLOYMENT_AIRFLOW } from "constants";
  * @param {Object} ctx The graphql context.
  * @return [EnvironmentVariablePayload] The variable payload.
  */
-export default async function updateDeploymentVariables(parent, args, ctx) {
+export default async function updateDeploymentVariables(_, args, ctx) {
   const { config, deploymentUuid, env, releaseName, payload } = args;
 
   const namespace = generateNamespace(releaseName);
@@ -108,11 +112,16 @@ export default async function updateDeploymentVariables(parent, args, ctx) {
     payload
   });
 
+  const environmentVariables = orderBy(updatedVariables, ["key"], ["asc"]);
+  const msg = formatNcMsg(deploymentUuid, environmentVariables);
+
+  nc.publish(DEPLOYMENT_VARS_UPDATED, msg);
+
   // Return final result
   return {
     releaseName,
     deploymentUuid,
-    environmentVariables: orderBy(updatedVariables, ["key"], ["asc"])
+    environmentVariables
   };
 }
 
@@ -138,4 +147,18 @@ export async function mergeEnvVariables(currentVariables, newVariables) {
     }
     return v;
   });
+}
+
+/**
+ * @param  {String} id
+ * @param  {Object} environmentVariables
+ * @return {String} Message to publish to NATS
+ */
+function formatNcMsg(id, environmentVariables) {
+  const msg = {
+    id,
+    environmentVariables
+  };
+
+  return JSON.stringify(msg);
 }
