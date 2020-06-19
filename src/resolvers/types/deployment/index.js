@@ -1,15 +1,11 @@
 import { hasPermission } from "rbac";
 import {
-  generateNamespace,
-  generateEnvironmentSecretName
-} from "deployments/naming";
-import {
-  objectToArrayOfKeyValue,
   mapDeploymentToProperties,
   findLatestTag,
   generateNextTag
 } from "deployments/config";
-import { first, get, map } from "lodash";
+import { extractVariables } from "deployments/environment-variables";
+import { first, map } from "lodash";
 import config from "config";
 import {
   AIRFLOW_EXECUTOR_CELERY,
@@ -52,17 +48,8 @@ export function urls(parent) {
  * @param {Object} ctx The graphql context.
  * @return {[]Object} The environment variables.
  */
-export async function env(parent, args, ctx) {
-  const { releaseName } = parent;
-
-  // Query commander for the environment variables.
-  const envs = await ctx.commander.request("getSecret", {
-    namespace: generateNamespace(releaseName),
-    name: generateEnvironmentSecretName(releaseName)
-  });
-
-  // Transform the returned object into an array.
-  return objectToArrayOfKeyValue(get(envs, "secret.data"));
+export async function environmentVariables(parent, args, ctx) {
+  return extractVariables(parent, { releaseName: parent.releaseName }, ctx);
 }
 
 /*
@@ -163,7 +150,7 @@ export function deploymentCapabilities(parent, args, ctx) {
 
 export default {
   urls,
-  env,
+  environmentVariables,
   type,
   properties,
   deployInfo,

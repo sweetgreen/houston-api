@@ -3,7 +3,7 @@
 This file documents any backwards-incompatible changes in Houston and
 assists users migrating to a new version.
 
-## Master
+## Main
 
 ### Updated auth configuration
 

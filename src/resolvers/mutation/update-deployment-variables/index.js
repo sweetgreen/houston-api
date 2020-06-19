@@ -20,13 +20,13 @@ const nc = nats.connect("test-cluster", "update-deployment-variables");
 
 /*
  * Update a deployment's environment variables
- * @param {Object} parent The result of the parent resolver.
+ * @param {Object} _ The result of the parent resolver.
  * @param {Object} args The graphql arguments.
  * @param {Object} ctx The graphql context.
- * @return [EnvironmentVariablePayload] The variable payload.
+ * @return [EnvironmentVariable] The environmentVariables.
  */
 export default async function updateDeploymentVariables(_, args, ctx) {
-  const { config, deploymentUuid, env, releaseName, payload } = args;
+  const { deploymentUuid, releaseName, environmentVariables } = args;
 
   const namespace = generateNamespace(releaseName);
   const secretName = generateEnvironmentSecretName(releaseName);
@@ -43,7 +43,7 @@ export default async function updateDeploymentVariables(_, args, ctx) {
   );
 
   // Build payload array for commander
-  const newVariables = payload.map(variable => ({
+  const newVariables = environmentVariables.map(variable => ({
     key: variable.key,
     value: variable.value,
     isSecret: variable.isSecret
@@ -105,24 +105,25 @@ export default async function updateDeploymentVariables(_, args, ctx) {
   });
 
   // Run the analytics track event
-  track(ctx.user.id, "Updated Deployment", {
-    deploymentId: deploymentUuid,
-    config,
-    env,
-    payload
+  track(ctx.user.id, "Updated Deployment Variables", {
+    deploymentId: deploymentUuid
   });
 
-  const environmentVariables = orderBy(updatedVariables, ["key"], ["asc"]);
-  const msg = formatNcMsg(deploymentUuid, environmentVariables);
+  // Remove secret values from response
+  const cleanedVars = map(updatedVariables, variable => ({
+    key: variable.key,
+    value: variable.isSecret ? "" : variable.value,
+    isSecret: variable.isSecret
+  }));
+
+  const envVars = orderBy(cleanedVars, ["key"], ["asc"]);
+
+  const msg = formatNcMsg(deploymentUuid, envVars);
 
   nc.publish(DEPLOYMENT_VARS_UPDATED, msg);
 
   // Return final result
-  return {
-    releaseName,
-    deploymentUuid,
-    environmentVariables
-  };
+  return envVars;
 }
 
 /*

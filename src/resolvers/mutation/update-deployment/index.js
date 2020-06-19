@@ -14,13 +14,13 @@ const nc = nats.connect("test-cluster", "update-deployment");
 
 /*
  * Update a deployment.
- * @param {Object} parent The result of the parent resolver.
+ * @param {Object} _ The result of the parent resolver.
  * @param {Object} args The graphql arguments.
  * @param {Object} ctx The graphql context.
  * @return {Deployment} The updated Deployment.
  */
-export default async function updateDeployment(parent, args, ctx, info) {
-  const { cloudRole, config: argsConfig, deploymentUuid, env, payload } = args;
+export default async function updateDeployment(_, args, ctx, info) {
+  const { cloudRole, config: argsConfig, deploymentUuid, payload } = args;
   // Get the deployment first.
   const deployment = await ctx.db.query.deployment(
     { where: { id: deploymentUuid } },
@@ -66,7 +66,6 @@ export default async function updateDeployment(parent, args, ctx, info) {
   // Once we fix the updateDeployment schema to match, we can skip this.
   const mungedArgs = merge({}, updatablePayload, {
     config: deploymentConfig,
-    env,
     properties: get(args, "payload.properties", {})
   });
 
@@ -90,7 +89,6 @@ export default async function updateDeployment(parent, args, ctx, info) {
   track(ctx.user.id, "Updated Deployment", {
     deploymentId: deploymentUuid,
     config: argsConfig,
-    env,
     payload
   });
 
@@ -98,15 +96,7 @@ export default async function updateDeployment(parent, args, ctx, info) {
   // An async worker will pick this job up and ensure
   // the changes are propagated.
   // Include any new env vars passed in the args
-  const msg = {
-    id: deployment.id,
-    env
-  };
-  const msgJson = JSON.stringify(msg);
-
-  // Can only publish Uint8Array|string|Buffer
-  // JSON.stringify seems like the best option for this use case
-  nc.publish(DEPLOYMENT_UPDATED, msgJson);
+  nc.publish(DEPLOYMENT_UPDATED, deployment.id);
 
   // Return the updated deployment object.
   return updatedDeployment;
