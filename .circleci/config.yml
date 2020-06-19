@@ -21,11 +21,11 @@ jobs:
     steps:
       - trivy-scan:
           image_name: ap-houston-api
-  publish-master:
+  publish-main:
     executor: docker-executor
     steps:
       - push:
-          comma_separated_tags: "master,latest"
+          comma_separated_tags: "main,latest"
           image_name: ap-houston-api
   publish-release-branch:
     executor: docker-executor
@@ -57,13 +57,13 @@ workflows:
       - scan:
           requires:
             - build
-      - publish-master:
+      - publish-main:
           requires:
             - scan
             - scan-trivy
           filters:
             branches:
-              only: master
+              only: main
       - publish-release-branch:
           requires:
             - test
