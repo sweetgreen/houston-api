@@ -9,41 +9,42 @@ import { DEPLOYMENT_DELETED } from "constants";
 const clusterID = "test-cluster";
 const clientID = "deployment-deleted";
 const subject = DEPLOYMENT_DELETED;
-const messageHandler = function(msg) {
-  deploymentDeleted(msg).catch(err => log.error(err));
-};
 // Create NATS client.
-const nc = ncFactory(clusterID, clientID, subject, messageHandler);
+const nc = ncFactory(clusterID, clientID, subject, deploymentDeleted);
 
 /*
  * Handle a deployment deletion.
  */
 export async function deploymentDeleted(msg) {
-  const id = msg.getData();
-  nc.publish("houston.deployment.delete.started", id);
+  try {
+    const id = msg.getData();
+    nc.publish("houston.deployment.delete.started", id);
 
-  const deployment = await prisma
-    .deployment({ id })
-    .$fragment(
-      `{ id, config, releaseName, version, extraAu, workspace { id } }`
-    );
-  const { releaseName } = deployment;
-  const namespace = generateNamespace(releaseName);
-  const deleteNamespace = !config.get("helm.singleNamespace");
+    const deployment = await prisma
+      .deployment({ id })
+      .$fragment(
+        `{ id, config, releaseName, version, extraAu, workspace { id } }`
+      );
+    const { releaseName } = deployment;
+    const namespace = generateNamespace(releaseName);
+    const deleteNamespace = !config.get("helm.singleNamespace");
 
-  // Delete deployment from helm.
-  await commander.request("deleteDeployment", {
-    releaseName,
-    namespace,
-    deleteNamespace
-  });
+    // Delete deployment from helm.
+    await commander.request("deleteDeployment", {
+      releaseName,
+      namespace,
+      deleteNamespace
+    });
 
-  nc.publish("houston.deployment.delete.deployed", id);
+    nc.publish("houston.deployment.delete.deployed", id);
 
-  // /// XXX: Remove me, uncomment to simulate an error
-  // // throw new Error("Intentionally throwing for deployment deleted!");
+    // /// XXX: Remove me, uncomment to simulate an error
+    // // throw new Error("Intentionally throwing for deployment deleted!");
 
-  // Ack the message
-  msg.ack();
-  log.info(`Deployment ${releaseName} successfully deleted`);
+    // Ack the message
+    msg.ack();
+    log.info(`Deployment ${releaseName} successfully deleted`);
+  } catch (err) {
+    log.error(err);
+  }
 }
