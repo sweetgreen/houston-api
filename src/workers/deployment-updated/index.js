@@ -3,16 +3,11 @@ import { prisma } from "generated/client";
 import commander from "commander";
 import log from "logger";
 import {
-  arrayOfKeyValueToObject,
   generateHelmValues,
   mapCustomEnvironmentVariables
 } from "deployments/config";
-import {
-  generateEnvironmentSecretName,
-  generateNamespace
-} from "deployments/naming";
+import { generateNamespace } from "deployments/naming";
 import config from "config";
-import crypto from "crypto";
 import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_UPDATED } from "constants";
 
 const clusterID = "test-cluster";
@@ -27,8 +22,7 @@ const nc = ncFactory(clusterID, clientID, subject, deploymentUpdated);
 export async function deploymentUpdated(msg) {
   try {
     // Grab the deploymentId from the message.
-    const msgData = msg.getData();
-    const { id, env } = JSON.parse(msgData);
+    const id = msg.getData();
 
     // Update the status in the database and grab some information.
     const deployment = await prisma
@@ -45,29 +39,8 @@ export async function deploymentUpdated(msg) {
 
     // If we're syncing to kubernetes, fire updates to commander.
     if (config.sync) {
-      // Set any environment variables.
-      await commander.request("setSecret", {
-        releaseName,
-        namespace: generateNamespace(releaseName),
-        secret: {
-          name: generateEnvironmentSecretName(releaseName),
-          data: arrayOfKeyValueToObject(env)
-        }
-      });
-
       // Map the user input env vars to a format that the helm chart expects.
-      const values = mapCustomEnvironmentVariables(deployment, env);
-
-      // Add an annotation to Airflow pods to inform pods to restart when
-      // secrets have been changed
-      const buf = Buffer.from(JSON.stringify(env));
-      const hash = crypto
-        .createHash("sha512")
-        .update(buf)
-        .digest("hex");
-
-      // This annotation is a sha512 hash of the user-provided Airflow environment variables
-      values.airflowPodAnnotations = { "checksum/airflow-secrets": hash };
+      const values = mapCustomEnvironmentVariables(deployment);
 
       // Update the deployment, passing in our custom env vars.
       await commander.request("updateDeployment", {

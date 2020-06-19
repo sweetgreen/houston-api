@@ -43,12 +43,13 @@ export async function deploymentCreated(msg) {
       resultBackendConnection
     } = await createDatabaseForDeployment(deployment);
 
+    const options = { length: 32, numbers: true };
     // Generate a unique registry password for this deployment.
-    const registryPassword = generatePassword({ length: 32, numbers: true });
+    const registryPassword = generatePassword(options);
     const hashedRegistryPassword = await bcrypt.hash(registryPassword, 10);
 
     // Generate a unique elasticsearch password for this deployment
-    const elasticsearchPassword = generatePassword({ length: 32, numbers: true });
+    const elasticsearchPassword = generatePassword(options);
     const hashedElasticsearchPassword = await bcrypt.hash(
       elasticsearchPassword,
       10
@@ -80,7 +81,7 @@ export async function deploymentCreated(msg) {
       releaseName,
       chart: {
         name: DEPLOYMENT_AIRFLOW,
-        version: version
+        version
       },
       namespace: generateNamespace(releaseName),
       namespaceLabels: generateDeploymentLabels(helmConfig.labels),
