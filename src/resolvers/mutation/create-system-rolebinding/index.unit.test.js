@@ -21,7 +21,7 @@ const query = `
 describe("createSystemRoleBinding", () => {
   test("correctly creates a system role binding", async () => {
     // Mock up some db functions.
-    const findOne = jest.fn();
+    const findMany = jest.fn().mockReturnValue([]);
     const create = jest.fn().mockReturnValue({
       id: casual.uuid,
       createdAt: new Date(),
@@ -30,7 +30,7 @@ describe("createSystemRoleBinding", () => {
 
     // Construct db object for context.
     const prisma = {
-      roleBinding: { findOne, create }
+      roleBinding: { findMany, create }
     };
 
     const vars = {
@@ -45,7 +45,7 @@ describe("createSystemRoleBinding", () => {
 
   test("throws error if role binding exists", async () => {
     // Mock up some db functions.
-    const findOne = jest.fn().mockReturnValue(true);
+    const findMany = jest.fn().mockReturnValue([]);
     const create = jest.fn().mockReturnValue({
       id: casual.uuid,
       createdAt: new Date(),
@@ -54,7 +54,7 @@ describe("createSystemRoleBinding", () => {
 
     // Construct db object for context.
     const prisma = {
-      roleBinding: { findOne, create }
+      roleBinding: { findMany, create }
     };
 
     const vars = {
