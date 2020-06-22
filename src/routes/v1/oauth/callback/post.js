@@ -1,11 +1,12 @@
 import fragment from "./fragment";
 import { createUser as _createUser, isFirst } from "users";
-import { getClient } from "oauth/config";
+import { getClient, getClaim } from "oauth/config";
 import { track } from "analytics";
 import { PublicSignupsDisabledError } from "errors";
 import { ui } from "utilities";
 import { prisma } from "generated/client";
 import { createAuthJWT, setJWTCookie } from "jwt";
+import log from "logger";
 import { ApolloError } from "apollo-server";
 import config from "config";
 import { first, merge } from "lodash";
@@ -16,7 +17,7 @@ import { URLSearchParams } from "url";
  * @param {Object} req The request.
  * @param {Object} res The response.
  */
-export default async function(req, res, next) {
+export default async function(req, res) {
   // Grab params out of the request body.
   const { state: rawState } = req.body;
   const firstUser = await isFirst();
@@ -30,6 +31,10 @@ export default async function(req, res, next) {
   // Get the provider module.
   const provider = await getClient(state.provider);
 
+  // Get claims fallback values if provided
+  const claimsMapping = provider.issuer.metadata.claimsMapping;
+  const fetchUserInfo = provider.issuer.metadata.fetchUserInfo;
+
   const tokenSet = await provider.authorizationCallback(null, req.body, {
     state: rawState,
     // Don't validate the nonce. Not great, but we don't store the nonce in a
@@ -37,26 +42,33 @@ export default async function(req, res, next) {
     nonce: null
   });
 
-  const email = tokenSet.claims.email
-    ? tokenSet.claims.email.toLowerCase()
-    : tokenSet.claims.preferred_username
-    ? tokenSet.claims.preferred_username.toLowerCase()
-    : null;
+  const claims = tokenSet.claims;
 
   // Grab user data
   // Some IDPs don't return useful info, so fall back to the claims if we don't have it
-  const userData = merge(await provider.userinfo(tokenSet.access_token), {
+  const email = getClaim(claims, claimsMapping, "email");
+  const name = getClaim(claims, claimsMapping, "name");
+  const sub = claims.sub;
+
+  let userData = {
     email,
-    sub: tokenSet.claims.sub,
-    name: tokenSet.claims.name || tokenSet.claims.unique_name
-  });
+    sub,
+    name
+  };
+
+  if (fetchUserInfo) {
+    userData = merge(await provider.userinfo(tokenSet.access_token), userData);
+  }
+
+  if (!userData.email) {
+    // Somehow we got no email! Abort
+    log.error("No email attribute found in claims");
+    res.sendStatus(400);
+  } else {
+    userData.email = userData.email.toLowerCase();
+  }
 
   const { sub: providerUserId, name: fullName, picture: avatarUrl } = userData;
-
-  if (!email) {
-    // Somehow we got no email! Abort
-    return next("No email from userinfo!");
-  }
 
   // Search for user in our system using email address.
   const user = first(

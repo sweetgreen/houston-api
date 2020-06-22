@@ -78,6 +78,8 @@ async function _getIssuer(key, integration = "self", providerName = undefined) {
     DEFAULT_CLIENT_ARGS,
     get(providerCfg[key], "authUrlParams")
   );
+  issuer.metadata.fetchUserInfo = get(providerCfg[key], "fetchUserInfo", true);
+  issuer.metadata.claimsMapping = get(providerCfg[key], "claimsMapping", {});
 
   return subclassClient(
     issuer,
@@ -154,6 +156,12 @@ function subclassClient(issuer, clientId, integration, providerName) {
   Object.defineProperty(newIssuer, "Client", { value: AstroClient });
   Registry.set(newIssuer.issuer, newIssuer);
   return newIssuer;
+}
+
+// Get mapped value from claims. Allows for provider specific mappings for these values.
+export function getClaim(claims, mapping, name) {
+  const mapped = get(mapping, name, name);
+  return get(claims, mapped);
 }
 
 function synthesiseConfig() {

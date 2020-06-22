@@ -151,7 +151,6 @@ auth:
       authUrlParams:
         audience: "astronomer-ee"
 
-
     # Google oauth configuration.
     google:
       displayName: Google
@@ -162,6 +161,25 @@ auth:
 
     okta:
       enabled: false
+      clientId: ~
+      discoveryUrl: ~
+
+    microsoft:
+      displayName: "Azure AD"
+      enabled: false
+      claimsMapping:
+        email: preferred_username
+      clientId: ~
+      discoveryUrl: ~
+
+    adfs:
+      displayName: "ADFS"
+      enabled: false
+      # Disable userInfo request for providers such as ADFS
+      fetchUserInfo: false
+      claimsMapping:
+        email: upn
+        name: upn
       clientId: ~
       discoveryUrl: ~
 
