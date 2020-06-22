@@ -27,7 +27,7 @@ export default async function removeUser(parent, args, ctx) {
   // If the user is an admin, ensure that there is
   // at least one more admin in the system, otherwise throw.
   if (isAdmin) {
-    const whereAdmin = { role: SYSTEM_ADMIN, user: { id_not: userUuid } };
+    const whereAdmin = { role: SYSTEM_ADMIN, user: { id: { not: userUuid } } };
     const otherAdminCount = size(
       await ctx.prisma.roleBinding.findMany({ where: whereAdmin })
     );

@@ -46,8 +46,8 @@ model User {
 model RoleBinding {
   id             String          @default(cuid()) @id
   role           String?
-  user           User            @relation(fields: [userId], name: "RoleBindingToUser")
-  userId         String
+  user           User?            @relation(fields: [userId], name: "RoleBindingToUser", references: id)
+  userId         String?
   serviceAccount ServiceAccount? @relation(fields: [serviceAccountId], name: "RoleBindingToServiceAccount", references: id)
   serviceAccountId String?
   workspace      Workspace?      @relation(fields: [workspaceId], name: "RoleBindingToWorkspace")
@@ -63,8 +63,8 @@ model Email {
   address   String?  @unique
   primary   Boolean?
   token     String?  @unique
-  user      User     @relation(fields: [userId], name: "EmailToUser")
-  userId    String
+  user      User?     @relation(fields: [userId], name: "EmailToUser")
+  userId    String?
   verified  Boolean?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -72,8 +72,8 @@ model Email {
 
 model LocalCredential {
   id         String   @default(cuid()) @id
-  user       User     @relation(fields: [userId], name: "LocalCredentialToUser")
-  userId     String
+  user       User?     @relation(fields: [userId], name: "LocalCredentialToUser")
+  userId     String?
   password   String?
   resetToken String?  @unique
   createdAt  DateTime @default(now())

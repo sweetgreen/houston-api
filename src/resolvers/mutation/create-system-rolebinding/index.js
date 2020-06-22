@@ -16,8 +16,8 @@ export default async function createSystemRoleBinding(parent, args, ctx, info) {
 
   // Check if the RoleBinding already exists. If so, return it.
   const where = { role, user: { id: userId } };
-  const roleBinding = await ctx.prisma.roleBinding.findOne(where);
-  if (roleBinding) throw new DuplicateRoleBindingError();
+  const roleBinding = await ctx.prisma.roleBinding.findMany({ where });
+  if (roleBinding.length > 1) throw new DuplicateRoleBindingError();
 
   // Otherwise, create and return the RoleBinding.
   return ctx.prisma.roleBinding.create(
