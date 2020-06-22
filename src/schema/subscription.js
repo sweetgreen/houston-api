@@ -35,6 +35,7 @@ const DeploymentLogs = subscriptionField("log", {
 
 const DeploymentMetrics = subscriptionField("metrics", {
   type: "DeploymentMetric",
+  list: true,
   args: {
     deploymentUuid: arg({ type: "Uuid", required: true }),
     metricType: arg({ type: "MetricType", required: false, list: true }),
