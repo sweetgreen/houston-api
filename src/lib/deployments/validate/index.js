@@ -17,7 +17,7 @@ export default async function validate(workspaceId, args, deployment = {}) {
   const deploymentId = deployment.id;
 
   // Validate environment variables.
-  validateEnvironment(args.env);
+  validateEnvironment(args.environmentVariables);
 
   // Get list of valid executors in the system.
   const { executors } = config.get("deployments");

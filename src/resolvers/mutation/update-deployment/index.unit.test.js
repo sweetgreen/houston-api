@@ -25,7 +25,6 @@ const mutation = `
     $deploymentUuid: Uuid!
     $payload: JSON
     $config: JSON
-    $env: JSON
     $sync: Boolean
     $cloudRole: String
   ) {
@@ -33,13 +32,11 @@ const mutation = `
       deploymentUuid: $deploymentUuid
       payload: $payload
       config: $config
-      env: $env
       sync: $sync
       cloudRole: $cloudRole
     ) {
         id
         config
-        env
         urls {
           type
           url

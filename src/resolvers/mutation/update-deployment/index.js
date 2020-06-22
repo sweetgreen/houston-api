@@ -2,20 +2,15 @@ import { queryFragment, responseFragment } from "./fragments";
 import { track } from "analytics";
 import validate from "deployments/validate";
 import {
-  arrayOfKeyValueToObject,
   generateHelmValues,
   mapPropertiesToDeployment,
   mapCustomEnvironmentVariables
 } from "deployments/config";
-import {
-  generateEnvironmentSecretName,
-  generateNamespace
-} from "deployments/naming";
+import { generateNamespace } from "deployments/naming";
 import { TrialError } from "errors";
 import config from "config";
 import { addFragmentToInfo } from "graphql-binding";
 import { get, isEmpty, merge, pick } from "lodash";
-import crypto from "crypto";
 import { DEPLOYMENT_AIRFLOW } from "constants";
 
 /*
@@ -75,7 +70,6 @@ export default async function updateDeployment(parent, args, ctx, info) {
   // Once we fix the updateDeployment schema to match, we can skip this.
   const mungedArgs = merge({}, updatablePayload, {
     config: deploymentConfig,
-    env: args.env,
     properties: get(args, "payload.properties", {})
   });
 
@@ -97,29 +91,8 @@ export default async function updateDeployment(parent, args, ctx, info) {
 
   // If we're syncing to kubernetes, fire updates to commander.
   if (args.sync) {
-    // Set any environment variables.
-    await ctx.commander.request("setSecret", {
-      releaseName: updatedDeployment.releaseName,
-      namespace: generateNamespace(updatedDeployment.releaseName),
-      secret: {
-        name: generateEnvironmentSecretName(updatedDeployment.releaseName),
-        data: arrayOfKeyValueToObject(args.env)
-      }
-    });
-
-    // Map the user input env vars to a format that the helm chart expects.
-    const values = mapCustomEnvironmentVariables(updatedDeployment, args.env);
-
-    // Add an annotation to Airflow pods to inform pods to restart when
-    // secrets have been changed
-    const buf = Buffer.from(JSON.stringify(args.env));
-    const hash = crypto
-      .createHash("sha512")
-      .update(buf)
-      .digest("hex");
-
-    // This annotation is a sha512 hash of the user-provided Airflow environment variables
-    values.airflowPodAnnotations = { "checksum/airflow-secrets": hash };
+    // Map to a format that the helm chart expects.
+    const values = mapCustomEnvironmentVariables(updatedDeployment);
 
     // Update the deployment, passing in our custom env vars.
     await ctx.commander.request("updateDeployment", {
@@ -137,7 +110,6 @@ export default async function updateDeployment(parent, args, ctx, info) {
   track(ctx.user.id, "Updated Deployment", {
     deploymentId: args.deploymentUuid,
     config: args.config,
-    env: args.env,
     payload: args.payload
   });
 

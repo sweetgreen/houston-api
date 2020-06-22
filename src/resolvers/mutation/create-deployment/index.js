@@ -3,12 +3,10 @@ import {
   validateReleaseName,
   generateReleaseName,
   generateNamespace,
-  generateDeploymentLabels,
-  generateEnvironmentSecretName
+  generateDeploymentLabels
 } from "deployments/naming";
 import { createDatabaseForDeployment } from "deployments/database";
 import {
-  arrayOfKeyValueToObject,
   defaultAirflowImage,
   generateHelmValues,
   mapPropertiesToDeployment,
@@ -211,22 +209,6 @@ export default async function createDeployment(parent, args, ctx, info) {
     namespaceLabels: generateDeploymentLabels(helmConfig.labels),
     rawConfig: JSON.stringify(helmConfig)
   });
-
-  // If we have environment variables, send to commander.
-  // TODO: The createDeployment commander method currently
-  // allows you to pass secrets to get created,
-  // but the implementation does not quite work.
-  // This call can be consolidated once that is fixed up in commander.
-  if (args.env) {
-    await ctx.commander.request("setSecret", {
-      release_name: releaseName,
-      namespace: generateNamespace(releaseName),
-      secret: {
-        name: generateEnvironmentSecretName(releaseName),
-        data: arrayOfKeyValueToObject(args.env)
-      }
-    });
-  }
 
   // Return the deployment.
   return deployment;

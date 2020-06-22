@@ -60,6 +60,12 @@ input UserSearch {
   fullName: String
 }
 
+input InputEnvironmentVariable {
+  key: String,
+  value: String,
+  isSecret: Boolean,
+}
+
 #
 # Types
 #
@@ -214,18 +220,9 @@ type DeployInfo {
 }
 
 type EnvironmentVariable {
-  releaseName: String!
-  createdAt: DateTime!
-  updatedAt: DateTime!
   key: String,
   value: String,
   isSecret: Boolean,
-}
-
-type DeploymentVariablesResponse {
-  deploymentUuid: ID!
-  releaseName: String!
-  environmentVariables: [EnvironmentVariable!]!
 }
 
 # Deployment properties are only to support the legacy API.
@@ -233,8 +230,7 @@ type DeploymentVariablesResponse {
 type Deployment {
   id: ID!
   config: JSON
-  env: JSON @deprecated # backwards capability
-  environmentVariables: [EnvironmentVariable]
+  environmentVariables: [EnvironmentVariable!]
   properties: JSON
   urls: [DeploymentUrl]
   description: String
@@ -330,7 +326,7 @@ type Query {
   self: AuthUser @auth
 
   updateAvailable: PlatformRelease @auth(permissions: ["system.updates.get"])
-  
+
   workspace(
     workspaceUuid: Uuid!
   ): Workspace @auth(permissions: ["workspace.config.get", "system.workspace.get"], op: OR)
@@ -349,7 +345,7 @@ type Query {
   deploymentVariables(
     workspaceUuid: Uuid! # used for RBAC only
     releaseName: String!
-  ): DeploymentVariablesResponse @auth(permissions: ["workspace.deployments.get", "system.deployments.get"], op: OR)
+  ): [EnvironmentVariable] @auth(permissions: ["workspace.deployments.get", "system.deployments.get"], op: OR)
 
   # New ServiceAccount (singlton) scoped query
   deploymentServiceAccount(
@@ -473,7 +469,6 @@ type Mutation {
     version: String
     airflowVersion: String
     config: JSON
-    env: JSON
     properties: JSON
     cloudRole: String
   ): Deployment @auth(permissions:["workspace.deployments.create"])
@@ -482,7 +477,6 @@ type Mutation {
     deploymentUuid: Uuid!
     payload: JSON
     config: JSON
-    env: JSON
     sync: Boolean
     cloudRole: String
   ): Deployment @auth(permissions: ["deployment.config.update", "system.deployments.update"], op: OR)
@@ -620,8 +614,8 @@ type Mutation {
   updateDeploymentVariables(
     deploymentUuid: Uuid!
     releaseName: String!
-    payload: JSON!
-  ): DeploymentVariablesResponse @auth(permissions: ["deployment.config.update", "system.deployments.update"], op: OR)
+    environmentVariables: [InputEnvironmentVariable!]!
+  ): [EnvironmentVariable] @auth(permissions: ["deployment.config.update", "system.deployments.update"], op: OR)
 
   createSystemRoleBinding(
     userId: ID!

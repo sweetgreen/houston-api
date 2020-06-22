@@ -20,8 +20,9 @@ const query = `
       workspaceUuid: $workspaceUuid
       releaseName: $releaseName
     ) {
-      deploymentUuid
-      releaseName
+      key
+      value
+      isSecret
     }
   }
 `;
@@ -62,6 +63,6 @@ describe("deploymentVariables", () => {
       vars
     );
     expect(res.errors).toBeUndefined();
-    expect(deployment.mock.calls.length).toBe(1);
+    expect(commander.request.mock.calls.length).toBe(1);
   });
 });

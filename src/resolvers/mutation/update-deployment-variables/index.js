@@ -1,4 +1,5 @@
 import { queryFragment } from "./fragments";
+import { sortVariables } from "deployments/environment-variables";
 import {
   generateEnvironmentSecretName,
   generateNamespace
@@ -10,7 +11,7 @@ import {
   generateHelmValues,
   mapCustomEnvironmentVariables
 } from "deployments/config";
-import { find, get, merge, orderBy, filter, map } from "lodash";
+import { find, get, merge, filter, map } from "lodash";
 import crypto from "crypto";
 import { DEPLOYMENT_AIRFLOW } from "constants";
 
@@ -19,30 +20,30 @@ import { DEPLOYMENT_AIRFLOW } from "constants";
  * @param {Object} parent The result of the parent resolver.
  * @param {Object} args The graphql arguments.
  * @param {Object} ctx The graphql context.
- * @return [EnvironmentVariablePayload] The variable payload.
+ * @return [EnvironmentVariable] The environmentVariables.
  */
 export default async function updateDeploymentVariables(parent, args, ctx) {
-  const { config, deploymentUuid, env, releaseName, payload } = args;
+  const { deploymentUuid, releaseName, environmentVariables } = args;
 
   const namespace = generateNamespace(releaseName);
-  const secretName = generateEnvironmentSecretName(releaseName);
+  const name = generateEnvironmentSecretName(releaseName);
 
   // Get Deployment Variables
-  const response = await ctx.commander.request("getSecret", {
+  const commanderValues = await ctx.commander.request("getSecret", {
     namespace,
-    name: secretName
+    name
   });
 
   // Get current env variables from commander response
   const currentVariables = objectToArrayOfKeyValue(
-    get(response, "secret.data", {})
+    get(commanderValues, "secret.data", {})
   );
 
   // Build payload array for commander
-  const newVariables = payload.map(variable => ({
-    key: variable.key,
-    value: variable.value,
-    isSecret: variable.isSecret
+  const newVariables = environmentVariables.map(v => ({
+    key: v.key,
+    value: v.value,
+    isSecret: v.isSecret
   }));
 
   // Merge current env variables and new variables
@@ -60,9 +61,9 @@ export default async function updateDeploymentVariables(parent, args, ctx) {
   // Send variable values to commander
   await ctx.commander.request("setSecret", {
     release_name: releaseName,
-    namespace: namespace,
+    namespace,
     secret: {
-      name: secretName,
+      name,
       data: arrayOfKeyValueToObject(updatedVariables),
       annotations: { "astronomer.io/hide-from-ui": JSON.stringify(annotations) }
     }
@@ -101,19 +102,21 @@ export default async function updateDeploymentVariables(parent, args, ctx) {
   });
 
   // Run the analytics track event
-  track(ctx.user.id, "Updated Deployment", {
-    deploymentId: deploymentUuid,
-    config,
-    env,
-    payload
+  track(ctx.user.id, "Updated Deployment Variables", {
+    deploymentId: deploymentUuid
   });
 
+  // Remove secret values from response
+  const cleanVariables = map(updatedVariables, v => ({
+    key: v.key,
+    value: v.isSecret ? "" : v.value,
+    isSecret: v.isSecret
+  }));
+
+  const sortedCleanVariables = sortVariables(cleanVariables);
+
   // Return final result
-  return {
-    releaseName,
-    deploymentUuid,
-    environmentVariables: orderBy(updatedVariables, ["key"], ["asc"])
-  };
+  return sortedCleanVariables;
 }
 
 /*
