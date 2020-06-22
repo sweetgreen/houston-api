@@ -1,4 +1,4 @@
-import { ncFactory } from "../factory";
+import { ncFactory } from "../nc-factory";
 import { prisma } from "generated/client";
 import { createDatabaseForDeployment } from "deployments/database";
 import commander from "commander";

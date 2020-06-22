@@ -1,4 +1,4 @@
-import { ncFactory } from "../factory";
+import { ncFactory } from "../nc-factory";
 import { prisma } from "generated/client";
 import commander from "commander";
 import log from "logger";
