@@ -1,5 +1,6 @@
 import { queryFragment } from "./fragments";
 import { sortVariables } from "deployments/environment-variables";
+import validateEnvironment from "deployments/environment-variables/validate";
 import {
   generateEnvironmentSecretName,
   generateNamespace
@@ -24,6 +25,8 @@ import { DEPLOYMENT_AIRFLOW } from "constants";
  */
 export default async function updateDeploymentVariables(parent, args, ctx) {
   const { deploymentUuid, releaseName, environmentVariables } = args;
+
+  validateEnvironment(environmentVariables);
 
   const namespace = generateNamespace(releaseName);
   const name = generateEnvironmentSecretName(releaseName);
