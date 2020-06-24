@@ -1,15 +1,16 @@
-import { generateHelmValues } from "deployments/config";
 import { prisma } from "generated/client";
 import { createDockerJWT } from "registry/jwt";
-import { generateNamespace } from "deployments/naming";
 import isValidTaggedDeployment from "deployments/validate/docker-tag";
 import log from "logger";
-import commander from "commander";
 import { version } from "utilities";
 import { track } from "analytics";
+import nats from "node-nats-streaming";
 import { merge, get } from "lodash";
 import got from "got";
-import { DEPLOYMENT_AIRFLOW, MEDIATYPE_DOCKER_MANIFEST_V2 } from "constants";
+import {
+  MEDIATYPE_DOCKER_MANIFEST_V2,
+  REGISTRY_EVENT_UPDATED
+} from "constants";
 
 /*
  * Handle webhooks from the docker registry.
@@ -18,6 +19,8 @@ import { DEPLOYMENT_AIRFLOW, MEDIATYPE_DOCKER_MANIFEST_V2 } from "constants";
  */
 export default async function(req, res) {
   const { events = [] } = req.body;
+  // Create NATS client.
+  const nc = nats.connect("test-cluster", "registry-event-update");
 
   await Promise.all(
     events.map(async ev => {
@@ -105,16 +108,11 @@ export default async function(req, res) {
           `{ id config label releaseName extraAu airflowVersion version workspace { id } }`
         );
 
-      // Fire the helm upgrade to commander.
-      await commander.request("updateDeployment", {
-        releaseName: updatedDeployment.releaseName,
-        chart: {
-          name: DEPLOYMENT_AIRFLOW,
-          version: updatedDeployment.version
-        },
-        namespace: generateNamespace(releaseName),
-        rawConfig: JSON.stringify(generateHelmValues(updatedDeployment))
-      });
+      const natsMessage = JSON.stringify(updatedDeployment);
+      // Send event to fire the helm upgrade.
+      // An async worker will pick this job up and ensure
+      // the changes are propagated.
+      nc.publish(REGISTRY_EVENT_UPDATED, natsMessage);
 
       // Run the analytics track event
       track(get(ev, "actor.name"), "Deployed Code", {
@@ -126,6 +124,7 @@ export default async function(req, res) {
     })
   );
 
+  nc.close();
   res.sendStatus(200);
 }
 
