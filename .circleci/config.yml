@@ -8,7 +8,6 @@ jobs:
   test:
     docker:
       - image: node:13-buster
-      - image: nats-streaming:0.17.0
     steps:
       - test
   scan:
@@ -130,6 +129,14 @@ commands:
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: install dockerize
+          command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+          environment:
+            DOCKERIZE_VERSION: v0.6.1
+        - run:
+            name: Wait for NATs
+            command: dockerize -wait tcp://nats:4222 -timeout 1m
       - run:
           name: Install Dependencies
           command: |
