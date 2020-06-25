@@ -19,18 +19,15 @@ describe("v1-registry-event worker", () => {
   test("updated deployment in worker", async () => {
     const id = casual.uuid;
     const workspace = { id };
-    const platform = casual.word;
-    const label = {
-      platform,
-      workspace
-    };
+    const label = casual.word;
     const airflowVersion = "1.10.10";
-    const data = JSON.stringify({
+    const fragment = {
       workspace,
       label,
       id,
       airflowVersion
-    });
+    };
+    const data = JSON.stringify(fragment);
     const natsMessage = {
       getData: () => data,
       ack: jest
@@ -43,12 +40,8 @@ describe("v1-registry-event worker", () => {
       .fn()
       .mockName("deployment")
       .mockReturnValue({
-        id: jest
-          .fn()
-          .mockName("id")
-          .mockResolvedValue(id),
         $fragment: function() {
-          return data;
+          return fragment;
         }
       });
 
