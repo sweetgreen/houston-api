@@ -23,11 +23,10 @@ export function natsFactory(clusterID, clientID, subject, messageHandler) {
 
 export function natsConnect(clusterID, clientID) {
   const natsConfig = config.get("nats");
-  const uri = `${natsConfig.host}:${natsConfig.port}`;
+  const url = `nats://${natsConfig.host}:${natsConfig.port}`;
   const opts = {
-    uri
+    url
   };
-  const nc = nats.connect(clusterID, clientID, opts);
 
-  return nc;
+  return nats.connect(clusterID, clientID, opts);
 }

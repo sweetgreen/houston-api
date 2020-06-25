@@ -1,9 +1,9 @@
-import { natsFactory } from "../nats-factory";
 import { prisma } from "generated/client";
 import commander from "commander";
 import log from "logger";
 import { generateNamespace } from "deployments/naming";
 import { generateHelmValues } from "deployments/config";
+import { natsFactory } from "workers/nats-factory";
 import { DEPLOYMENT_AIRFLOW, REGISTRY_EVENT_UPDATED } from "constants";
 
 const clusterID = "test-cluster";

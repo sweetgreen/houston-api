@@ -20,7 +20,8 @@
             "commander-proto": "commander",
             "resolvers": "./src/resolvers",
             "routes": "./src/routes",
-            "stripe-api": "stripe"
+            "stripe-api": "stripe",
+            "workers": "./src/workers"
         }
       }
     ]

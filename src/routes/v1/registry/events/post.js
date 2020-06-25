@@ -1,10 +1,10 @@
+import { natsConnect } from "workers/nats-factory";
 import { prisma } from "generated/client";
 import { createDockerJWT } from "registry/jwt";
 import isValidTaggedDeployment from "deployments/validate/docker-tag";
 import log from "logger";
 import { version } from "utilities";
 import { track } from "analytics";
-import nats from "node-nats-streaming";
 import { merge, get } from "lodash";
 import got from "got";
 import {
