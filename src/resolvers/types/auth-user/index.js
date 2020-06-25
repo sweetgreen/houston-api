@@ -3,8 +3,8 @@ import { createAuthJWT, setJWTCookie } from "jwt";
 import { USER_STATUS_ACTIVE } from "constants";
 
 // Grab the user object for this id.
-export function user(parent, args, context) {
-  return context.prisma.user.findOne({
+export async function user(parent, args, context) {
+  return await context.prisma.user.findOne({
     where: { id: parent.userId },
     select: {
       id: true,

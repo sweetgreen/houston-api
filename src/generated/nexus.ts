@@ -246,6 +246,7 @@ export interface NexusGenRootTypes {
     id: string; // String!
     label?: string | null; // String
     properties?: any | null; // JSON
+    roleBindings: NexusGenRootTypes['RoleBinding'][]; // [RoleBinding!]!
     stripeCustomerId?: string | null; // String
     trialEndsAt?: string | null; // String
     updatedAt: any; // DateTime!

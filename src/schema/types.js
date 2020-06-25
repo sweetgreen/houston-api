@@ -411,7 +411,7 @@ const Workspace = objectType({
       resolve: workspace.users
     });
     t.model.stripeCustomerId();
-    t.model.roleBindings({ pagination: false });
+    t.field("roleBindings", { type: "RoleBinding", list: true });
     t.field("workspaceCapabilities", {
       type: "WorkspaceCapabilities",
       nullable: true,

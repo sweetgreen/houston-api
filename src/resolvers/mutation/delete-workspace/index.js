@@ -23,8 +23,7 @@ export default async function deleteWorkspace(parent, args, ctx) {
   });
 
   // Delete the workspace record from the database.
-  return await ctx.prisma.workspace.delete({
-    where: { id: args.workspaceUuid },
-    select: { id: true }
+  return ctx.prisma.workspace.delete({
+    where: { id: args.workspaceUuid }
   });
 }
