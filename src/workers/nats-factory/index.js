@@ -23,7 +23,7 @@ export function natsFactory(clusterID, clientID, subject, messageHandler) {
 
 export function natsConnect(clusterID, clientID) {
   const natsConfig = config.get("nats");
-  const url = `nats://${natsConfig.host}:${natsConfig.port}`;
+  const url = `${natsConfig.host}:${natsConfig.port}`;
   const opts = {
     url
   };

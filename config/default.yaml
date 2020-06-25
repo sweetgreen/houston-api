@@ -18,7 +18,7 @@ prisma:
 
 # NATS configuration.
 nats:
-  host: localhost
+  host: nats://localhost
   port: 4222
 
 # Logging configuration.
