@@ -7,7 +7,7 @@ import { makeSchema } from "@nexus/schema";
 
 export const schema = makeSchema({
   types: [...types, Query, Mutation, Subscription],
-  plugins: [nexusPrismaPlugin()],
+  plugins: [nexusPrismaPlugin({ experimentalCRUD: true })],
   outputs: {
     schema: __dirname + "/generated/schema.graphql",
     typegen: __dirname + "/generated/nexus.ts"
