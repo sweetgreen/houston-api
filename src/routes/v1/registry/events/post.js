@@ -107,17 +107,17 @@ export default async function(req, res) {
         .$fragment(
           `{ id config label releaseName extraAu airflowVersion version workspace { id } }`
         );
+      const { deploymentId, label } = updatedDeployment;
 
-      const natsMessage = JSON.stringify(updatedDeployment);
       // Send event to fire the helm upgrade.
       // An async worker will pick this job up and ensure
       // the changes are propagated.
-      nc.publish(REGISTRY_EVENT_UPDATED, natsMessage);
+      nc.publish(REGISTRY_EVENT_UPDATED, deploymentId);
 
       // Run the analytics track event
       track(get(ev, "actor.name"), "Deployed Code", {
-        deploymentId: updatedDeployment.id,
-        label: updatedDeployment.label,
+        deploymentId,
+        label,
         releaseName,
         tag
       });

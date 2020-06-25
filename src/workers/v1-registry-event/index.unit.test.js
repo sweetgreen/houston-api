@@ -1,10 +1,12 @@
 import { helmUpdateDeployment } from "./index";
+import { prisma } from "generated/client";
 import casual from "casual";
 
 jest.mock("generated/client", () => {
   return {
     __esModule: true,
     commander: jest.fn().mockName("MockCommander"),
+    prisma: jest.fn().mockName("MockPrisma"),
     natsFactory: jest.fn().mockName("MockNatsFactory")
   };
 });
@@ -32,6 +34,28 @@ describe("v1-registry-event worker", () => {
         .mockName("ack")
         .mockReturnValue(true)
     };
+
+    prisma.deployment = jest
+      .fn()
+      .mockName("deployment")
+      .mockReturnValue({
+        id: jest
+          .fn()
+          .mockName("id")
+          .mockResolvedValue(id),
+        $fragment: function() {
+          return data;
+        }
+      });
+
+    // prisma.updateDeployment = jest
+    //   .fn()
+    //   .mockName("deployment")
+    //   .mockReturnValue({
+    //     $fragment: function() {
+    //       return data;
+    //     }
+    //   });
 
     await helmUpdateDeployment(natsMessage);
 
