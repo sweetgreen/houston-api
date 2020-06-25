@@ -19,7 +19,11 @@ describe("v1-registry-event worker", () => {
   test("updated deployment in worker", async () => {
     const id = casual.uuid;
     const workspace = { id };
-    const label = casual.word;
+    const platform = casual.word;
+    const label = {
+      platform,
+      workspace
+    };
     const airflowVersion = "1.10.10";
     const data = JSON.stringify({
       workspace,
@@ -47,15 +51,6 @@ describe("v1-registry-event worker", () => {
           return data;
         }
       });
-
-    // prisma.updateDeployment = jest
-    //   .fn()
-    //   .mockName("deployment")
-    //   .mockReturnValue({
-    //     $fragment: function() {
-    //       return data;
-    //     }
-    //   });
 
     await helmUpdateDeployment(natsMessage);
 
