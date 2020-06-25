@@ -16,6 +16,11 @@ prisma:
   secret: ~
   debug: false
 
+# NATS configuration.
+nats:
+  host: localhost
+  port: 4222
+
 # Logging configuration.
 logging:
   level: "debug"

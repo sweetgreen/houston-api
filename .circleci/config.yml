@@ -8,6 +8,9 @@ jobs:
   test:
     docker:
       - image: node:13-buster
+        environment:
+            NATS_HOST: "nats"
+            NATS_PORT: 4222
       - image: nats-streaming:0.17.0
         name: nats
     steps:

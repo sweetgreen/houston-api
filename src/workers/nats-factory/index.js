@@ -1,7 +1,8 @@
 import nats from "node-nats-streaming";
+import config from "config";
 
 export function natsFactory(clusterID, clientID, subject, messageHandler) {
-  const nc = nats.connect(clusterID, clientID);
+  const nc = natsConnect(clusterID, clientID);
 
   // Attach handler
   nc.on("connect", function() {
@@ -16,6 +17,17 @@ export function natsFactory(clusterID, clientID, subject, messageHandler) {
     const sub = nc.subscribe(subject, opts);
     sub.on("message", messageHandler);
   });
+
+  return nc;
+}
+
+export function natsConnect(clusterID, clientID) {
+  const natsConfig = config.get("nats");
+  const uri = `${natsConfig.host}:${natsConfig.port}`;
+  const opts = {
+    uri
+  };
+  const nc = nats.connect(clusterID, clientID, opts);
 
   return nc;
 }

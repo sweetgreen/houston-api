@@ -20,7 +20,7 @@ import {
 export default async function(req, res) {
   const { events = [] } = req.body;
   // Create NATS client.
-  const nc = nats.connect("test-cluster", "registry-event-update");
+  const nc = natsConnect("test-cluster", "registry-event-update");
 
   await Promise.all(
     events.map(async ev => {
