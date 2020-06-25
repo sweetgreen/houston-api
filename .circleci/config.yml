@@ -12,7 +12,7 @@ jobs:
           PRISMA__ENDPOINT: "http://prisma:4466/houston"
           PRISMA__DEBUG: "false"
           NATS_HOST: "nats"
-          NATS_PORT: 8222
+          NATS_PORT: 4222
       - image: nats-streaming:0.17.0
         name: nats
     steps:
@@ -143,7 +143,7 @@ commands:
             DOCKERIZE_VERSION: v0.6.1
       - run:
           name: Wait for NATs
-          command: dockerize -wait tcp://nats:8222 -timeout 1m
+          command: dockerize -wait tcp://nats:4222 -timeout 1m
       - run:
           name: Install Dependencies
           command: |
