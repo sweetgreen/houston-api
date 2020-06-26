@@ -1,4 +1,4 @@
-import { natsConnect } from "workers/nats-factory";
+import { natsPublisher } from "nats-streaming";
 import { prisma } from "generated/client";
 import { createDockerJWT } from "registry/jwt";
 import isValidTaggedDeployment from "deployments/validate/docker-tag";
@@ -20,7 +20,7 @@ import {
 export default async function(req, res) {
   const { events = [] } = req.body;
   // Create NATS client.
-  const nc = natsConnect("test-cluster", "registry-event-update");
+  const nc = natsPublisher("registry-event-update");
 
   await Promise.all(
     events.map(async ev => {

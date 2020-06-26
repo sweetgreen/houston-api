@@ -5,9 +5,7 @@ import casual from "casual";
 jest.mock("generated/client", () => {
   return {
     __esModule: true,
-    commander: jest.fn().mockName("MockCommander"),
-    prisma: jest.fn().mockName("MockPrisma"),
-    natsFactory: jest.fn().mockName("MockNatsFactory")
+    prisma: jest.fn().mockName("MockPrisma")
   };
 });
 

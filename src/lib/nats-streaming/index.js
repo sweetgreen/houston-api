@@ -1,8 +1,8 @@
 import nats from "node-nats-streaming";
 import config from "config";
 
-export function natsFactory(clusterID, clientID, subject, messageHandler) {
-  const nc = natsConnect(clusterID, clientID);
+export function natsPubSub(clientID, subject, messageHandler) {
+  const nc = natsPublisher(clientID);
 
   // Attach handler
   nc.on("connect", function() {
@@ -21,7 +21,8 @@ export function natsFactory(clusterID, clientID, subject, messageHandler) {
   return nc;
 }
 
-export function natsConnect(clusterID, clientID) {
+export function natsPublisher(clientID) {
+  const clusterID = "houston-api";
   const natsConfig = config.get("nats");
   const url = `${natsConfig.host}:${natsConfig.port}`;
   const opts = {

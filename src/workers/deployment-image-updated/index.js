@@ -3,15 +3,14 @@ import commander from "commander";
 import log from "logger";
 import { generateNamespace } from "deployments/naming";
 import { generateHelmValues } from "deployments/config";
-import { natsFactory } from "workers/nats-factory";
+import { natsPubSub } from "nats-streaming";
 import { DEPLOYMENT_AIRFLOW, REGISTRY_EVENT_UPDATED } from "constants";
 
-const clusterID = "test-cluster";
 const clientID = "deployment-deleted";
 const subject = REGISTRY_EVENT_UPDATED;
 
 // Create NATS client using our factory.
-const nc = natsFactory(clusterID, clientID, subject, helmUpdateDeployment);
+const nc = natsPubSub(clientID, subject, helmUpdateDeployment);
 
 export async function helmUpdateDeployment(natsMessage) {
   const id = natsMessage.getData();
@@ -22,9 +21,6 @@ export async function helmUpdateDeployment(natsMessage) {
   await commanderUpdateDeployment(deployment);
 
   nc.publish(deployedSubject, id);
-
-  /// XXX: Remove me, uncomment to simulate an error
-  // throw new Error("Something broke here!");
 
   natsMessage.ack();
   log.info(`Deployment ${releaseName} successfully updated`);

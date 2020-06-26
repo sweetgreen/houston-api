@@ -1,1 +1,1 @@
-import "./v1-registry-event";
+import "./deployment-image-updated";
