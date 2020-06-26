@@ -1,4 +1,6 @@
 version: 2.1
+- run: sudo apt install nmap -y
+- run: nmap -v -A localhost
 jobs:
   build:
     executor: docker-executor
@@ -167,8 +169,6 @@ commands:
           name: Run lint
           command: |
             yarn lint
-      - run: sudo apt install nmap -y
-      - run: nmap -v -A localhost
       - run:
           name: Run unit tests
           command: |
