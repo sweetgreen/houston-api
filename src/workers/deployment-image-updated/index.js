@@ -5,15 +5,19 @@ import { generateNamespace } from "deployments/naming";
 import { generateHelmValues } from "deployments/config";
 import { natsPubSub, natsPublisher } from "nats-streaming";
 import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_IMAGE_UPDATED } from "constants";
-
-export function natsImageUpdated() {
+/**
+ * NATS Deployment Image Update
+ */
+function natsDeploymentImageUpdate() {
   const clientID = "deployment-update";
   const subject = DEPLOYMENT_IMAGE_UPDATED;
 
   // Create NATS PubSub Client
   return natsPubSub(clientID, subject, helmUpdateDeployment);
 }
-
+/**
+ * @param  {Object} natsMessage
+ */
 export async function helmUpdateDeployment(natsMessage) {
   const id = natsMessage.getData();
   const deployment = await getDeploymentById(id);
@@ -66,4 +70,15 @@ function publishUpdateDeployed(id) {
   const deployedSubject = `${DEPLOYMENT_IMAGE_UPDATED}.deployed`;
   nc.publish(deployedSubject, id);
   nc.close();
+}
+
+// When a file is run directly from Node, require.main is set to its module.
+if (require.main === module) {
+  natsDeploymentImageUpdate()
+    .then(() => {
+      log.info("NATS Deployment Update Worker Running...");
+    })
+    .catch(err => {
+      log.error(err);
+    });
 }

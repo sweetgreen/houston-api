@@ -1,4 +1,4 @@
-import { natsImageUpdated, helmUpdateDeployment } from "./index";
+import { helmUpdateDeployment } from "./index";
 import { prisma } from "generated/client";
 import casual from "casual";
 
@@ -10,14 +10,8 @@ jest.mock("generated/client", () => {
 });
 
 describe("v1-registry-event worker", () => {
-  let nc = {};
-  beforeEach(() => {
-    nc = natsImageUpdated();
-  });
-
   afterEach(() => {
     jest.restoreAllMocks();
-    nc.close();
   });
 
   test("updated deployment in worker", async () => {

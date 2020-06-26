@@ -43,7 +43,7 @@ RUN apk add --no-cache --virtual .build-deps \
 COPY . .
 RUN yarn build
 
-EXPOSE 8871 4222 8222
+EXPOSE 8871
 
 # Wrap with entrypoint
 ENTRYPOINT ["/houston/bin/entrypoint"]
