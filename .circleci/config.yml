@@ -11,7 +11,7 @@ jobs:
         environment:
           PRISMA__ENDPOINT: "http://prisma:4466/houston"
           PRISMA__DEBUG: "false"
-          NATS_HOST: "nats"
+          NATS_HOST: nats://nats
           NATS_PORT: 4222
       - image: nats-streaming:0.17.0
         name: nats
