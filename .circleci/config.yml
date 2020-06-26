@@ -13,6 +13,11 @@ jobs:
           PRISMA__DEBUG: "false"
           NATS_HOST: "nats"
           NATS_PORT: 4222
+      - image: postgres
+        name: postgres
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
       - image: nats-streaming:0.17.0
         name: nats
         environment:
