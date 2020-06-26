@@ -1,3 +1,4 @@
+import log from "logger";
 import nats from "node-nats-streaming";
 import config from "config";
 
@@ -25,6 +26,7 @@ export function natsPublisher(clientID) {
   const clusterID = "houston-api";
   const natsConfig = config.get("nats");
   const url = `${natsConfig.host}:${natsConfig.port}`;
+  log.info(url);
   const opts = {
     url
   };
