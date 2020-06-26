@@ -9,7 +9,7 @@ import { merge, get } from "lodash";
 import got from "got";
 import {
   MEDIATYPE_DOCKER_MANIFEST_V2,
-  REGISTRY_EVENT_UPDATED
+  DEPLOYMENT_IMAGE_UPDATED
 } from "constants";
 
 /*
@@ -112,7 +112,7 @@ export default async function(req, res) {
       // Send event to fire the helm upgrade.
       // An async worker will pick this job up and ensure
       // the changes are propagated.
-      nc.publish(REGISTRY_EVENT_UPDATED, deploymentId);
+      nc.publish(DEPLOYMENT_IMAGE_UPDATED, deploymentId);
 
       // Run the analytics track event
       track(get(ev, "actor.name"), "Deployed Code", {

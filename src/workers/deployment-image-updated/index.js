@@ -3,24 +3,25 @@ import commander from "commander";
 import log from "logger";
 import { generateNamespace } from "deployments/naming";
 import { generateHelmValues } from "deployments/config";
-import { natsPubSub } from "nats-streaming";
-import { DEPLOYMENT_AIRFLOW, REGISTRY_EVENT_UPDATED } from "constants";
+import { natsPubSub, natsPublisher } from "nats-streaming";
+import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_IMAGE_UPDATED } from "constants";
 
-const clientID = "deployment-deleted";
-const subject = REGISTRY_EVENT_UPDATED;
+export function natsImageUpdated() {
+  const clientID = "deployment-update";
+  const subject = DEPLOYMENT_IMAGE_UPDATED;
 
-// Create NATS client using our factory.
-const nc = natsPubSub(clientID, subject, helmUpdateDeployment);
+  // Create NATS PubSub Client
+  return natsPubSub(clientID, subject, helmUpdateDeployment);
+}
 
 export async function helmUpdateDeployment(natsMessage) {
   const id = natsMessage.getData();
   const deployment = await getDeploymentById(id);
   const { releaseName } = deployment;
-  const deployedSubject = `${REGISTRY_EVENT_UPDATED}.deployed`;
 
   await commanderUpdateDeployment(deployment);
 
-  nc.publish(deployedSubject, id);
+  publishUpdateDeployed(id);
 
   natsMessage.ack();
   log.info(`Deployment ${releaseName} successfully updated`);
@@ -57,4 +58,12 @@ async function getDeploymentById(id) {
   return await prisma
     .deployment({ id })
     .$fragment(`{ id, releaseName, version, extraAu, workspace { id } }`);
+}
+
+function publishUpdateDeployed(id) {
+  const clientID = "registry-event-update";
+  const nc = natsPublisher(clientID);
+  const deployedSubject = `${DEPLOYMENT_IMAGE_UPDATED}.deployed`;
+  nc.publish(deployedSubject, id);
+  nc.close();
 }
