@@ -1,6 +1,4 @@
 version: 2.1
-- run: sudo apt install nmap -y
-- run: nmap -v -A localhost
 jobs:
   build:
     executor: docker-executor
@@ -26,6 +24,8 @@ jobs:
           port: 4222
           http: 8222
     steps:
+      - run: sudo apt install nmap -y
+      - run: nmap -v -A localhost
       - test
   scan:
     executor: clair-scanner/default
