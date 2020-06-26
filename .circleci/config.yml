@@ -15,6 +15,7 @@ jobs:
           NATS_PORT: 4222
       - image: nats-streaming:0.17.0
         name: nats
+        port: 4222
     steps:
       - test
   scan:
