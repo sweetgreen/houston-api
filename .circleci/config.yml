@@ -150,6 +150,9 @@ commands:
           environment:
             DOCKERIZE_VERSION: v0.6.1
       - run:
+          name: Wait for db
+          command: dockerize -wait tcp://postgres:5432 -timeout 1m
+      - run:
           name: Wait for NATs
           command: dockerize -wait tcp://nats:4222 -timeout 1m
       - run:
