@@ -1,8 +1,7 @@
 import { InvalidAuthenticationProviderError } from "errors";
 import { version, houston } from "utilities";
-import { Issuer, Registry } from "openid-client";
+import { Issuer, Registry, generators } from "openid-client";
 import config from "config";
-import shortid from "shortid";
 import { has, merge, get, upperFirst } from "lodash";
 
 export const providerCfg = config.get("auth.openidConnect");
@@ -61,32 +60,41 @@ export async function getClient(name) {
 
   if (!issuer) issuer = await _getIssuer(name);
 
-  const client = new issuer.Client();
-  client.metadata.displayName =
-    providerCfg[name].displayName || upperFirst(name);
+  const clientMetadata = new issuer.Client();
+
+  const displayName = providerCfg[name].displayName || upperFirst(name);
+  const client = new issuer.Client({
+    displayName,
+    ...clientMetadata
+  });
   ClientCache.set(name, client);
   client.CLOCK_TOLERANCE = config.get("auth.openidConnect.clockTolerance");
   return client;
 }
 
-async function _getIssuer(key, integration = "self", providerName = undefined) {
-  const issuer = await Issuer.discover(providerCfg[key].discoveryUrl);
+async function _getIssuer(
+  name,
+  integration = "self",
+  providerName = undefined
+) {
+  const provider = providerCfg[name];
+  const metadata = await Issuer.discover(provider.discoveryUrl);
+  const fetchUserInfo = get(provider, "fetchUserInfo", true);
+  const claimsMapping = get(provider, "claimsMapping", {});
 
-  issuer.metadata.name = key;
-  issuer.metadata.authUrlParams = merge(
-    {},
-    DEFAULT_CLIENT_ARGS,
-    get(providerCfg[key], "authUrlParams")
-  );
-  issuer.metadata.fetchUserInfo = get(providerCfg[key], "fetchUserInfo", true);
-  issuer.metadata.claimsMapping = get(providerCfg[key], "claimsMapping", {});
+  const issuer = new Issuer({
+    name,
+    authUrlParams: merge(
+      {},
+      DEFAULT_CLIENT_ARGS,
+      get(provider, "authUrlParams")
+    ),
+    fetchUserInfo,
+    claimsMapping,
+    ...metadata
+  });
 
-  return subclassClient(
-    issuer,
-    providerCfg[key].clientId,
-    integration,
-    providerName
-  );
+  return subclassClient(issuer, provider.clientId, integration, providerName);
 }
 
 function subclassClient(issuer, clientId, integration, providerName) {
@@ -100,9 +108,13 @@ function subclassClient(issuer, clientId, integration, providerName) {
     }
 
     authUrl(state) {
+      const redirectUri = this.oauthRedirectUrl();
+      const nonce = generators.nonce();
+      const provider = providerName || this.issuer.metadata.name;
+      const origin = oauthUrl();
       const params = merge({}, this.issuer.metadata.authUrlParams, {
-        redirect_uri: this.oauthRedirectUrl(),
-        nonce: shortid.generate(),
+        redirect_uri: redirectUri,
+        nonce,
         state: JSON.stringify(
           merge(
             {
@@ -110,9 +122,9 @@ function subclassClient(issuer, clientId, integration, providerName) {
               // handling the post request, For example Google via Auth0, the
               // issuer name is "auth0", but the name we want to pass to
               // getClient is "google"
-              provider: providerName || this.issuer.metadata.name,
+              provider,
               integration,
-              origin: oauthUrl()
+              origin
             },
             state
           )
@@ -167,9 +179,11 @@ export function getClaim(claims, mapping, name) {
 function synthesiseConfig() {
   // Make github look like an OIDC auth provider, even though it isn't. It is
   // handled in getClient to go via Auth0
+  const enabled = config.get("auth.github.enabled");
+  const displayName = "GitHub";
   providerCfg["github"] = {
-    enabled: config.get("auth.github.enabled"),
-    displayName: "GitHub"
+    enabled,
+    displayName
   };
 }
 

@@ -32,14 +32,14 @@ describe("POST /oauth", () => {
         fetchUserInfo: true
       }
     },
-    authorizationCallback: () => {
+    callback: () => {
       return {
-        claims: {
+        claims: jest.fn().mockReturnValue({
           email: "TESTING@google.com",
           name: "test name",
           sub: "test-sub=",
           access_token: "some-token"
-        }
+        })
       };
     },
     userinfo: () => {
@@ -88,14 +88,14 @@ describe("POST /oauth", () => {
         fetchUserInfo: true
       }
     };
-    mockGetClient.authorizationCallback = () => {
+    mockGetClient.callback = () => {
       return {
-        claims: {
+        claims: jest.fn().mockReturnValue({
           email: "TESTING@google.com",
           name: "test name",
           sub: "test-sub=",
           access_token: "some-token"
-        }
+        })
       };
     };
     mockGetClient.userinfo = () => {
@@ -129,13 +129,13 @@ describe("POST /oauth", () => {
         fetchUserInfo: false
       }
     };
-    mockGetClient.authorizationCallback = () => {
+    mockGetClient.callback = () => {
       return {
-        claims: {
+        claims: jest.fn().mockReturnValue({
           upn: "TESTING@company.com",
           sub: "test-sub=",
           access_token: "some-token"
-        }
+        })
       };
     };
     mockGetClient.userinfo = null;
@@ -165,14 +165,14 @@ describe("POST /oauth", () => {
         fetchUserInfo: true
       }
     };
-    mockGetClient.authorizationCallback = () => {
+    mockGetClient.callback = () => {
       return {
-        claims: {
+        claims: jest.fn().mockReturnValue({
           preferred_username: "test@microsoft.com",
           name: "test name",
           sub: "test-sub=",
           access_token: "some-token"
-        }
+        })
       };
     };
     mockGetClient.userinfo = () => {
@@ -203,14 +203,14 @@ describe("POST /oauth", () => {
         fetchUserInfo: true
       }
     };
-    mockGetClient.authorizationCallback = () => {
+    mockGetClient.callback = () => {
       return {
-        claims: {
+        claims: jest.fn().mockReturnValue({
           upn: "test@example.com",
           name: "test name",
           sub: "test-sub=",
           access_token: "some-token"
-        }
+        })
       };
     };
     mockGetClient.userinfo = () => {
@@ -244,13 +244,15 @@ describe("POST /oauth", () => {
         fetchUserInfo: true
       }
     };
-    mockGetClient.authorizationCallback = () => {
+    mockGetClient.callback = () => {
       return {
-        claims: {
+        claims: jest.fn().mockReturnValue({
           upn: "test@example.com",
           sub: "test-sub=",
-          access_token: "some-token"
-        }
+          access_token: "some-token",
+          name: "fake",
+          email: "fake@astronomer.io"
+        })
       };
     };
     mockGetClient.userinfo = () => {

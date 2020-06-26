@@ -44,10 +44,12 @@ export async function providers(parent) {
   return Promise.all(
     enabledProviders().map(async name => {
       const client = await getClient(name);
+      const url = client.authUrl(parent);
+      const displayName = client.metadata.displayName;
       return {
-        name: name,
-        url: client.authUrl(parent),
-        displayName: client.metadata.displayName
+        name,
+        url,
+        displayName
       };
     })
   );

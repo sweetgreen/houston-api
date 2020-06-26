@@ -35,14 +35,14 @@ export default async function(req, res) {
   const claimsMapping = provider.issuer.metadata.claimsMapping;
   const fetchUserInfo = provider.issuer.metadata.fetchUserInfo;
 
-  const tokenSet = await provider.authorizationCallback(null, req.body, {
+  const tokenSet = await provider.callback(null, req.body, {
     state: rawState,
     // Don't validate the nonce. Not great, but we don't store the nonce in a
     // session right now, so we can't validate this
     nonce: null
   });
 
-  const claims = tokenSet.claims;
+  const claims = tokenSet.claims();
 
   // Grab user data
   // Some IDPs don't return useful info, so fall back to the claims if we don't have it
