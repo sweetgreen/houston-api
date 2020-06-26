@@ -139,9 +139,6 @@ commands:
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
-        name: nmap 
-        command: sudo apt install nmap -y && nmap -v -A localhost
-      - run:
           name: install dockerize
           command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
           environment:
