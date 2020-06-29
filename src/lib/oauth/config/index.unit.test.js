@@ -2,6 +2,10 @@ import { oauthUrl, getClient, providerCfg, ClientCache } from "./index";
 import { URLSearchParams } from "url";
 
 describe("oauth configuration", () => {
+  beforeAll(() => {
+    providerCfg.google.clientId = "fake-google-clientId";
+    providerCfg.auth0.clientId = "fake-auth0-clientId";
+  });
   test("houston url is generated successfully", () => {
     expect(oauthUrl()).toEqual(expect.stringMatching(/https?:\/\/houston./));
   });
@@ -50,37 +54,6 @@ describe("oauth configuration", () => {
           expect.stringMatching(/https?:\/\/houston./)
         );
       });
-    });
-  });
-
-  describe("When google client_id is null", () => {
-    beforeAll(() => {
-      providerCfg.google.clientId = null;
-    });
-
-    afterAll(() => {
-      ClientCache.delete("google");
-    });
-
-    test("should use the Auth0 provider", async () => {
-      const client = await getClient("google");
-      expect(client.issuer.metadata.name).toBe("auth0");
-      expect(client.metadata.displayName).toBe("Google");
-    });
-
-    test("should include connection in URL", async () => {
-      const client = await getClient("google");
-      const params = new URLSearchParams(client.authUrl({}));
-
-      expect(params.get("connection")).toBe("google-oauth2");
-    });
-
-    test("should include right integration in state", async () => {
-      const client = await getClient("google");
-      const params = new URLSearchParams(client.authUrl({}));
-
-      const state = JSON.parse(params.get("state"));
-      expect(state.integration).toBe("google-oauth2");
     });
   });
 
@@ -146,5 +119,36 @@ describe("oauth configuration", () => {
 
   test("throws error for invalid provider string", async () => {
     await expect(getClient("notaprovider")).rejects.toThrow();
+  });
+});
+
+describe("When google client_id is null", () => {
+  beforeAll(() => {
+    providerCfg.google.clientId = null;
+  });
+
+  afterAll(() => {
+    ClientCache.delete("google");
+  });
+
+  test("should use the Auth0 provider", async () => {
+    const client = await getClient("google");
+    expect(client.issuer.metadata.name).toBe("auth0");
+    expect(client.metadata.displayName).toBe("Google");
+  });
+
+  test("should include connection in URL", async () => {
+    const client = await getClient("google");
+    const params = new URLSearchParams(client.authUrl({}));
+
+    expect(params.get("connection")).toBe("google-oauth2");
+  });
+
+  test("should include right integration in state", async () => {
+    const client = await getClient("google");
+    const params = new URLSearchParams(client.authUrl({}));
+
+    const state = JSON.parse(params.get("state"));
+    expect(state.integration).toBe("google-oauth2");
   });
 });

@@ -22,6 +22,11 @@ describe("When valid environment variables are passed", () => {
       expect(validateEnvironment(goodEnvs)).toBeUndefined();
     });
 
+    test("when env constains number (not at begining)", () => {
+      const goodEnvs = [{ key: "S3", value: "", isSecret: false }];
+      expect(validateEnvironment(goodEnvs)).toBeUndefined();
+    });
+
     test("when env is uppercase and uses underscores", () => {
       const goodEnvs = [{ key: "GOOD_VARIABLE", value: "", isSecret: false }];
       expect(validateEnvironment(goodEnvs)).toBeUndefined();
@@ -59,6 +64,11 @@ describe("When invalid environment variables are passed", () => {
 
     expect(() => {
       const badEnvs = [{ key: "__", value: "test", isSecret: false }];
+      validateEnvironment(badEnvs);
+    }).toThrow();
+
+    expect(() => {
+      const badEnvs = [{ key: "___", value: "test", isSecret: false }];
       validateEnvironment(badEnvs);
     }).toThrow();
 
@@ -104,6 +114,13 @@ describe("When invalid environment variables are passed", () => {
     expect(() => {
       const badEnvs = [
         { key: "STARTS_VALID_ENDS INVALID", value: "", isSecret: false }
+      ];
+      validateEnvironment(badEnvs);
+    }).toThrow();
+
+    expect(() => {
+      const badEnvs = [
+        { key: "3STARTS_WITH_NUMBER", value: "", isSecret: false }
       ];
       validateEnvironment(badEnvs);
     }).toThrow();
