@@ -12,9 +12,14 @@ import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_IMAGE_UPDATED } from "constants";
 export function deploymentImageUpdateWorker() {
   const clientID = "deployment-update";
   const subject = DEPLOYMENT_IMAGE_UPDATED;
-
-  // Create NATS PubSub Client
-  return natsPubSub(clientID, subject, helmUpdateDeployment);
+  try {
+    // Create NATS PubSub Client
+    const nc = natsPubSub(clientID, subject, helmUpdateDeployment);
+    log.info("NATS Deployment Update Worker Running...");
+    return nc;
+  } catch (err) {
+    log.error(err);
+  }
 }
 
 /**
@@ -79,11 +84,5 @@ function publishUpdateDeployed(id) {
 
 // When a file is run directly from Node, require.main is set to its module.
 if (require.main === module) {
-  deploymentImageUpdateWorker()
-    .then(() => {
-      log.info("NATS Deployment Update Worker Running...");
-    })
-    .catch(err => {
-      log.error(err);
-    });
+  deploymentImageUpdateWorker();
 }

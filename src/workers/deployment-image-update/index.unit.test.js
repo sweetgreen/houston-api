@@ -48,7 +48,7 @@ describe("deployment image update worker", () => {
       .fn()
       .mockName("deployment")
       .mockReturnValue({
-        $fragment: function() {
+        $fragment: () => {
           return fragment;
         }
       });
