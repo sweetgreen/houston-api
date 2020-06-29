@@ -1,4 +1,4 @@
-import { helmUpdateDeployment } from "./index";
+import { deploymentImageUpdateWorker, helmUpdateDeployment } from "./index";
 import { prisma } from "generated/client";
 import casual from "casual";
 
@@ -9,12 +9,20 @@ jest.mock("generated/client", () => {
   };
 });
 
-describe("v1-registry-event worker", () => {
+describe("deployment image update worker", () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  test("updated deployment in worker", async () => {
+  test("correctly sets up pubsub", async () => {
+    const nc = deploymentImageUpdateWorker();
+    const eventNames = nc.eventNames();
+
+    expect(nc.on).toBeTruthy();
+    expect(eventNames).toEqual(["connect"]);
+  });
+
+  test("correctly deploys and update", async () => {
     const id = casual.uuid;
     const workspace = { id };
     const label = casual.word;

@@ -1,1 +1,1 @@
-import "./deployment-image-updated";
+import "./deployment-image-update";

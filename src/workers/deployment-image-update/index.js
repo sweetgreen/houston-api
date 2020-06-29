@@ -5,16 +5,18 @@ import { generateNamespace } from "deployments/naming";
 import { generateHelmValues } from "deployments/config";
 import { natsPubSub, natsPublisher } from "nats-streaming";
 import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_IMAGE_UPDATED } from "constants";
+
 /**
- * NATS Deployment Image Update
+ * NATS Deployment Update Worker
  */
-function natsDeploymentImageUpdate() {
+export function deploymentImageUpdateWorker() {
   const clientID = "deployment-update";
   const subject = DEPLOYMENT_IMAGE_UPDATED;
 
   // Create NATS PubSub Client
   return natsPubSub(clientID, subject, helmUpdateDeployment);
 }
+
 /**
  * @param  {Object} natsMessage
  */
@@ -63,18 +65,21 @@ async function getDeploymentById(id) {
     .deployment({ id })
     .$fragment(`{ id, releaseName, version, extraAu, workspace { id } }`);
 }
-
+/**
+ * @param  {String} id for the deployment
+ */
 function publishUpdateDeployed(id) {
   const clientID = "registry-event-update";
   const nc = natsPublisher(clientID);
   const deployedSubject = `${DEPLOYMENT_IMAGE_UPDATED}.deployed`;
+
   nc.publish(deployedSubject, id);
   nc.close();
 }
 
 // When a file is run directly from Node, require.main is set to its module.
 if (require.main === module) {
-  natsDeploymentImageUpdate()
+  deploymentImageUpdateWorker()
     .then(() => {
       log.info("NATS Deployment Update Worker Running...");
     })
