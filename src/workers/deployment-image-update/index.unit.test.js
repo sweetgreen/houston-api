@@ -17,8 +17,10 @@ describe("deployment image update worker", () => {
   test("correctly sets up pubsub", async () => {
     const nc = deploymentImageUpdateWorker();
     const eventNames = nc.eventNames();
+    nc.close();
 
     expect(nc.on).toBeTruthy();
+    expect(nc.close).toBeTruthy();
     expect(eventNames).toEqual(["connect"]);
   });
 
