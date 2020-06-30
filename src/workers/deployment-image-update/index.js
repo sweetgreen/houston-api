@@ -11,7 +11,7 @@ let nc = {};
 /**
  * NATS Deployment Update Worker
  */
-export default function() {
+function deploymentImageUpdate() {
   const clientID = "deployment-image-update";
   const subject = DEPLOYMENT_IMAGE_UPDATED;
   try {
@@ -81,3 +81,5 @@ function publishUpdateDeployed(id) {
   nc.publish(deployedSubject, id);
   nc.close();
 }
+
+export default deploymentImageUpdate();

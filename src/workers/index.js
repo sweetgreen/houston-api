@@ -1,4 +1,6 @@
-import deploymentImageUpdate from "./deployment-image-update";
+import DeploymentImageUpdate from "./deployment-image-update";
 
-// Add all workers here
-deploymentImageUpdate();
+// Define Workers
+export default {
+  DeploymentImageUpdate
+};

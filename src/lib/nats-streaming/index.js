@@ -25,8 +25,8 @@ export function natsPubSub(clientID, subject, messageHandler) {
 }
 
 export function natsPublisher(clientID) {
-  const clusterID = "houston-api";
   const natsConfig = config.get("nats");
+  const clusterID = natsConfig.clusterID;
   const url = `${natsConfig.host}:${natsConfig.port}`;
   const opts = {
     url

@@ -16,7 +16,6 @@ import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import { PubSub } from "apollo-server";
 import { createServer } from "http";
-import "workers";
 
 // Get configuration from config dir and environment.
 const serverConfig = config.get("webserver");
