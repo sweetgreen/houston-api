@@ -3,18 +3,20 @@ import commander from "commander";
 import log from "logger";
 import { generateNamespace } from "deployments/naming";
 import { generateHelmValues } from "deployments/config";
-import { natsPubSub, natsPublisher } from "nats-streaming";
+import { natsPubSub } from "nats-streaming";
 import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_IMAGE_UPDATED } from "constants";
+
+let nc = {};
 
 /**
  * NATS Deployment Update Worker
  */
-export function deploymentImageUpdateWorker() {
-  const clientID = "deployment-update";
+export default function() {
+  const clientID = "deployment-image-update";
   const subject = DEPLOYMENT_IMAGE_UPDATED;
   try {
     // Create NATS PubSub Client
-    const nc = natsPubSub(clientID, subject, helmUpdateDeployment);
+    nc = natsPubSub(clientID, subject, helmUpdateDeployment);
     log.info("NATS Deployment Update Worker Running...");
     return nc;
   } catch (err) {
@@ -74,15 +76,8 @@ async function getDeploymentById(id) {
  * @param  {String} id for the deployment
  */
 function publishUpdateDeployed(id) {
-  const clientID = "registry-event-update";
-  const nc = natsPublisher(clientID);
   const deployedSubject = `${DEPLOYMENT_IMAGE_UPDATED}.deployed`;
 
   nc.publish(deployedSubject, id);
   nc.close();
-}
-
-// When a file is run directly from Node, require.main is set to its module.
-if (require.main === module) {
-  deploymentImageUpdateWorker();
 }

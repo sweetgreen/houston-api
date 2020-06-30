@@ -17,6 +17,8 @@ export function natsPubSub(clientID, subject, messageHandler) {
     // Subscribe and assign event handler
     const sub = nc.subscribe(subject, opts);
     sub.on("message", messageHandler);
+
+    log.info("Subscribing to ", sub);
   });
 
   return nc;
@@ -26,10 +28,14 @@ export function natsPublisher(clientID) {
   const clusterID = "houston-api";
   const natsConfig = config.get("nats");
   const url = `${natsConfig.host}:${natsConfig.port}`;
-  log.info(url);
   const opts = {
     url
   };
+  log.info(JSON.stringify(opts));
 
-  return nats.connect(clusterID, clientID, opts);
+  const nc = nats.connect(clusterID, clientID, opts);
+
+  log.info(JSON.stringify(nc));
+
+  return nc;
 }

@@ -1,4 +1,5 @@
 import { deploymentFragment, workspaceFragment } from "./fragment";
+import { natsPublisher } from "nats-streaming";
 import {
   validateReleaseName,
   generateReleaseName,
@@ -23,7 +24,8 @@ import { generate as generatePassword } from "generate-password";
 import {
   DEPLOYMENT_AIRFLOW,
   DEPLOYMENT_PROPERTY_EXTRA_AU,
-  AIRFLOW_EXECUTOR_DEFAULT
+  AIRFLOW_EXECUTOR_DEFAULT,
+  DEPLOYMENT_IMAGE_UPDATED
 } from "constants";
 
 /*
@@ -209,6 +211,13 @@ export default async function createDeployment(parent, args, ctx, info) {
     namespaceLabels: generateDeploymentLabels(helmConfig.labels),
     rawConfig: JSON.stringify(helmConfig)
   });
+
+  // Create NATS client.
+  const nc = natsPublisher("deployment-image-update");
+  // Send event to fire the helm upgrade.
+  // An async worker will pick this job up and ensure
+  // the changes are propagated.
+  nc.publish(DEPLOYMENT_IMAGE_UPDATED, "someID");
 
   // Return the deployment.
   return deployment;
