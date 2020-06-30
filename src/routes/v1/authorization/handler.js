@@ -14,8 +14,6 @@ export default async function(req, res) {
   const { user } = req.session;
   if (!user) return res.sendStatus(401);
 
-  const prisma = new PrismaClient();
-
   // Parse out some variables.
   const originalUrl = req.get("x-original-url");
   const { hostname, path } = url.parse(originalUrl);
@@ -34,6 +32,7 @@ export default async function(req, res) {
   const matches = path.match(RELEASE_NAME_AIRFLOW_PATTERN);
   if (matches && subdomain === "deployments") {
     const releaseName = matches[1];
+    const prisma = new PrismaClient();
     // Get the deploymentId for the parsed releaseName.
     const { id } = await prisma.deployment.findOne({
       where: {

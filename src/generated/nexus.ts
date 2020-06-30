@@ -17,8 +17,8 @@ declare global {
 }
 declare global {
   interface NexusGenCustomOutputProperties<TypeName extends string> {
+    crud: NexusPrisma<TypeName, 'crud'>
     model: NexusPrisma<TypeName, 'model'>
-    crud: any
   }
 }
 
@@ -27,6 +27,15 @@ declare global {
 }
 
 export interface NexusGenInputs {
+  DeploymentWhereUniqueInput: { // input type
+    id?: string | null; // String
+    releaseName?: string | null; // String
+  }
+  EmailWhereUniqueInput: { // input type
+    address?: string | null; // String
+    id?: string | null; // String
+    token?: string | null; // String
+  }
   InviteSearch: { // input type
     email?: string | null; // String
     inviteUuid?: any | null; // Uuid
@@ -36,6 +45,9 @@ export interface NexusGenInputs {
     fullName?: string | null; // String
     username?: string | null; // String
     userUuid?: any | null; // Uuid
+  }
+  WorkspaceWhereUniqueInput: { // input type
+    id?: string | null; // String
   }
 }
 
@@ -275,8 +287,11 @@ export interface NexusGenRootTypes {
 }
 
 export interface NexusGenAllTypes extends NexusGenRootTypes {
+  DeploymentWhereUniqueInput: NexusGenInputs['DeploymentWhereUniqueInput'];
+  EmailWhereUniqueInput: NexusGenInputs['EmailWhereUniqueInput'];
   InviteSearch: NexusGenInputs['InviteSearch'];
   UserSearch: NexusGenInputs['UserSearch'];
+  WorkspaceWhereUniqueInput: NexusGenInputs['WorkspaceWhereUniqueInput'];
   EntityType: NexusGenEnums['EntityType'];
   MetricType: NexusGenEnums['MetricType'];
   Operator: NexusGenEnums['Operator'];
@@ -502,10 +517,12 @@ export interface NexusGenFieldTypes {
     appConfig: NexusGenRootTypes['AppConfig'] | null; // AppConfig
     authConfig: NexusGenRootTypes['AuthConfig']; // AuthConfig!
     card: NexusGenRootTypes['Card']; // Card!
+    deployment: NexusGenRootTypes['Deployment'] | null; // Deployment
     deploymentConfig: NexusGenRootTypes['DeploymentConfig']; // DeploymentConfig!
     deployments: NexusGenRootTypes['Deployment'][] | null; // [Deployment!]
     deploymentServiceAccount: NexusGenRootTypes['ServiceAccount']; // ServiceAccount!
     deploymentServiceAccounts: NexusGenRootTypes['ServiceAccount'][] | null; // [ServiceAccount!]
+    email: NexusGenRootTypes['Email'] | null; // Email
     invites: NexusGenRootTypes['Invite'][] | null; // [Invite!]
     logs: NexusGenRootTypes['DeploymentLog'][] | null; // [DeploymentLog!]
     self: NexusGenRootTypes['AuthUser']; // AuthUser!
@@ -810,6 +827,9 @@ export interface NexusGenArgTypes {
       stripeCustomerId?: string | null; // String
       workspaceUuid: any; // Uuid!
     }
+    deployment: { // args
+      where: NexusGenInputs['DeploymentWhereUniqueInput']; // DeploymentWhereUniqueInput!
+    }
     deploymentConfig: { // args
       deploymentUuid?: any | null; // Uuid
       type?: string | null; // String
@@ -822,6 +842,9 @@ export interface NexusGenArgTypes {
     }
     deploymentServiceAccounts: { // args
       deploymentUuid: any; // Uuid!
+    }
+    email: { // args
+      where: NexusGenInputs['EmailWhereUniqueInput']; // EmailWhereUniqueInput!
     }
     invites: { // args
       invite?: NexusGenInputs['InviteSearch'] | null; // InviteSearch
@@ -897,7 +920,7 @@ export interface NexusGenInheritedFields {}
 
 export type NexusGenObjectNames = "AirflowImage" | "AppConfig" | "AstroUnit" | "AuthConfig" | "AuthProvider" | "AuthUser" | "AuthUserCapabilities" | "Card" | "DeployInfo" | "Deployment" | "DeploymentCapabilities" | "DeploymentConfig" | "DeploymentLog" | "DeploymentMetric" | "DeploymentStatus" | "DeploymentUrl" | "DockerImage" | "Email" | "Invite" | "InviteToken" | "LocalCredential" | "Mutation" | "PlatformRelease" | "Query" | "RoleBinding" | "ServiceAccount" | "Subscription" | "Token" | "TokenPayload" | "User" | "UserProp" | "Workspace" | "WorkspaceCapabilities";
 
-export type NexusGenInputNames = "InviteSearch" | "UserSearch";
+export type NexusGenInputNames = "DeploymentWhereUniqueInput" | "EmailWhereUniqueInput" | "InviteSearch" | "UserSearch" | "WorkspaceWhereUniqueInput";
 
 export type NexusGenEnumNames = "EntityType" | "MetricType" | "Operator" | "Role";
 
