@@ -150,7 +150,10 @@ async function cleanupDeployments() {
   log.info(`Searching for deployments soft-deleted before ${olderThan}`);
 
   // Build the deployment query.
-  const query = { where: { deletedAt_lte: olderThan } };
+  const query = {
+    where: { deletedAt_lte: olderThan },
+    select: { releaseName: true }
+  };
 
   if (argv["canary"]) {
     log.info(`Limiting search to canary deployments`);
@@ -162,9 +165,7 @@ async function cleanupDeployments() {
   const prisma = new PrismaClient();
 
   // Find the deployments that are older than cleanup
-  const deployments = await prisma
-    .deployments(query)
-    .$fragment(`{ releaseName }`);
+  const deployments = await prisma.deployment.findMany(query);
 
   const deploymentCount = size(deployments);
 
@@ -191,7 +192,7 @@ async function cleanupDeployments() {
     log.info(`Beginning cleanup for ${deployment.releaseName}`);
     await removeDatabaseForDeployment(deployment);
     await cleanupImagesForDeployment(deployment);
-    await prisma.deleteDeployment({
+    await prisma.deployment.delete({
       releaseName: deployment.releaseName
     });
   }
