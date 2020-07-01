@@ -2,7 +2,7 @@ import log from "logger";
 import nats from "node-nats-streaming";
 import config from "config";
 
-export function natsPubSub(clientID, subject, messageHandler) {
+export function natsPubSub(clientID, subject, queueGroup, messageHandler) {
   const nc = natsPublisher(clientID);
 
   // Attach handler
@@ -11,14 +11,14 @@ export function natsPubSub(clientID, subject, messageHandler) {
     const opts = nc.subscriptionOptions();
     opts.setDeliverAllAvailable();
     opts.setManualAckMode(true);
-    opts.setAckWait(300 * 1000);
+    opts.setAckWait(3000);
     opts.setDurableName(clientID);
 
     // Subscribe and assign event handler
-    const sub = nc.subscribe(subject, opts);
+    const sub = nc.subscribe(subject, queueGroup, opts);
     sub.on("message", messageHandler);
 
-    log.info("Subscribing to ", sub);
+    log.info(`Subscribing to: ${subject}`);
   });
 
   return nc;
@@ -34,8 +34,6 @@ export function natsPublisher(clientID) {
   log.info(JSON.stringify(opts));
 
   const nc = nats.connect(clusterID, clientID, opts);
-
-  log.info(JSON.stringify(nc));
 
   return nc;
 }

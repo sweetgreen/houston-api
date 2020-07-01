@@ -1,4 +1,4 @@
-import { deploymentImageUpdateWorker, helmUpdateDeployment } from "./index";
+import deploymentImageUpdate, { helmUpdateDeployment } from "./index";
 import { prisma } from "generated/client";
 import casual from "casual";
 
@@ -10,14 +10,18 @@ jest.mock("generated/client", () => {
 });
 
 describe("deployment image update worker", () => {
+  const nc = deploymentImageUpdate;
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  test("correctly sets up pubsub", async () => {
-    const nc = deploymentImageUpdateWorker();
-    const eventNames = nc.eventNames();
+  afterAll(() => {
     nc.close();
+  });
+
+  test("correctly sets up pubsub", async () => {
+    const eventNames = nc.eventNames();
 
     expect(nc.on).toBeTruthy();
     expect(nc.close).toBeTruthy();

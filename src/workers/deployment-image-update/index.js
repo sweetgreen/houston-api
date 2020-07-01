@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { prisma } from "generated/client";
 import commander from "commander";
 import log from "logger";
@@ -13,10 +14,11 @@ let nc = {};
  */
 function deploymentImageUpdate() {
   const clientID = "deployment-image-update";
+  const queueGroup = "houston-api";
   const subject = DEPLOYMENT_IMAGE_UPDATED;
   try {
     // Create NATS PubSub Client
-    nc = natsPubSub(clientID, subject, helmUpdateDeployment);
+    nc = natsPubSub(clientID, subject, queueGroup, helmUpdateDeployment);
     log.info("NATS Deployment Update Worker Running...");
     return nc;
   } catch (err) {
@@ -29,15 +31,17 @@ function deploymentImageUpdate() {
  */
 export async function helmUpdateDeployment(natsMessage) {
   const id = natsMessage.getData();
-  const deployment = await getDeploymentById(id);
-  const { releaseName } = deployment;
+  try {
+    const deployment = await getDeploymentById(id);
+    const { releaseName } = deployment;
+    await commanderUpdateDeployment(deployment);
 
-  await commanderUpdateDeployment(deployment);
-
-  publishUpdateDeployed(id);
-
-  natsMessage.ack();
-  log.info(`Deployment ${releaseName} successfully updated`);
+    publishUpdateDeployed(id);
+    natsMessage.ack();
+    log.info(`Deployment ${releaseName} successfully updated`);
+  } catch (err) {
+    log.error(err);
+  }
 }
 
 /**
@@ -68,10 +72,12 @@ async function commanderUpdateDeployment(deployment) {
  * @return {Object} deployment if found
  */
 async function getDeploymentById(id) {
-  return await prisma
-    .deployment({ id })
-    .$fragment(`{ id, releaseName, version, extraAu, workspace { id } }`);
+  const query = { id };
+  const fragment = `{ id, releaseName, version, extraAu, workspace { id } }`;
+
+  return await prisma.deployment(query).$fragment(fragment);
 }
+
 /**
  * @param  {String} id for the deployment
  */
@@ -79,7 +85,6 @@ function publishUpdateDeployed(id) {
   const deployedSubject = `${DEPLOYMENT_IMAGE_UPDATED}.deployed`;
 
   nc.publish(deployedSubject, id);
-  nc.close();
 }
 
 export default deploymentImageUpdate();

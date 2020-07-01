@@ -16,10 +16,11 @@ prisma:
   secret: ~
   debug: false
 
-# NATS configuration.
+# # NATS configuration.
 nats:
   host: nats://localhost
   port: 4222
+  clusterID: development-cluster
 
 # Logging configuration.
 logging:
