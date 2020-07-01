@@ -6,5 +6,9 @@
  * @return {[]Deployment} List of Deployments.
  */
 export default async function deployments(parent, args, ctx) {
-  return await ctx.prisma.deployment.findMany();
+  return await ctx.prisma.deployment.findMany({
+    where: {
+      deletedAt: null
+    }
+  });
 }
