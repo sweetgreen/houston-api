@@ -1,14 +1,18 @@
+import { generateHelmValues } from "deployments/config";
 import { publisher } from "nats-streaming";
 import { prisma } from "generated/client";
 import { createDockerJWT } from "registry/jwt";
+import { generateNamespace } from "deployments/naming";
 import isValidTaggedDeployment from "deployments/validate/docker-tag";
 import log from "logger";
+import commander from "commander";
 import { version } from "utilities";
 import { track } from "analytics";
 import { merge, get } from "lodash";
 import got from "got";
 import {
   MEDIATYPE_DOCKER_MANIFEST_V2,
+  DEPLOYMENT_AIRFLOW,
   DEPLOYMENT_IMAGE_UPDATED
 } from "constants";
 
@@ -107,6 +111,19 @@ export default async function(req, res) {
         .$fragment(
           `{ id config label releaseName extraAu airflowVersion version workspace { id } }`
         );
+
+      // TODO: Remove commander call after testing that NATS is functional
+      // Fire the helm upgrade to commander.
+      await commander.request("updateDeployment", {
+        releaseName: updatedDeployment.releaseName,
+        chart: {
+          name: DEPLOYMENT_AIRFLOW,
+          version: updatedDeployment.version
+        },
+        namespace: generateNamespace(releaseName),
+        rawConfig: JSON.stringify(generateHelmValues(updatedDeployment))
+      });
+
       const { deploymentId, label } = updatedDeployment;
 
       // Send event to fire the helm upgrade.
