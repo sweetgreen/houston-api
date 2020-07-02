@@ -7,15 +7,14 @@ describe("nats-streaming", () => {
     nc.close();
   });
 
-  test("nc on and publish exist", async () => {
+  test("nc on error and connect exist", async () => {
     const clientID = "deployment-updated";
     const subject = "test-subject";
-    const queueGroup = "houston-api";
     const testFunc = () => {};
-    nc = natsPubSub(clientID, subject, queueGroup, testFunc);
+    nc = await natsPubSub(clientID, subject, testFunc);
     const eventNames = nc.eventNames();
 
     expect(nc.on).toBeTruthy();
-    expect(eventNames).toEqual(["connect"]);
+    expect(eventNames).toEqual(["error", "connect"]);
   });
 });

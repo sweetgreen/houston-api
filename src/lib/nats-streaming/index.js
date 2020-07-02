@@ -2,7 +2,7 @@ import log from "logger";
 import nats from "node-nats-streaming";
 import config from "config";
 
-export async function natsPubSub(clientID, subject, messageHandler) {
+export function natsPubSub(clientID, subject, messageHandler) {
   const nc = natsPublisher(clientID);
 
   // Subscribe after successful connection

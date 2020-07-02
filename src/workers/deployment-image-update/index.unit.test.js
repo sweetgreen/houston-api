@@ -1,4 +1,4 @@
-import deploymentImageUpdate, { helmUpdateDeployment } from "./index";
+import nc, { helmUpdateDeployment } from "./index";
 import { prisma } from "generated/client";
 import casual from "casual";
 
@@ -10,8 +10,6 @@ jest.mock("generated/client", () => {
 });
 
 describe("deployment image update worker", () => {
-  const nc = deploymentImageUpdate;
-
   afterEach(() => {
     jest.restoreAllMocks();
   });
@@ -25,10 +23,10 @@ describe("deployment image update worker", () => {
 
     expect(nc.on).toBeTruthy();
     expect(nc.close).toBeTruthy();
-    expect(eventNames).toEqual(["connect"]);
+    expect(eventNames).toEqual(["error", "connect"]);
   });
 
-  test("correctly deploys and update", async () => {
+  test("correctly deploys and updates", async () => {
     const id = casual.uuid;
     const workspace = { id };
     const label = casual.word;
