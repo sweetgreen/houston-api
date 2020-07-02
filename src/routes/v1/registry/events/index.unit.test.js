@@ -1,8 +1,8 @@
 import router from "./index";
 import * as postExports from "./post";
 import { prisma } from "generated/client";
-import casual from "casual";
 import { generateHelmValues } from "deployments/config";
+import casual from "casual";
 import request from "supertest";
 import express from "express";
 import nock from "nock";
