@@ -1,4 +1,4 @@
-import { natsPubSub } from "./";
+import { pubSub } from "./";
 
 describe("nats-streaming", () => {
   let nc = {};
@@ -11,7 +11,7 @@ describe("nats-streaming", () => {
     const clientID = "deployment-updated";
     const subject = "test-subject";
     const testFunc = () => {};
-    nc = await natsPubSub(clientID, subject, testFunc);
+    nc = await pubSub(clientID, subject, testFunc);
     const eventNames = nc.eventNames();
 
     expect(nc.on).toBeTruthy();

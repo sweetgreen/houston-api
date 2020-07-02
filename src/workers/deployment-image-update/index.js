@@ -4,35 +4,36 @@ import commander from "commander";
 import log from "logger";
 import { generateNamespace } from "deployments/naming";
 import { generateHelmValues } from "deployments/config";
-import { natsPubSub } from "nats-streaming";
-import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_IMAGE_UPDATED } from "constants";
-
-const nc = createNatsClient();
+import { pubSub } from "nats-streaming";
+import {
+  DEPLOYMENT_AIRFLOW,
+  DEPLOYMENT_IMAGE_UPDATE,
+  DEPLOYMENT_IMAGE_UPDATE_ID,
+  DEPLOYMENT_IMAGE_UPDATE_DEPLOYED
+} from "constants";
 
 /**
  * NATS Deployment Update Worker
  */
-function createNatsClient() {
-  const clientID = "deployment-image-update-worker";
-  const subject = DEPLOYMENT_IMAGE_UPDATED;
-  const nc = natsPubSub(clientID, subject, helmUpdateDeployment);
-  log.info(`NATS ${clientID} Running...`);
-
-  return nc;
-}
+const nc = pubSub(
+  DEPLOYMENT_IMAGE_UPDATE_ID,
+  DEPLOYMENT_IMAGE_UPDATE,
+  helmUpdateDeployment
+);
+log.info(`NATS ${DEPLOYMENT_IMAGE_UPDATE_ID} Running...`);
 
 /**
- * @param  {Object} natsMessage
+ * @param  {Object} message NATS message
  */
-export async function helmUpdateDeployment(natsMessage) {
-  const id = natsMessage.getData();
+export async function helmUpdateDeployment(message) {
+  const id = message.getData();
   try {
     const deployment = await getDeploymentById(id);
     const { releaseName } = deployment;
 
     await commanderUpdateDeployment(deployment);
     publishUpdateDeployed(id);
-    natsMessage.ack();
+    message.ack();
     log.info(`Deployment ${releaseName} successfully updated`);
   } catch (err) {
     log.error(err);
@@ -77,9 +78,7 @@ async function getDeploymentById(id) {
  * @param  {String} id for the deployment
  */
 function publishUpdateDeployed(id) {
-  const deployedSubject = `${DEPLOYMENT_IMAGE_UPDATED}.deployed`;
-
-  nc.publish(deployedSubject, id);
+  nc.publish(DEPLOYMENT_IMAGE_UPDATE_DEPLOYED, id);
 }
 
 export default nc;

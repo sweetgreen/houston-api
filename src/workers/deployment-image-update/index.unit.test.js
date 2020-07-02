@@ -38,7 +38,7 @@ describe("deployment image update worker", () => {
       airflowVersion
     };
     const data = JSON.stringify(fragment);
-    const natsMessage = {
+    const messsage = {
       getData: () => data,
       ack: jest
         .fn()
@@ -55,8 +55,8 @@ describe("deployment image update worker", () => {
         }
       });
 
-    await helmUpdateDeployment(natsMessage);
+    await helmUpdateDeployment(messsage);
 
-    expect(natsMessage.ack).toHaveBeenCalledTimes(1);
+    expect(messsage.ack).toHaveBeenCalledTimes(1);
   });
 });

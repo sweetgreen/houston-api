@@ -1,9 +1,13 @@
 import log from "logger";
 import nats from "node-nats-streaming";
 import config from "config";
-
-export function PubSub(clientID, subject, messageHandler) {
-  const nc = natsPublisher(clientID);
+/**
+ * @param  {String} clientID name of the client to identify requests (unique)
+ * @param  {String} subject subject to publish and subscribe (shared)
+ * @param  {Function} messageHandler to accept the NATS message
+ */
+export function pubSub(clientID, subject, messageHandler) {
+  const nc = publisher(clientID);
 
   // Subscribe after successful connection
   nc.on("connect", () => {
@@ -24,8 +28,10 @@ export function PubSub(clientID, subject, messageHandler) {
 
   return nc;
 }
-
-export function Publisher(clientID) {
+/**
+ * @param  {String} clientID name of the client to identify requests (unique)
+ */
+export function publisher(clientID) {
   const natsConfig = config.get("nats");
   const clusterID = natsConfig.clusterID;
   const url = `${natsConfig.host}:${natsConfig.port}`;
