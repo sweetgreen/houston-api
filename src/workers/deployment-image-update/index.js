@@ -7,23 +7,18 @@ import { generateHelmValues } from "deployments/config";
 import { natsPubSub } from "nats-streaming";
 import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_IMAGE_UPDATED } from "constants";
 
-let nc = {};
+const nc = createNatsClient();
 
 /**
  * NATS Deployment Update Worker
  */
-function deploymentImageUpdate() {
-  const clientID = "deployment-image-update";
-  const queueGroup = "houston-api";
+function createNatsClient() {
+  const clientID = "deployment-image-update-worker";
   const subject = DEPLOYMENT_IMAGE_UPDATED;
-  try {
-    // Create NATS PubSub Client
-    nc = natsPubSub(clientID, subject, queueGroup, helmUpdateDeployment);
-    log.info("NATS Deployment Update Worker Running...");
-    return nc;
-  } catch (err) {
-    log.error(err);
-  }
+  const nc = natsPubSub(clientID, subject, helmUpdateDeployment);
+  log.info(`NATS ${clientID} Running...`);
+
+  return nc;
 }
 
 /**
@@ -34,8 +29,8 @@ export async function helmUpdateDeployment(natsMessage) {
   try {
     const deployment = await getDeploymentById(id);
     const { releaseName } = deployment;
-    await commanderUpdateDeployment(deployment);
 
+    await commanderUpdateDeployment(deployment);
     publishUpdateDeployed(id);
     natsMessage.ack();
     log.info(`Deployment ${releaseName} successfully updated`);
@@ -87,4 +82,4 @@ function publishUpdateDeployed(id) {
   nc.publish(deployedSubject, id);
 }
 
-export default deploymentImageUpdate();
+export default nc;
