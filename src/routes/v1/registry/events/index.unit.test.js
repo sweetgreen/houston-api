@@ -2,6 +2,7 @@ import router from "./index";
 import * as postExports from "./post";
 import { prisma } from "generated/client";
 import casual from "casual";
+import { generateHelmValues } from "deployments/config";
 import request from "supertest";
 import express from "express";
 import nock from "nock";
@@ -110,6 +111,12 @@ describe("POST /registry-events", () => {
       })
     );
     expect(extractImageMetadata).toHaveBeenCalledTimes(1);
+    expect(generateHelmValues).toHaveBeenCalledTimes(1);
+    expect(generateHelmValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        airflowVersion: "1.10.10"
+      })
+    );
     expect(prisma.upsertDockerImage).toHaveBeenCalledTimes(1);
     expect(prisma.upsertDockerImage).toHaveBeenCalledWith({
       where: { name },
@@ -159,6 +166,7 @@ describe("POST /registry-events", () => {
       });
 
     expect(prisma.deployment).toHaveBeenCalledTimes(1);
+    expect(prisma.updateDeployment).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
 
@@ -231,6 +239,7 @@ describe("POST /registry-events", () => {
       });
 
     expect(prisma.deployment).toHaveBeenCalledTimes(1);
+    expect(prisma.updateDeployment).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
 
@@ -254,6 +263,7 @@ describe("POST /registry-events", () => {
       });
 
     expect(prisma.deployment).toHaveBeenCalledTimes(0);
+    expect(prisma.updateDeployment).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
 
@@ -278,6 +288,7 @@ describe("POST /registry-events", () => {
       });
 
     expect(prisma.deployment).toHaveBeenCalledTimes(0);
+    expect(prisma.updateDeployment).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
 });
