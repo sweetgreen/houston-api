@@ -2,7 +2,7 @@ import log from "logger";
 import nats from "node-nats-streaming";
 import config from "config";
 
-export function natsPubSub(clientID, subject, messageHandler) {
+export function PubSub(clientID, subject, messageHandler) {
   const nc = natsPublisher(clientID);
 
   // Subscribe after successful connection
@@ -25,7 +25,7 @@ export function natsPubSub(clientID, subject, messageHandler) {
   return nc;
 }
 
-export function natsPublisher(clientID) {
+export function Publisher(clientID) {
   const natsConfig = config.get("nats");
   const clusterID = natsConfig.clusterID;
   const url = `${natsConfig.host}:${natsConfig.port}`;
