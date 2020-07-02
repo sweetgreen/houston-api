@@ -158,7 +158,3 @@ export class NoSystemAdminError extends ApolloError {
     this.message ||
     "There are no other system administrators. Please assign another before removing yourself.";
 }
-
-export class NatsConnectionError extends Error {
-  message = this.message || "NATS Connection error";
-}
