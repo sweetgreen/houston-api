@@ -47,7 +47,9 @@ describe("deployment image update worker", () => {
       "error",
       "disconnect",
       "reconnecting",
-      "connect"
+      "connect",
+      "reconnect",
+      "connection_lost"
     ]);
   });
 
