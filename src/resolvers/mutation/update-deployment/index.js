@@ -3,8 +3,7 @@ import { track } from "analytics";
 import validate from "deployments/validate";
 import {
   generateHelmValues,
-  mapPropertiesToDeployment,
-  mapCustomEnvironmentVariables
+  mapPropertiesToDeployment
 } from "deployments/config";
 import { generateNamespace } from "deployments/naming";
 import { TrialError } from "errors";
@@ -91,10 +90,7 @@ export default async function updateDeployment(parent, args, ctx, info) {
 
   // If we're syncing to kubernetes, fire updates to commander.
   if (args.sync) {
-    // Map to a format that the helm chart expects.
-    const values = mapCustomEnvironmentVariables(updatedDeployment);
-
-    // Update the deployment, passing in our custom env vars.
+    // Update the deployment
     await ctx.commander.request("updateDeployment", {
       releaseName: updatedDeployment.releaseName,
       chart: {
@@ -102,7 +98,7 @@ export default async function updateDeployment(parent, args, ctx, info) {
         version: updatedDeployment.version
       },
       namespace: generateNamespace(updatedDeployment.releaseName),
-      rawConfig: JSON.stringify(generateHelmValues(updatedDeployment, values))
+      rawConfig: JSON.stringify(generateHelmValues(updatedDeployment))
     });
   }
 
