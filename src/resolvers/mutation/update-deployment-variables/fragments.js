@@ -7,4 +7,8 @@ export const queryFragment = `fragment EnsureFields on Deployment {
     stripeCustomerId
     isSuspended
   }
+  version
+  extraAu
+  airflowVersion
+  alertEmails
 }`;
