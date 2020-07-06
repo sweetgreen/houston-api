@@ -33,13 +33,8 @@ export function pubSub(clientID, subject, messageHandler) {
     pubSub(clientID, subject, messageHandler);
   };
 
-  nc.connectionLostHandler = error => {
-    log.info(`NATS Streaming ${error}`);
-  };
-
   nc.on("connect", nc.connectHandler);
   nc.on("reconnect", nc.reconnectHandler);
-  nc.on("connection_lost", nc.connectionLostHandler);
 
   return nc;
 }
@@ -69,9 +64,14 @@ export function publisher(clientID) {
     log.info(`Attempting to reconnect to ${opts.url}`);
   };
 
+  nc.connectionLostHandler = error => {
+    log.info(`NATS Streaming ${error}`);
+  };
+
   nc.on("error", nc.errorHandler);
   nc.on("disconnect", nc.disconnectHandler);
   nc.on("reconnecting", nc.reconnectingHandler);
+  nc.on("connection_lost", nc.connectionLostHandler);
 
   return nc;
 }
@@ -122,7 +122,5 @@ function createSubscriber(nc, clientID, subject) {
   opts.setManualAckMode(true);
   opts.setDurableName(clientID);
 
-  const subscriber = nc.subscribe(subject, opts);
-
-  return subscriber;
+  return nc.subscribe(subject, opts);
 }

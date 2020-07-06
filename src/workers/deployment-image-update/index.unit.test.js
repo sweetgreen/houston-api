@@ -40,17 +40,18 @@ describe("deployment image update worker", () => {
 
   test("correctly sets up pubsub", async () => {
     const eventNames = nc.eventNames();
-
-    expect(nc.on).toBeTruthy();
-    expect(nc.close).toBeTruthy();
-    expect(eventNames).toEqual([
+    const expectedEvents = [
       "error",
       "disconnect",
       "reconnecting",
+      "connection_lost",
       "connect",
-      "reconnect",
-      "connection_lost"
-    ]);
+      "reconnect"
+    ];
+
+    expect(nc.on).toBeTruthy();
+    expect(nc.close).toBeTruthy();
+    expect(eventNames.sort()).toEqual(expectedEvents.sort());
   });
 
   test("correctly deploys and updates", async () => {
