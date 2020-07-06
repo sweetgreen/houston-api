@@ -10,9 +10,8 @@ describe("nats-streaming", () => {
     nc = pubSub(clientID, subject, testFunc);
   });
 
-  afterAll(() => {
+  afterEach(() => {
     nc.close();
-    nc = {};
   });
 
   test("nc on error and connect exist", () => {
@@ -52,7 +51,10 @@ describe("nats-streaming", () => {
         unsubscribe: jest.fn().mockReturnValue(true)
       };
     });
+
     nc.connectHandler();
-    nc.reconnectHandler(nc);
+    const newNc = nc.reconnectHandler(nc);
+    // Close the new connection so the test suite does not fail
+    newNc.close();
   });
 });

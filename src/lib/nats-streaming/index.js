@@ -30,7 +30,7 @@ export function pubSub(clientID, subject, messageHandler) {
     log.info(`Unsubscribed from: ${subject}`);
 
     // Reconnect to STAN again or the worker will shutdown
-    pubSub(clientID, subject, messageHandler);
+    return pubSub(clientID, subject, messageHandler);
   };
 
   nc.on("connect", nc.connectHandler);
