@@ -15,6 +15,11 @@ describe("nats-streaming", () => {
     const eventNames = nc.eventNames();
 
     expect(nc.on).toBeTruthy();
-    expect(eventNames).toEqual(["error", "connect"]);
+    expect(eventNames).toEqual([
+      "error",
+      "disconnect",
+      "reconnecting",
+      "connect"
+    ]);
   });
 });

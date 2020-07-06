@@ -43,7 +43,12 @@ describe("deployment image update worker", () => {
 
     expect(nc.on).toBeTruthy();
     expect(nc.close).toBeTruthy();
-    expect(eventNames).toEqual(["error", "connect"]);
+    expect(eventNames).toEqual([
+      "error",
+      "disconnect",
+      "reconnecting",
+      "connect"
+    ]);
   });
 
   test("correctly deploys and updates", async () => {
