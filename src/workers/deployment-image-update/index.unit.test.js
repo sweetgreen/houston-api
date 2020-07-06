@@ -1,5 +1,6 @@
 import nc, { helmUpdateDeployment } from "./index";
 import { prisma } from "generated/client";
+import log from "logger";
 import casual from "casual";
 
 jest.mock("generated/client", () => {
@@ -10,6 +11,25 @@ jest.mock("generated/client", () => {
 });
 
 describe("deployment image update worker", () => {
+  const id = casual.uuid;
+  const workspace = { id };
+  const label = casual.word;
+  const airflowVersion = "1.10.10";
+  const fragment = {
+    workspace,
+    label,
+    id,
+    airflowVersion
+  };
+  const data = JSON.stringify(fragment);
+  const messsage = {
+    getData: () => data,
+    ack: jest
+      .fn()
+      .mockName("ack")
+      .mockReturnValue(true)
+  };
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
@@ -27,25 +47,6 @@ describe("deployment image update worker", () => {
   });
 
   test("correctly deploys and updates", async () => {
-    const id = casual.uuid;
-    const workspace = { id };
-    const label = casual.word;
-    const airflowVersion = "1.10.10";
-    const fragment = {
-      workspace,
-      label,
-      id,
-      airflowVersion
-    };
-    const data = JSON.stringify(fragment);
-    const messsage = {
-      getData: () => data,
-      ack: jest
-        .fn()
-        .mockName("ack")
-        .mockReturnValue(true)
-    };
-
     prisma.deployment = jest
       .fn()
       .mockName("deployment")
@@ -58,5 +59,21 @@ describe("deployment image update worker", () => {
     await helmUpdateDeployment(messsage);
 
     expect(messsage.ack).toHaveBeenCalledTimes(1);
+  });
+
+  test("correctly throw error when database is down", async () => {
+    prisma.deployment = jest
+      .fn()
+      .mockName("deployment")
+      .mockImplementation(() => {
+        throw new Error("The database is down!");
+      });
+
+    jest.spyOn(log, "error").mockImplementation(() => "Test error message");
+
+    await helmUpdateDeployment(messsage);
+
+    expect(messsage.ack).toHaveBeenCalledTimes(0);
+    expect(log.error).toHaveBeenCalledTimes(1);
   });
 });

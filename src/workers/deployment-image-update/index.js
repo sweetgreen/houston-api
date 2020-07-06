@@ -26,8 +26,8 @@ log.info(`NATS ${DEPLOYMENT_IMAGE_UPDATE_ID} Running...`);
  * @param  {Object} message NATS message
  */
 export async function helmUpdateDeployment(message) {
-  const id = message.getData();
   try {
+    const id = message.getData();
     const deployment = await getDeploymentById(id);
     const { releaseName } = deployment;
 
