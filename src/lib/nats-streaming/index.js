@@ -82,37 +82,10 @@ export function publisher(clientID) {
  */
 function getNatsStreamingOptions() {
   const natsConfig = config.get("nats");
-  const {
-    ackTimeout,
-    connectTimeout,
-    host,
-    port,
-    maxPubAcksInflight,
-    maxReconnectAttempts,
-    stanMaxPingOut,
-    stanPingInterval,
-    reconnect,
-    reconnectTimeWait,
-    reconnectJitter,
-    reconnectJitterTLS,
-    waitOnFirstConnect
-  } = natsConfig;
+  const { host, port } = natsConfig;
   const url = `${host}:${port}`;
 
-  return {
-    url,
-    ackTimeout,
-    connectTimeout,
-    maxPubAcksInflight,
-    maxReconnectAttempts,
-    stanMaxPingOut,
-    stanPingInterval,
-    reconnect,
-    reconnectJitter,
-    reconnectJitterTLS,
-    reconnectTimeWait,
-    waitOnFirstConnect
-  };
+  return { ...natsConfig, url };
 }
 
 /**
