@@ -1,9 +1,13 @@
 import "dotenv/config";
 import { prisma } from "generated/client";
+import commander from "commander";
+import { generateNamespace } from "deployments/naming";
+import { generateHelmValues } from "deployments/config";
 import log from "logger";
 import { pubSub } from "nats-streaming";
 import {
   DEPLOYMENT_IMAGE_UPDATE,
+  DEPLOYMENT_AIRFLOW,
   DEPLOYMENT_IMAGE_UPDATE_ID,
   DEPLOYMENT_IMAGE_UPDATE_DEPLOYED
 } from "constants";
@@ -40,9 +44,8 @@ export async function helmUpdateDeployment(message) {
  * @param  {Object} deployment from prisma
  */
 async function commanderUpdateDeployment(deployment) {
-  log.info(`NATS Streaming Update Deployment: ${deployment}`);
+  log.info(`NATS Streaming Update Deployment: ${deployment.releaseName}`);
 
-  /* TODO: Uncomment after testing STAN is completed and the logs for deployments match
   const { releaseName, version } = deployment;
   const namespace = generateNamespace(releaseName);
   const helmValues = generateHelmValues(deployment);
@@ -60,7 +63,6 @@ async function commanderUpdateDeployment(deployment) {
     namespace,
     rawConfig
   });
-  */
 }
 
 /**
