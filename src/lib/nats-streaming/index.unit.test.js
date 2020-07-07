@@ -30,30 +30,20 @@ describe("nats-streaming", () => {
   });
 
   test("error handlers log", () => {
-    nc.errorHandler("Test Error Handler");
-    nc.disconnectHandler();
+    nc._events.error("Test Error Message");
+    nc._events.disconnect();
   });
 
   test("reconnect attempt logs", () => {
-    nc.reconnectingHandler();
+    nc._events.reconnecting();
   });
 
   test("connection lost logs", () => {
-    nc.connectionLostHandler("Test Connection Lost");
+    nc._events.connection_lost("Test Connection Lost Message");
   });
 
   test("Reconnects correctly", () => {
-    nc.subscribe = jest.fn().mockImplementation(() => {
-      return {
-        on: jest.fn().mockReturnValue(true),
-        close: jest.fn().mockReturnValue(true),
-        isClosed: jest.fn().mockReturnValue(true),
-        unsubscribe: jest.fn().mockReturnValue(true)
-      };
-    });
-
-    nc.connectHandler();
-    const newNc = nc.reconnectHandler(nc);
+    const newNc = nc._events.reconnect(nc);
     // Close the new connection so the test suite does not fail
     newNc.close();
   });

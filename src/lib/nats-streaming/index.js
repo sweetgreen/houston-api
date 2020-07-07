@@ -12,29 +12,26 @@ export function pubSub(clientID, subject, messageHandler) {
   let sub = {};
 
   // Subscribe after successful connection
-  nc.connectHandler = () => {
+  nc.on("connect", () => {
     log.info(`Connected to ${nc.options.url}`);
     sub = createSubscriber(nc, clientID, subject);
     // Subscribe and assign event handler
     sub.on("message", messageHandler);
     log.info(`Subscribed to: ${subject}`);
-  };
+  });
 
   // Emitted whenever the client reconnects
   // reconnect callback provides a reference to the connection as an argument
-  nc.reconnectHandler = nc => {
+  nc.on("reconnect", nc => {
     log.info(`Reconnected to ${nc.options.url}`);
 
     // Unsubscribe so we can reconnect and resubscribe to keep the worker running
-    sub.unsubscribe("message");
+    sub.unsubscribe && sub.unsubscribe("message");
     log.info(`Unsubscribed from: ${subject}`);
 
     // Reconnect to STAN again or the worker will shutdown
     return pubSub(clientID, subject, messageHandler);
-  };
-
-  nc.on("connect", nc.connectHandler);
-  nc.on("reconnect", nc.reconnectHandler);
+  });
 
   return nc;
 }
@@ -51,27 +48,22 @@ export function publisher(clientID) {
 
   const nc = nats.connect(clusterID, clientID, opts);
 
-  nc.errorHandler = msg => {
+  nc.on("error", msg => {
     log.error(`NATS Error for client: ${clientID}.`);
     log.error(msg);
-  };
+  });
 
-  nc.disconnectHandler = () => {
+  nc.on("disconnect", () => {
     log.error(`Disconnected: ${opts.url}`);
-  };
+  });
 
-  nc.reconnectingHandler = () => {
+  nc.on("reconnecting", () => {
     log.info(`Attempting to reconnect to ${opts.url}`);
-  };
+  });
 
-  nc.connectionLostHandler = error => {
+  nc.on("connection_lost", error => {
     log.info(`NATS Streaming ${error}`);
-  };
-
-  nc.on("error", nc.errorHandler);
-  nc.on("disconnect", nc.disconnectHandler);
-  nc.on("reconnecting", nc.reconnectingHandler);
-  nc.on("connection_lost", nc.connectionLostHandler);
+  });
 
   return nc;
 }
