@@ -60,5 +60,6 @@ export const VALID_DOCKER_IMAGE_NAME = /^(?<releaseName>(?![0-9]+$)(?!.*-$)(?!-)
 // NATS related constants
 
 export const DEPLOYMENT_IMAGE_UPDATE = "houston.deployment.image.update";
-export const DEPLOYMENT_IMAGE_UPDATE_ID = "houston-deployment-image-update-worker";
+export const DEPLOYMENT_IMAGE_UPDATE_ID =
+  "houston-deployment-image-update-worker";
 export const DEPLOYMENT_IMAGE_UPDATE_DEPLOYED = `${DEPLOYMENT_IMAGE_UPDATE}.deployed`;
