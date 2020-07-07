@@ -67,25 +67,25 @@ export default function queries(deployment, since, step) {
       {
         name: "runningTasks",
         query: rangeQuery(
-          `airflow_executor_running_tasks{deployment=~"${deployment}"}`
+          `rate(airflow_executor_running_tasks{deployment=~"${deployment}"}${fstep})`
         )
       },
       {
         name: "queuedTasks",
         query: rangeQuery(
-          `airflow_executor_queued_tasks{deployment=~"${deployment}"}`
+          `rate(airflow_executor_queued_tasks{deployment=~"${deployment}"}${fstep})`
         )
       },
       {
         name: "failedTasks",
         query: rangeQuery(
-          `increase(airflow_ti_failures{deployment=~"${deployment}"}${fstep})`
+          `rate(airflow_ti_failures{deployment=~"${deployment}"}${fstep})`
         )
       },
       {
         name: "successfulTasks",
         query: rangeQuery(
-          `increase(airflow_ti_successes{deployment=~"${deployment}"}${fstep})`
+          `rate(airflow_ti_successes{deployment=~"${deployment}"}${fstep})`
         )
       },
       {
