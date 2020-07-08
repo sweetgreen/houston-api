@@ -8,8 +8,8 @@ describe("AuthUser", () => {
   });
 
   afterAll(() => {
-    jest.resetAllMocks();
     jest.useRealTimers();
+    jest.resetAllMocks();
   });
 
   test("token resolves a valid token", async () => {
