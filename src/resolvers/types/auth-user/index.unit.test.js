@@ -11,15 +11,16 @@ describe("AuthUser", () => {
       }
     };
     const res = await token({ userId }, {}, { db, res: { cookie } });
+    const testDate = Math.floor(new Date() / 1000);
 
     // Test that uuid gets set propertly.
     expect(res.payload.uuid).toBe(userId);
 
     // Test that the issued at is now.
-    expect(res.payload.iat).toBe(Math.floor(new Date() / 1000));
+    expect(res.payload.iat).toBe(testDate);
 
     // Test that the expiration is greater than now.
-    expect(res.payload.exp).toBeGreaterThan(Math.floor(new Date() / 1000));
+    expect(res.payload.exp).toBeGreaterThan(testDate);
 
     // Test that the cookie function is called.
     expect(cookie.mock.calls.length).toBe(1);
