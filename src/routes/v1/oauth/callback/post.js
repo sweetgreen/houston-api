@@ -1,6 +1,6 @@
 import fragment from "./fragment";
 import { createUser as _createUser, isFirst } from "users";
-import { getClient, getClaim } from "oauth/config";
+import { getClient, getClaim, getCookieList } from "oauth/config";
 import { track } from "analytics";
 import { PublicSignupsDisabledError } from "errors";
 import { ui } from "utilities";
@@ -23,6 +23,7 @@ export default async function(req, res) {
   const firstUser = await isFirst();
   const publicSignups = config.get("publicSignups");
 
+  const cookieList = await getCookieList(req.headers.cookie);
   // TODO: Handle `error` in the response
 
   // Parse the state object.
@@ -35,12 +36,16 @@ export default async function(req, res) {
   const claimsMapping = provider.issuer.metadata.claimsMapping;
   const fetchUserInfo = provider.issuer.metadata.fetchUserInfo;
 
-  const tokenSet = await provider.callback(null, req.body, {
-    state: rawState,
-    // Don't validate the nonce. Not great, but we don't store the nonce in a
-    // session right now, so we can't validate this
-    nonce: null
-  });
+  let tokenSet;
+  try {
+    tokenSet = await provider.callback(null, req.body, {
+      state: rawState,
+      nonce: cookieList.nonce
+    });
+  } catch (e) {
+    log.error(e);
+    return res.status(403).send("Unable to Login!");
+  }
 
   const claims = tokenSet.claims();
 
@@ -63,7 +68,7 @@ export default async function(req, res) {
   if (!userData.email) {
     // Somehow we got no email! Abort
     log.error("No email attribute found in claims");
-    res.sendStatus(400);
+    return res.sendStatus(400);
   } else {
     userData.email = userData.email.toLowerCase();
   }
@@ -94,7 +99,7 @@ export default async function(req, res) {
     // where an error message can be shown
     if (e instanceof ApolloError) {
       const url = `${ui()}/login?error=${e.extensions.code}`;
-      res.redirect(url);
+      return res.redirect(url);
     }
   }
 
