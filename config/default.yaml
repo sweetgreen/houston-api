@@ -327,6 +327,7 @@ roles:
       ? deployment.images.pull
       ? deployment.metrics.get
       ? deployment.serviceAccounts.get
+      ? deployment.rollouts.get
 
   DEPLOYMENT_EDITOR:
     name: Deployment Editor
@@ -371,9 +372,9 @@ deployments:
   # Airflow image settings
   # This is a list of supported airflow versions and corresponding docker tag
   images:
-    - version: 0.0.0
+    - version: 1.10.10
       channel: stable
-      tag: 0.0.0-alpine3.10-onbuild
+      tag: 1.10.10-alpine3.10-onbuild
     # - version: 1.10.5
     #   channel: stable
     #   tag: 1.10.5-alpine3.10-onbuild

@@ -161,6 +161,7 @@ deployments:
       __name: "DEPLOYMENTS__DATABASE__ALLOW_ROOT_ACCESS"
       __format: "json"
     connection: "DEPLOYMENTS__DATABASE__CONNECTION"
-
+    chart:
+      version: "DEPLOYMENTS__CHART__VERSION"
 analytics:
   writeKey: "ANALYTICS__WRITE_KEY"
