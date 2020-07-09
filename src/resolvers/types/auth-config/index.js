@@ -40,11 +40,11 @@ export function localEnabled() {
   return config.get("auth.local.enabled");
 }
 
-export async function providers(parent) {
+export async function providers() {
   return Promise.all(
     enabledProviders().map(async name => {
       const client = await getClient(name);
-      const url = client.authUrl(parent);
+      const url = client.startUrl();
       const displayName = client.metadata.displayName;
       return {
         name,

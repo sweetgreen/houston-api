@@ -1,6 +1,6 @@
 import { InvalidAuthenticationProviderError } from "errors";
 import { version, houston } from "utilities";
-import { Issuer, Registry, generators } from "openid-client";
+import { Issuer, Registry } from "openid-client";
 import config from "config";
 import { has, merge, get, upperFirst } from "lodash";
 
@@ -107,9 +107,17 @@ function subclassClient(issuer, clientId, integration, providerName) {
       super(merge(meta, { client_id: clientId }));
     }
 
-    authUrl(state) {
+    /*
+     * Return full oauth start url for oauth logins.
+     * @return {String} The oauth start url.
+     */
+    startUrl() {
+      const provider = providerName || this.issuer.metadata.name;
+      return `${houston()}/${version()}/oauth/start?provider=${provider}`;
+    }
+
+    authUrl(nonce, state = {}) {
       const redirectUri = this.oauthRedirectUrl();
-      const nonce = generators.nonce();
       const provider = providerName || this.issuer.metadata.name;
       const origin = oauthUrl();
       const params = merge({}, this.issuer.metadata.authUrlParams, {
@@ -174,6 +182,21 @@ function subclassClient(issuer, clientId, integration, providerName) {
 export function getClaim(claims, mapping, name) {
   const mapped = get(mapping, name, name);
   return get(claims, mapped);
+}
+
+/*
+ * Return an object of cookies.
+ * @param {String} cookies string
+ * @return {Object} list of all cookies.
+ */
+export function getCookieList(cookies) {
+  return cookies.split(";").reduce((accumulator, cookie) => {
+    const splitCookie = cookie.split("=");
+    const key = splitCookie[0].trim();
+    const value = splitCookie[1];
+    accumulator[key] = value;
+    return accumulator;
+  }, {});
 }
 
 function synthesiseConfig() {

@@ -23,7 +23,7 @@
     "check-platfrom-updates": "prisma generate && babel-node src/scripts/check-platform-updates/index.js"
   },
   "author": "Astronomer",
-  "license": "Astronomer Enterprise License",
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
     "analytics-node": "^3.4.0-beta.1",

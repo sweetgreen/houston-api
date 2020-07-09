@@ -49,7 +49,7 @@ describe("Auth Config", () => {
 
     jest.spyOn(oAuthConfig, "getClient").mockReturnValue({
       clientId,
-      authUrl: jest.fn(),
+      startUrl: jest.fn(),
       metadata
     });
     const result = await providers(url);

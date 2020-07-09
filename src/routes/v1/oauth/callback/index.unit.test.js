@@ -1,10 +1,12 @@
 import router from "./index";
 import { prisma } from "generated/client";
+import { PublicSignupsDisabledError } from "errors";
 import * as userExports from "users";
 import * as oAuthExports from "oauth/config";
 import express from "express";
 import request from "supertest";
 import casual from "casual";
+import jwt from "jsonwebtoken";
 
 jest.mock("generated/client", () => {
   return {
@@ -23,7 +25,16 @@ const app = express()
   .use(router);
 
 describe("POST /oauth", () => {
-  const idToken = `{"provider":"example","integration":"example","origin":"http://houston.local.astronomer.io:8871/v1/oauth/callback"}`;
+  const nonce = "fake-nonce-value";
+  const provider = "fake-provider";
+  const integration = "test";
+  const origin = "http://houston.local.astronomer.io:8871/v1/oauth/callback";
+  const idToken = {
+    provider,
+    integration,
+    nonce,
+    origin
+  };
   const expiresIn = 5000;
   const mockGetClient = {
     issuer: {
@@ -81,6 +92,170 @@ describe("POST /oauth", () => {
     mockGetClient.user = null;
   });
 
+  test("Should redirected user to login with PUBLIC_SIGNUPS_DISABLED code", async () => {
+    prisma.users = jest
+      .fn()
+      .mockName("users")
+      .mockReturnValue({
+        $fragment: function() {
+          return [];
+        }
+      });
+
+    prisma.usersConnection = jest.fn().mockReturnValue({
+      aggregate: jest.fn().mockReturnValue({
+        count: jest
+          .fn()
+          .mockName("usersConnection")
+          .mockReturnValue(0)
+      })
+    });
+
+    jest.spyOn(userExports, "createUser").mockImplementation(() => {
+      throw new PublicSignupsDisabledError();
+    });
+
+    const state = `{"provider":"google","integration":"google-oauth2","origin":"http://houston.local.astronomer.io:8871/v1/oauth/callback"}`;
+
+    mockGetClient.issuer = {
+      metadata: {
+        claimsMapping: {},
+        fetchUserInfo: true
+      }
+    };
+    mockGetClient.callback = () => {
+      return {
+        claims: jest.fn().mockReturnValue({
+          email: "TESTING@google.com",
+          name: "test name",
+          sub: "test-sub=",
+          access_token: "some-token"
+        })
+      };
+    };
+    mockGetClient.userinfo = () => {
+      return {
+        name: "Testing Name",
+        picture: "http://www.astronomer.io/test.img"
+      };
+    };
+
+    jest.spyOn(oAuthExports, "getClient").mockImplementation(() => {
+      return mockGetClient;
+    });
+
+    const res = await request(app)
+      .post("/")
+      .set("Cookie", [`nonce=${nonce}`])
+      .send({
+        id_token: jwt.sign(idToken, "test"),
+        expires_in: expiresIn,
+        state
+      });
+
+    expect(res.statusCode).toBe(302);
+    expect(res.text).toBe(
+      "Found. Redirecting to http://app.astronomer.io:5000/login?error=PUBLIC_SIGNUPS_DISABLED"
+    );
+  });
+
+  test("Should not allow login if auth0 callback fails", async () => {
+    const state = `{"provider":"google","integration":"google-oauth2","origin":"http://houston.local.astronomer.io:8871/v1/oauth/callback"}`;
+
+    mockGetClient.issuer = {
+      metadata: {
+        claimsMapping: {},
+        fetchUserInfo: true
+      }
+    };
+
+    mockGetClient.callback = jest.fn().mockImplementation(() => {
+      throw new Error();
+    });
+
+    jest.spyOn(oAuthExports, "getClient").mockImplementation(() => {
+      return mockGetClient;
+    });
+
+    const res = await request(app)
+      .post("/")
+      .set("Cookie", [`nonce=${nonce}`])
+      .send({
+        id_token: jwt.sign(idToken, "test"),
+        expires_in: expiresIn,
+        state
+      });
+
+    expect(res.statusCode).toBe(403);
+    expect(res.text).toBe("Unable to Login!");
+  });
+
+  test("Should throw error if user does not exists", async () => {
+    prisma.users = jest
+      .fn()
+      .mockName("users")
+      .mockReturnValue({
+        $fragment: function() {
+          return [];
+        }
+      });
+
+    prisma.usersConnection = jest.fn().mockReturnValue({
+      aggregate: jest.fn().mockReturnValue({
+        count: jest
+          .fn()
+          .mockName("usersConnection")
+          .mockReturnValue(0)
+      })
+    });
+
+    jest.spyOn(userExports, "isFirst").mockImplementation(() => false);
+
+    jest.spyOn(userExports, "createUser").mockImplementation(() => {
+      return { id: () => 1 };
+    });
+
+    const state = `{"provider":"google","integration":"google-oauth2","origin":"http://houston.local.astronomer.io:8871/v1/oauth/callback"}`;
+
+    mockGetClient.issuer = {
+      metadata: {
+        claimsMapping: {},
+        fetchUserInfo: true
+      }
+    };
+    mockGetClient.callback = () => {
+      return {
+        claims: jest.fn().mockReturnValue({
+          email: "TESTING@google.com",
+          name: "test name",
+          sub: "test-sub=",
+          access_token: "some-token"
+        })
+      };
+    };
+    mockGetClient.userinfo = () => {
+      return {
+        name: "Testing Name",
+        picture: "http://www.astronomer.io/test.img"
+      };
+    };
+
+    jest.spyOn(oAuthExports, "getClient").mockImplementation(() => {
+      return mockGetClient;
+    });
+
+    const res = await request(app)
+      .post("/")
+      .set("Cookie", [`nonce=${nonce}`])
+      .send({
+        id_token: jwt.sign(idToken, "test"),
+        expires_in: expiresIn,
+        state
+      });
+
+    expect(res.statusCode).toBe(500);
+  });
+
   test("typical request to google successfully redirects", async () => {
     mockGetClient.issuer = {
       metadata: {
@@ -111,11 +286,13 @@ describe("POST /oauth", () => {
 
     const res = await request(app)
       .post("/")
+      .set("Cookie", [`nonce=${nonce}`])
       .send({
-        id_token: idToken,
+        id_token: jwt.sign(idToken, "test"),
         expires_in: expiresIn,
         state
       });
+
     expect(res.statusCode).toBe(302);
   });
 
@@ -147,8 +324,9 @@ describe("POST /oauth", () => {
 
     const res = await request(app)
       .post("/")
+      .set("Cookie", [`nonce=${nonce}`])
       .send({
-        id_token: idToken,
+        id_token: jwt.sign(idToken, "test"),
         expires_in: expiresIn,
         state
       });
@@ -188,8 +366,9 @@ describe("POST /oauth", () => {
 
     const res = await request(app)
       .post("/")
+      .set("Cookie", [`nonce=${nonce}`])
       .send({
-        id_token: idToken,
+        id_token: jwt.sign(idToken, "test"),
         expires_in: expiresIn,
         state
       });
@@ -226,8 +405,9 @@ describe("POST /oauth", () => {
 
     const res = await request(app)
       .post("/")
+      .set("Cookie", [`nonce=${nonce}`])
       .send({
-        id_token: idToken,
+        id_token: jwt.sign(idToken, "test"),
         expires_in: expiresIn,
         state
       });
@@ -268,8 +448,9 @@ describe("POST /oauth", () => {
     const state = `{"provider":"example","integration":"example","origin":"http://houston.local.astronomer.io:8871/v1/oauth/callback"}`;
     const res = await request(app)
       .post("/")
+      .set("Cookie", [`nonce=${nonce}`])
       .send({
-        id_token: idToken,
+        id_token: jwt.sign(idToken, "test"),
         expires_in: expiresIn,
         state
       });
