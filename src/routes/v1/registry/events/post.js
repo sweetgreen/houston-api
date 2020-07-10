@@ -24,7 +24,7 @@ import {
 export default async function(req, res) {
   const { events = [] } = req.body;
   // Create NATS client.
-  const nc = publisher("registry-event-update");
+  const nc = publisher("houston-deployment-image-update");
 
   await Promise.all(
     events.map(async ev => {
