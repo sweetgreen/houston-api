@@ -2,16 +2,6 @@ import { token, permissions, isAdmin } from "./index";
 import { USER_STATUS_ACTIVE } from "constants";
 
 describe("AuthUser", () => {
-  beforeAll(() => {
-    jest.useFakeTimers("modern");
-    jest.setSystemTime(1594220731300);
-  });
-
-  afterAll(() => {
-    jest.useRealTimers();
-    jest.resetAllMocks();
-  });
-
   test("token resolves a valid token", async () => {
     const userId = "12345";
     const cookie = jest.fn();
