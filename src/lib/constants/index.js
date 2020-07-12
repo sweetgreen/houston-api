@@ -63,3 +63,8 @@ export const DEPLOYMENT_IMAGE_UPDATE = "houston.deployment.image.update";
 export const DEPLOYMENT_IMAGE_UPDATE_ID =
   "houston-deployment-image-update-worker";
 export const DEPLOYMENT_IMAGE_UPDATE_DEPLOYED = `${DEPLOYMENT_IMAGE_UPDATE}.deployed`;
+
+export const DEPLOYMENT_VARS_UPDATED = "houston.deployment.variables.updated";
+export const DEPLOYMENT_VARS_UPDATED_ID =
+  "houston-deployment-variables-updated-worker";
+export const DEPLOYMENT_VARS_UPDATED_DEPLOYED = `${DEPLOYMENT_VARS_UPDATED}.deployed`;

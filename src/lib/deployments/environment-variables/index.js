@@ -4,7 +4,7 @@ import {
 } from "deployments/naming";
 import { objectToArrayOfKeyValue } from "deployments/config";
 
-import { get, orderBy, includes, map } from "lodash";
+import { get, orderBy, includes, map, find, merge } from "lodash";
 
 function removeSecretValues(commanderValues) {
   const variables = objectToArrayOfKeyValue(
@@ -52,4 +52,28 @@ export async function extractVariables(parent, args, ctx) {
   const sortedCleanVariables = sortVariables(cleanVariables);
 
   return sortedCleanVariables;
+}
+
+/**
+ * Merge env variables before store in k8s annotations
+ * @param {Object} currentVariables current environment variables.
+ * @param {Object} newVariables new environment variables.
+ * @return {Object} Merged environment variables.
+ */
+export async function mergeEnvVariables(currentVariables, newVariables) {
+  // Start with the list of incoming variables, since that defines the intended structure.
+  return newVariables.map(function(v) {
+    // If this variable is marked as a secret and does not have a value defined,
+    // grab the value from the values we already have stored in Kubernetes.
+    const { isSecret, value, key } = v;
+    if (isSecret && !value) {
+      const serverVar = find(currentVariables, { key });
+      // Return the new patched env var object.
+      // If the value is not found in the existing serverVars, default to an empty string.
+      const newValue = get(serverVar, "value", "");
+      const existingVars = { value: newValue };
+      return merge({}, v, existingVars);
+    }
+    return v;
+  });
 }
