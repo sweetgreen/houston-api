@@ -68,10 +68,8 @@ export default async function updateDeploymentVariables(_, args, ctx) {
     isSecret: v.isSecret
   }));
 
-  const sortedCleanVariables = sortVariables(cleanVariables);
-
   // Return final result
-  return sortedCleanVariables;
+  return sortVariables(cleanVariables);
 }
 
 /**

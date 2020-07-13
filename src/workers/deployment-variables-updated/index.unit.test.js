@@ -1,5 +1,6 @@
 import nc, { deploymentVariablesUpdated } from "./index";
 import { prisma } from "generated/client";
+import commander from "commander";
 import log from "logger";
 import { generateReleaseName } from "deployments/naming";
 import casual from "casual";
@@ -8,6 +9,12 @@ jest.mock("generated/client", () => {
   return {
     __esModule: true,
     prisma: jest.fn().mockName("MockPrisma")
+  };
+});
+
+jest.mock("commander", () => {
+  return {
+    commander: jest.fn().mockName("MockCommander")
   };
 });
 
@@ -79,9 +86,14 @@ describe("deployment variables updated worker", () => {
           return fragment;
         }
       });
+    commander.request = jest
+      .fn()
+      .mockName("request")
+      .mockReturnValue(true);
 
     await deploymentVariablesUpdated(message);
 
+    expect(commander.request).toHaveBeenCalledTimes(3);
     expect(message.ack).toHaveBeenCalledTimes(1);
   });
 

@@ -60,7 +60,7 @@ export async function extractVariables(parent, args, ctx) {
  * @param {Object} newVariables new environment variables.
  * @return {Object} Merged environment variables.
  */
-export async function mergeEnvVariables(currentVariables, newVariables) {
+export function mergeEnvVariables(currentVariables, newVariables) {
   // Start with the list of incoming variables, since that defines the intended structure.
   return newVariables.map(function(v) {
     // If this variable is marked as a secret and does not have a value defined,
