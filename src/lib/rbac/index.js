@@ -135,7 +135,19 @@ export async function getUserWithRoleBindings(prisma, id) {
 export async function getServiceAccountWithRoleBindings(prisma, apiKey) {
   // Get the Service Account by API Key.
   const serviceAccount = await prisma.serviceAccount.findOne({
-    where: { apiKey }
+    where: { apiKey },
+    include: {
+      roleBinding: {
+        select: {
+          id: true,
+          user: true,
+          role: true,
+          workspace: true,
+          deployment: true,
+          serviceAccount: true
+        }
+      }
+    }
   });
 
   // Return early if we didn't find a service account.
