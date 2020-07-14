@@ -2,6 +2,7 @@ import fragment from "./fragment";
 import { track } from "analytics";
 import { generateNamespace } from "deployments/naming";
 import { publisher } from "nats-streaming";
+import log from "logger";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 import { DEPLOYMENT_DELETED } from "constants";
@@ -24,10 +25,19 @@ export default async function deleteDeployment(parent, args, ctx, info) {
     addFragmentToInfo(info, fragment)
   );
   const { label, releaseName } = deployment;
+  log.info(
+    `Delete Deployment publishing to ${DEPLOYMENT_DELETED} with ID: ${id}`
+  );
   // Create NATS client.
-  const nc = publisher("delete-deployment");
-  nc.publish(DEPLOYMENT_DELETED, id);
-  nc.close();
+  const nc = publisher(`delete-deployment-${id}`);
+  await nc.on("connect", async () => {
+    nc.publish(DEPLOYMENT_DELETED, id);
+    nc.close();
+    log.info(
+      `Delete Deployment published to ${DEPLOYMENT_DELETED} with ID: ${id}`
+    );
+    return Promise.resolve();
+  });
 
   // Run the analytics track event
   track(ctx.user.id, "Deleted Deployment", {

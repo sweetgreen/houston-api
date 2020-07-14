@@ -8,6 +8,7 @@ import {
 } from "deployments/config";
 import { generateNamespace } from "deployments/naming";
 import { TrialError } from "errors";
+import log from "logger";
 import config from "config";
 import { addFragmentToInfo } from "graphql-binding";
 import { get, isEmpty, merge, pick } from "lodash";
@@ -27,6 +28,7 @@ export default async function updateDeployment(_, args, ctx, info) {
     { where: { id: deploymentUuid } },
     queryFragment
   );
+  const { id } = deployment;
 
   // Block config changes if the user is in a trial
   const stripeEnabled = config.get("stripe.enabled");
@@ -86,13 +88,19 @@ export default async function updateDeployment(_, args, ctx, info) {
     addFragmentToInfo(info, responseFragment)
   );
 
-  const nc = publisher("houston-deployment-update");
   // Send event that a new deployment was created.
   // An async worker will pick this job up and ensure
   // the changes are propagated.
   // Include any new env vars passed in the args
-  nc.publish(DEPLOYMENT_UPDATED, deployment.id);
-  nc.close();
+  const nc = publisher(`houston-deployment-update-${id}`);
+  await nc.on("connect", async () => {
+    nc.publish(DEPLOYMENT_UPDATED, id);
+    nc.close();
+    log.info(
+      `Update Deployment published to ${DEPLOYMENT_UPDATED} with ID: ${id}`
+    );
+    return Promise.resolve();
+  });
 
   // TODO: Remove once NATS is tested and works correctly
   // If we're syncing to kubernetes, fire updates to commander.

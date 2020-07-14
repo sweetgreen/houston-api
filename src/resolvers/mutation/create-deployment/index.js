@@ -9,6 +9,7 @@ import {
 import validate from "deployments/validate";
 import { track } from "analytics";
 import { WorkspaceSuspendedError, TrialError } from "errors";
+import log from "logger";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 import { get, isNull, find, size, merge, isEmpty } from "lodash";
@@ -149,10 +150,19 @@ export default async function createDeployment(parent, args, ctx, info) {
   //   `{ id }`
   // );
 
+  log.info(
+    `Create Deployment publishing to ${DEPLOYMENT_CREATED} with ID: ${id}`
+  );
   // Send event that a new deployment was created.
   const nc = publisher(`create-deployment-${id}`);
-  nc.publish(DEPLOYMENT_CREATED, id);
-  nc.close();
+  await nc.on("connect", async () => {
+    nc.publish(DEPLOYMENT_CREATED, id);
+    nc.close();
+    log.info(
+      `Create Deployment published to ${DEPLOYMENT_CREATED} with ID: ${id}`
+    );
+    return Promise.resolve();
+  });
 
   // Return the deployment.
   return deployment;

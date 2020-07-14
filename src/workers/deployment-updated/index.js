@@ -38,14 +38,14 @@ export async function deploymentUpdated(msg) {
         `{ id, config, releaseName, version, extraAu, workspace { id } }`
       );
 
-    // Notify that we've started the process.
-    nc.publish(DEPLOYMENT_UPDATED_STARTED, id);
-
     // Grab the releaseName and version of the deployment.
     const { releaseName, version } = deployment;
 
     // If we're syncing to kubernetes, fire updates to commander.
     if (config.sync) {
+      // TODO: Edge case - check to see if we need to await for nc.connect before publishing
+      // Notify that we've started the process.
+      nc.publish(DEPLOYMENT_UPDATED_STARTED, id);
       // Map the user input env vars to a format that the helm chart expects.
       const values = mapCustomEnvironmentVariables(deployment);
 
@@ -59,17 +59,14 @@ export async function deploymentUpdated(msg) {
         namespace: generateNamespace(releaseName),
         rawConfig: JSON.stringify(generateHelmValues(deployment, values))
       });
+      // TODO: Edge case - check to see if we need to await for nc.connect before publishing
       // Notify that we've deployed the update
       nc.publish(DEPLOYMENT_UPDATED_DEPLOYED, id);
-      log.info(`Deployment ${releaseName} successfully updated`);
     }
-
-    /// XXX: Remove me, uncomment to simulate an error
-    // throw new Error("Intentionally throwing for deployment updated!");
 
     // Ack the message
     msg.ack();
-    log.info(`houston.deployment.updated messaged acked`);
+    log.info(`Deployment ${releaseName} successfully updated`);
   } catch (err) {
     log.error(err);
   }

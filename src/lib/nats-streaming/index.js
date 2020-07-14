@@ -44,9 +44,19 @@ export function publisher(clientID) {
   const clusterID = natsConfig.clusterID;
   const opts = getNatsStreamingOptions();
 
-  log.info(`Connecting to NATS with options: ${JSON.stringify(opts)}`);
+  log.info(
+    `Connecting to NATS clusterID: ${clusterID} clientID: ${clientID} options: ${JSON.stringify(
+      opts
+    )}`
+  );
 
   const nc = nats.connect(clusterID, clientID, opts);
+
+  nc.on("connect", () => {
+    log.info(
+      `Connected to NATS clusterID: ${clusterID} clientID: ${clientID} url: ${nc.options.url}`
+    );
+  });
 
   nc.on("error", msg => {
     log.error(`NATS Error for client: ${clientID}.`);
@@ -54,11 +64,15 @@ export function publisher(clientID) {
   });
 
   nc.on("disconnect", () => {
-    log.error(`Disconnected: ${opts.url}`);
+    log.error(
+      `Disconnected from clusterID: ${clusterID} clientID: ${clientID} url: ${opts.url}`
+    );
   });
 
   nc.on("reconnecting", () => {
-    log.info(`Attempting to reconnect to ${opts.url}`);
+    log.info(
+      `Attempting to reconnect to clusterID: ${clusterID} clientID: ${clientID} url: ${opts.url}`
+    );
   });
 
   nc.on("connection_lost", error => {
@@ -67,9 +81,13 @@ export function publisher(clientID) {
 
   nc.on("close", err => {
     if (err) {
-      log.error(`Error closing connection: ${err}`);
+      log.error(
+        `Error closing connection for clusterID: ${clusterID} clientID: ${clientID} error: ${err}`
+      );
     } else {
-      log.info(`Closed connection for: ${opts.url} with client id ${clientID}`);
+      log.info(
+        `Closed connection for clusterID: ${clusterID} clientID: ${clientID} url: ${opts.url}`
+      );
     }
   });
 

@@ -95,9 +95,6 @@ export async function deploymentCreated(msg) {
       rawConfig: JSON.stringify(helmConfig)
     });
 
-    log.info(
-      `BEFORE UPDATE DEPLOYMENT! ${id} ${hashedRegistryPassword} ${hashedElasticsearchPassword}`
-    );
     // Update the status of the rollout, and some deployment details.
     await prisma.updateDeployment({
       where: { id },
@@ -106,17 +103,11 @@ export async function deploymentCreated(msg) {
         elasticsearchPassword: hashedElasticsearchPassword
       }
     });
-    log.info(`AFTER updateDeployment!`);
 
     // Notify that we've deployed the rollout
-    try {
-      nc.publish(DEPLOYMENT_CREATED_DEPLOYED, id);
-    } catch (err) {
-      log.error(`Could not publish. ${err}`);
-    }
+    nc.publish(DEPLOYMENT_CREATED_DEPLOYED, `${id}`);
     // Ack the message
     msg.ack();
-    log.info(`Correctly published! ${id}`);
     log.info(`Deployment ${releaseName} successfully created`);
   } catch (err) {
     log.error(err);

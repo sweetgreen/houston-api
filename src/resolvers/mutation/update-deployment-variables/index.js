@@ -31,8 +31,6 @@ export default async function updateDeploymentVariables(_, args, ctx) {
 
   validateEnvironment(environmentVariables);
 
-  // TODO: Remove everything besides tracking and returning the cleaned variables.
-
   const namespace = generateNamespace(releaseName);
   const name = generateEnvironmentSecretName(releaseName);
 

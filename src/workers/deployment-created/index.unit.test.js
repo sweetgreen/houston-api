@@ -1,7 +1,7 @@
 import nc, { deploymentCreated } from "./index";
 import { prisma } from "generated/client";
-import { generateReleaseName } from "deployments/naming";
 import log from "logger";
+import { generateReleaseName } from "deployments/naming";
 import casual from "casual";
 import { DEPLOYMENT_CREATED_ID } from "constants";
 
@@ -14,18 +14,15 @@ jest.mock("generated/client", () => {
 
 describe("deployment created worker", () => {
   const id = casual.uuid;
-  const stripeCustomerId = casual.uuid;
-  const isSuspended = false;
-  const workspace = { id, stripeCustomerId, isSuspended };
+  const workspace = { id };
+  const label = casual.word;
+  const airflowVersion = "1.10.10";
   const releaseName = generateReleaseName();
-  const version = "0.16.1";
-  const extraAu = 25;
   const fragment = {
+    workspace,
+    label,
     id,
-    releaseName,
-    extraAu,
-    version,
-    workspace
+    airflowVersion
   };
   const message = {
     getData: () => id,
@@ -43,7 +40,7 @@ describe("deployment created worker", () => {
     nc.close();
   });
 
-  test("correctly sets up pubsub", async () => {
+  test("correctly set up pubsub", async () => {
     const eventNames = nc.eventNames();
     const expectedEvents = [
       "close",
@@ -61,7 +58,7 @@ describe("deployment created worker", () => {
     expect(eventNames.sort()).toEqual(expectedEvents.sort());
   });
 
-  test.skip("correctly creates and deploys", async () => {
+  test("correctly created deployment", async () => {
     prisma.deployment = jest
       .fn()
       .mockName("deployment")
@@ -70,6 +67,7 @@ describe("deployment created worker", () => {
           return fragment;
         }
       });
+
     prisma.updateDeployment = jest
       .fn()
       .mockName("updateDeployment")
@@ -79,7 +77,8 @@ describe("deployment created worker", () => {
             workspace: { id: casual.uuid },
             label: casual.word,
             id: casual.uuid,
-            airflowVersion: "1.10.10"
+            airflowVersion: "1.10.10",
+            releaseName
           };
         }
       });
@@ -87,21 +86,5 @@ describe("deployment created worker", () => {
     await deploymentCreated(message);
 
     expect(message.ack).toHaveBeenCalledTimes(1);
-  });
-
-  test("correctly throw error when database is down for deployment", async () => {
-    prisma.deployment = jest
-      .fn()
-      .mockName("deployment")
-      .mockImplementation(() => {
-        return new Error("The database is down!");
-      });
-
-    jest.spyOn(log, "error").mockImplementation(() => "Test error message");
-
-    await deploymentCreated(message);
-
-    expect(message.ack).toHaveBeenCalledTimes(0);
-    expect(log.error).toHaveBeenCalledTimes(1);
   });
 });
