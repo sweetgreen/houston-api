@@ -8,7 +8,6 @@ import {
   generateEnvironmentSecretName,
   generateNamespace
 } from "deployments/naming";
-import { publisher } from "nats-streaming";
 import { track } from "analytics";
 import {
   arrayOfKeyValueToObject,
@@ -17,7 +16,7 @@ import {
   mapCustomEnvironmentVariables
 } from "deployments/config";
 import { get, filter, map } from "lodash";
-import { DEPLOYMENT_VARS_UPDATED, DEPLOYMENT_AIRFLOW } from "constants";
+import { DEPLOYMENT_AIRFLOW } from "constants";
 import crypto from "crypto";
 
 /*
@@ -112,11 +111,6 @@ export default async function updateDeploymentVariables(_, args, ctx) {
     deploymentId: deploymentUuid
   });
 
-  const msg = formatNcMsg(args);
-  const nc = publisher("update-deployment-variables");
-  nc.publish(DEPLOYMENT_VARS_UPDATED, msg);
-  nc.close();
-
   // Remove secret values from response
   const cleanVariables = map(updatedVariables, v => ({
     key: v.key,
@@ -126,19 +120,4 @@ export default async function updateDeploymentVariables(_, args, ctx) {
 
   // Return final result
   return sortVariables(cleanVariables);
-}
-
-/**
- * @param  {String} id
- * @param  {Object} environmentVariables
- * @return {String} Message to publish to NATS
- */
-function formatNcMsg(args) {
-  const { id, environmentVariables } = args;
-  const msg = {
-    id,
-    environmentVariables
-  };
-
-  return JSON.stringify(msg);
 }
