@@ -5,7 +5,7 @@ import { track } from "analytics";
 import { PublicSignupsDisabledError } from "errors";
 import { ui } from "utilities";
 import { prisma } from "generated/client";
-import { createAuthJWT, setJWTCookie } from "jwt";
+import { createAuthJWT, setJWTCookie, createJWS } from "jwt";
 import log from "logger";
 import { ApolloError } from "apollo-server";
 import config from "config";
@@ -40,7 +40,7 @@ export default async function(req, res) {
   try {
     tokenSet = await provider.callback(null, req.body, {
       state: rawState,
-      nonce: cookieList.nonce
+      nonce: createJWS(cookieList.nonce)
     });
   } catch (e) {
     log.error(e);

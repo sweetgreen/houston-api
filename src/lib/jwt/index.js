@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import config from "config";
 import ms from "ms";
 import { memoize, partial } from "lodash";
+import jws from "jws";
 import path from "path";
 import fs from "fs";
 
@@ -42,6 +43,19 @@ export function createJWT(payload, opts) {
 
   if (opts.returnPayload) return { token, payload };
   return token;
+}
+
+export function createJWS(payload) {
+  const { signWith, alg } = jwtSigningParam();
+  const header = {
+    alg
+  };
+
+  return jws.sign({
+    header,
+    payload,
+    secret: signWith
+  });
 }
 
 /*
@@ -87,7 +101,6 @@ const jwtSigningParam = memoize(() => {
     log.warn("Signing JWT tokens with shared key (only allowed in dev!)");
     return { signWith: config.get("jwt.passphrase"), alg: "HS256" };
   }
-
   return { signWith: getHoustonCertificate().key, alg: "RS256" };
 });
 
