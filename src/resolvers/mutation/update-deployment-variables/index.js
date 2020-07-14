@@ -1,3 +1,4 @@
+import { queryFragment } from "./fragments";
 import {
   sortVariables,
   mergeEnvVariables
@@ -9,9 +10,15 @@ import {
 } from "deployments/naming";
 import { publisher } from "nats-streaming";
 import { track } from "analytics";
-import { objectToArrayOfKeyValue } from "deployments/config";
-import { get, map } from "lodash";
-import { DEPLOYMENT_VARS_UPDATED } from "constants";
+import {
+  arrayOfKeyValueToObject,
+  objectToArrayOfKeyValue,
+  generateHelmValues,
+  mapCustomEnvironmentVariables
+} from "deployments/config";
+import { get, filter, map } from "lodash";
+import { DEPLOYMENT_VARS_UPDATED, DEPLOYMENT_AIRFLOW } from "constants";
+import crypto from "crypto";
 
 /*
  * Update a deployment's environment variables
@@ -24,11 +31,6 @@ export default async function updateDeploymentVariables(_, args, ctx) {
   const { deploymentUuid, releaseName, environmentVariables } = args;
 
   validateEnvironment(environmentVariables);
-
-  const msg = formatNcMsg(args);
-  const nc = publisher("update-deployment-variables");
-  nc.publish(DEPLOYMENT_VARS_UPDATED, msg);
-  nc.close();
 
   // TODO: Remove everything besides tracking and returning the cleaned variables.
 
@@ -56,10 +58,64 @@ export default async function updateDeploymentVariables(_, args, ctx) {
   // Merge current env variables and new variables
   const updatedVariables = mergeEnvVariables(currentVariables, newVariables);
 
+  // Create array of secret keys as k8s annotations
+  const annotations = map(
+    filter(updatedVariables, { isSecret: true }),
+    i => i.key
+  );
+
+  // Send variable values to commander
+  await ctx.commander.request("setSecret", {
+    release_name: releaseName,
+    namespace,
+    secret: {
+      name,
+      data: arrayOfKeyValueToObject(updatedVariables),
+      annotations: { "astronomer.io/hide-from-ui": JSON.stringify(annotations) }
+    }
+  });
+
+  // Get the deployment first.
+  const deployment = await ctx.db.query.deployment(
+    { where: { id: deploymentUuid } },
+    queryFragment
+  );
+
+  // Map the user input env vars to a format that the helm chart expects.
+  const values = mapCustomEnvironmentVariables(deployment, updatedVariables);
+
+  // Add an annotation to Airflow pods to inform pods to restart when
+  // secrets have been changed
+  const buf = Buffer.from(JSON.stringify(updatedVariables));
+
+  const hash = crypto
+    .createHash("sha512")
+    .update(buf)
+    .digest("hex");
+
+  // This annotation is a sha512 hash of the user-provided Airflow environment variables
+  values.airflowPodAnnotations = { "checksum/airflow-secrets": hash };
+
+  // Update the deployment, passing in our custom env vars.
+  await ctx.commander.request("updateDeployment", {
+    releaseName: deployment.releaseName,
+    chart: {
+      name: DEPLOYMENT_AIRFLOW,
+      version: deployment.version
+    },
+    namespace,
+    rawConfig: JSON.stringify(generateHelmValues(deployment, values))
+  });
+
   // Run the analytics track event
   track(ctx.user.id, "Updated Deployment Variables", {
     deploymentId: deploymentUuid
   });
+
+  const msg = formatNcMsg(args);
+  const nc = publisher("update-deployment-variables");
+  nc.publish(DEPLOYMENT_VARS_UPDATED, msg);
+  nc.close();
 
   // Remove secret values from response
   const cleanVariables = map(updatedVariables, v => ({

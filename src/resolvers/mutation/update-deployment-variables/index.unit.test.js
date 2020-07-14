@@ -71,7 +71,8 @@ describe("updateDeploymentVariables", () => {
     );
 
     expect(res.errors).toBeUndefined();
-    expect(commander.request.mock.calls.length).toBe(1);
+    expect(deployment.mock.calls.length).toBe(1);
+    expect(commander.request.mock.calls.length).toBe(3);
     expect(res.data.updateDeploymentVariables[0].key).toBe(
       vars.environmentVariables[0].key
     );
@@ -101,7 +102,8 @@ describe("updateDeploymentVariables", () => {
     );
 
     expect(res.errors).toBeUndefined();
-    expect(commander.request.mock.calls.length).toBe(1);
+    expect(deployment.mock.calls.length).toBe(1);
+    expect(commander.request.mock.calls.length).toBe(3);
     expect(res.data.updateDeploymentVariables[1].isSecret).toBe(true);
   });
 });

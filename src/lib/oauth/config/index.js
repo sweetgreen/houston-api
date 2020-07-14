@@ -168,7 +168,7 @@ function subclassClient(issuer, clientId, integration, providerName) {
 
       // Otherwise return the redirect url of the installation. If a user, brings
       // their own auth0 account, this will be used and will skip the shared url.
-      return `${houston()}/${version()}/oauth/redirect`;
+      return `${houston()}/${version()}/oauth/redirect/`;
     }
   }
 

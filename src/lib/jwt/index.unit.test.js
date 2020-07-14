@@ -1,4 +1,5 @@
-import { createAuthJWT, setJWTCookie } from "./index";
+import { createAuthJWT, setJWTCookie, createJWS } from "./index";
+import jws from "jws";
 import casual from "casual";
 
 describe("createAuthJWT", () => {
@@ -10,6 +11,18 @@ describe("createAuthJWT", () => {
     expect(token.payload.uuid).toBe(id);
     expect(token.payload.iat).toBeDefined();
     expect(token.payload.exp).toBeGreaterThan(Math.floor(new Date() / 1000));
+  });
+});
+
+describe("createJWS", () => {
+  test("successfully creates a jws token", () => {
+    const word = casual.word;
+    const token = createJWS(word);
+    const decoded = jws.decode(token);
+    expect(decoded).toHaveProperty("header");
+    expect(decoded).toHaveProperty("payload");
+    expect(decoded).toHaveProperty("signature");
+    expect(decoded.payload).toBe(word);
   });
 });
 
