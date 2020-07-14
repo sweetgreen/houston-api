@@ -273,4 +273,17 @@ describe("POST /oauth", () => {
       });
     expect(res.statusCode).toBe(400);
   });
+
+  test("unable to parse rawState", async () => {
+    const state = `%7C%22provider%22%3A%22example%22%2C%22integration%22%3A%22example%22%2C%22origin%22%3A%22http%3A%2F%2Fhouston.local.astronomer.io%3A8871%2Fv1%2Foauth%2Fcallback%22%7D`;
+    const res = await request(app)
+      .post("/")
+      .send({
+        id_token: idToken,
+        expires_in: expiresIn,
+        state
+      });
+
+    expect(res.statusCode).toBe(400);
+  });
 });

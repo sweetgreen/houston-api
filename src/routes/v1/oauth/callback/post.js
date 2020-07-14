@@ -26,8 +26,13 @@ export default async function(req, res) {
   // TODO: Handle `error` in the response
 
   // Parse the state object.
-  const state = JSON.parse(decodeURIComponent(rawState));
-
+  let state;
+  try {
+    state = JSON.parse(decodeURIComponent(rawState));
+  } catch (error) {
+    log.error("Unable to parse rawState: " + rawState);
+    return res.sendStatus(400);
+  }
   // Get the provider module.
   const provider = await getClient(state.provider);
 
