@@ -27,8 +27,13 @@ export default async function(req, res) {
   // TODO: Handle `error` in the response
 
   // Parse the state object.
-  const state = JSON.parse(decodeURIComponent(rawState));
-
+  let state;
+  try {
+    state = JSON.parse(decodeURIComponent(rawState));
+  } catch (error) {
+    log.error("Unable to parse rawState: " + rawState);
+    return res.sendStatus(400);
+  }
   // Get the provider module.
   const provider = await getClient(state.provider);
 
@@ -78,7 +83,7 @@ export default async function(req, res) {
   // Search for user in our system using email address.
   const user = first(
     await prisma
-      .users({ where: { emails_some: { address: email } } })
+      .users({ where: { emails_some: { address: userData.email } } })
       .$fragment(fragment)
   );
 
@@ -90,7 +95,7 @@ export default async function(req, res) {
       ? user.id
       : await _createUser({
           fullName,
-          email,
+          email: userData.email,
           inviteToken: state.inviteToken,
           active: true // OAuth users are active immediately
         });
@@ -139,7 +144,7 @@ export default async function(req, res) {
   setJWTCookie(res, token);
 
   // Add userId and email for in-app tracking
-  state.extras = { ...state.extras, userId, email };
+  state.extras = { ...state.extras, userId, email: userData.email };
 
   // Build redirect query string.
   const qs = new URLSearchParams([
