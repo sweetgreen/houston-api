@@ -1,4 +1,5 @@
 import { generateHelmValues } from "deployments/config";
+import { publisher } from "nats-streaming";
 import { prisma } from "generated/client";
 import { createDockerJWT } from "registry/jwt";
 import { generateNamespace } from "deployments/naming";
@@ -9,7 +10,11 @@ import { version } from "utilities";
 import { track } from "analytics";
 import { merge, get } from "lodash";
 import got from "got";
-import { DEPLOYMENT_AIRFLOW, MEDIATYPE_DOCKER_MANIFEST_V2 } from "constants";
+import {
+  MEDIATYPE_DOCKER_MANIFEST_V2,
+  DEPLOYMENT_AIRFLOW,
+  DEPLOYMENT_IMAGE_UPDATED
+} from "constants";
 
 /*
  * Handle webhooks from the docker registry.
@@ -18,6 +23,8 @@ import { DEPLOYMENT_AIRFLOW, MEDIATYPE_DOCKER_MANIFEST_V2 } from "constants";
  */
 export default async function(req, res) {
   const { events = [] } = req.body;
+  // Create NATS client.
+  const nc = publisher("houston-deployment-image-update");
 
   await Promise.all(
     events.map(async ev => {
@@ -105,6 +112,7 @@ export default async function(req, res) {
           `{ id config label releaseName extraAu airflowVersion version workspace { id } }`
         );
 
+      // TODO: Remove commander call after testing that NATS is functional
       // Fire the helm upgrade to commander.
       await commander.request("updateDeployment", {
         releaseName: updatedDeployment.releaseName,
@@ -116,16 +124,24 @@ export default async function(req, res) {
         rawConfig: JSON.stringify(generateHelmValues(updatedDeployment))
       });
 
+      const { deploymentId, label } = updatedDeployment;
+
+      // Send event to fire the helm upgrade.
+      // An async worker will pick this job up and ensure
+      // the changes are propagated.
+      nc.publish(DEPLOYMENT_IMAGE_UPDATED, deploymentId);
+
       // Run the analytics track event
       track(get(ev, "actor.name"), "Deployed Code", {
-        deploymentId: updatedDeployment.id,
-        label: updatedDeployment.label,
+        deploymentId,
+        label,
         releaseName,
         tag
       });
     })
   );
 
+  nc.close();
   res.sendStatus(200);
 }
 

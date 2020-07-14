@@ -1,25 +1,32 @@
-import { ncFactory } from "../nc-factory";
+import "dotenv/config";
 import { prisma } from "generated/client";
-import { createDatabaseForDeployment } from "deployments/database";
 import commander from "commander";
-import log from "logger";
 import {
   generateNamespace,
   generateDeploymentLabels
 } from "deployments/naming";
+import { createDatabaseForDeployment } from "deployments/database";
 import { generateHelmValues } from "deployments/config";
+import log from "logger";
+import { pubSub } from "nats-streaming";
 import bcrypt from "bcryptjs";
 import { generate as generatePassword } from "generate-password";
-import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_CREATED } from "constants";
+import {
+  DEPLOYMENT_CREATED,
+  DEPLOYMENT_AIRFLOW,
+  DEPLOYMENT_CREATED_ID,
+  DEPLOYMENT_CREATED_DEPLOYED,
+  DEPLOYMENT_CREATED_STARTED
+} from "constants";
 
-const clusterID = "test-cluster";
-const clientID = "deployment-created";
-const subject = DEPLOYMENT_CREATED;
-// Create NATS client.
-const nc = ncFactory(clusterID, clientID, subject, deploymentCreated);
+/**
+ * NATS Deployment Update Worker
+ */
+const nc = pubSub(DEPLOYMENT_CREATED_ID, DEPLOYMENT_CREATED, deploymentCreated);
+log.info(`NATS ${DEPLOYMENT_CREATED_ID} Running...`);
 
 /*
- * Handle a deployment rollout creation.
+ * Handle deployment rollout creation.
  */
 export async function deploymentCreated(msg) {
   try {
@@ -29,10 +36,10 @@ export async function deploymentCreated(msg) {
     // Update the status in the database and grab some information.
     const deployment = await prisma
       .deployment({ id })
-      .$fragment(`{ id, releaseName, version, extraAu, workspace { id } }`);
+      .$fragment(`{ id, releaseName, extraAu, version, workspace { id } }`);
 
     // Notify that we've started the process.
-    nc.publish("houston.deployment.rollout.started", id);
+    nc.publish(DEPLOYMENT_CREATED_STARTED, id);
 
     // Grab the releaseName and version of the deployment.
     const { releaseName, version } = deployment;
@@ -88,6 +95,9 @@ export async function deploymentCreated(msg) {
       rawConfig: JSON.stringify(helmConfig)
     });
 
+    log.info(
+      `BEFORE UPDATE DEPLOYMENT! ${id} ${hashedRegistryPassword} ${hashedElasticsearchPassword}`
+    );
     // Update the status of the rollout, and some deployment details.
     await prisma.updateDeployment({
       where: { id },
@@ -96,17 +106,21 @@ export async function deploymentCreated(msg) {
         elasticsearchPassword: hashedElasticsearchPassword
       }
     });
+    log.info(`AFTER updateDeployment!`);
 
     // Notify that we've deployed the rollout
-    nc.publish("houston.deployment.rollout.deployed", id);
-
-    /// XXX: Remove me, uncomment to simulate an error
-    // throw new Error("whoa");
-
+    try {
+      nc.publish(DEPLOYMENT_CREATED_DEPLOYED, id);
+    } catch (err) {
+      log.error(`Could not publish. ${err}`);
+    }
     // Ack the message
     msg.ack();
+    log.info(`Correctly published! ${id}`);
     log.info(`Deployment ${releaseName} successfully created`);
   } catch (err) {
     log.error(err);
   }
 }
+
+export default nc;

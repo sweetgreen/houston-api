@@ -16,6 +16,23 @@ prisma:
   secret: ~
   debug: false
 
+# NATS configuration.
+nats:
+  host: nats://localhost
+  port: 4222
+  clusterID: development-cluster
+  ackTimeout: 30000
+  connectTimeout: 3000
+  maxPubAcksInflight: 16384
+  maxReconnectAttempts: 25
+  stanMaxPingOut: 20
+  stanPingInterval: 5000
+  reconnect: true
+  reconnectTimeWait: 5000
+  reconnectJitter: 150
+  reconnectJitterTLS: 1000
+  waitOnFirstConnect: true
+
 # Logging configuration.
 logging:
   level: "debug"
@@ -151,7 +168,6 @@ auth:
       authUrlParams:
         audience: "astronomer-ee"
 
-
     # Google oauth configuration.
     google:
       displayName: Google
@@ -162,6 +178,25 @@ auth:
 
     okta:
       enabled: false
+      clientId: ~
+      discoveryUrl: ~
+
+    microsoft:
+      displayName: "Azure AD"
+      enabled: false
+      claimsMapping:
+        email: preferred_username
+      clientId: ~
+      discoveryUrl: ~
+
+    adfs:
+      displayName: "ADFS"
+      enabled: false
+      # Disable userInfo request for providers such as ADFS
+      fetchUserInfo: false
+      claimsMapping:
+        email: upn
+        name: upn
       clientId: ~
       discoveryUrl: ~
 

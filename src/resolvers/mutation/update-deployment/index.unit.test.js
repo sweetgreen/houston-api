@@ -377,4 +377,170 @@ describe("updateDeployment", () => {
     );
     expect(res.data.updateDeployment.id).toBe(id);
   });
+
+  test("typical request is successful with args.sync = true", async () => {
+    // Create some deployment vars.
+    const id = casual.uuid;
+    const releaseName = generateReleaseName();
+    const label = casual.word;
+    const workspaceId = casual.uuid;
+
+    const deployment = jest.fn().mockReturnValue({
+      id,
+      releaseName,
+      workspace: {
+        id: workspaceId,
+        stripeCustomerId: casual.uuid,
+        isSuspended: false
+      },
+      properties: [
+        {
+          id: casual.uuid,
+          key: DEPLOYMENT_PROPERTY_EXTRA_AU,
+          value: casual.integer(0, 500)
+        },
+        {
+          id: casual.uuid,
+          key: DEPLOYMENT_PROPERTY_COMPONENT_VERSION,
+          value: "10.0.1"
+        }
+      ]
+    });
+    // Mock up some db functions.
+    const updateDeployment = jest.fn().mockReturnValue({
+      id,
+      releaseName,
+      workspace: {
+        id: workspaceId
+      },
+      config: { executor: AIRFLOW_EXECUTOR_DEFAULT },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    const db = {
+      query: { deployment },
+      mutation: { updateDeployment }
+    };
+
+    // Create mock commander client.
+    const commander = {
+      request: jest.fn()
+    };
+    const user = { id: casual.uuid };
+
+    // Set up our spy.
+    jest.spyOn(validate, "default").mockReturnValue();
+
+    // Vars for the gql mutation.
+    const vars = {
+      deploymentUuid: id,
+      label,
+      sync: true
+    };
+
+    // Run the graphql mutation.
+    const res = await graphql(
+      schema,
+      mutation,
+      null,
+      { db, commander, user },
+      vars
+    );
+
+    expect(res.errors).toBeUndefined();
+    expect(deployment.mock.calls.length).toBe(1);
+    expect(updateDeployment.mock.calls.length).toBe(1);
+    expect(res.data.updateDeployment.id).toBe(id);
+    expect(commander.request.mock.calls.length).toBe(1);
+    expect(commander.request).toHaveBeenCalledWith(
+      "updateDeployment",
+      expect.objectContaining({
+        rawConfig: expect.any(String)
+      })
+    );
+  });
+
+  test("we are not passsing env variables anymore to updateDeployment with args.sync = true", async () => {
+    // Create some deployment vars.
+    const id = casual.uuid;
+    const releaseName = generateReleaseName();
+    const label = casual.word;
+    const workspaceId = casual.uuid;
+
+    const deployment = jest.fn().mockReturnValue({
+      id,
+      releaseName,
+      workspace: {
+        id: workspaceId,
+        stripeCustomerId: casual.uuid,
+        isSuspended: false
+      },
+      properties: [
+        {
+          id: casual.uuid,
+          key: DEPLOYMENT_PROPERTY_EXTRA_AU,
+          value: casual.integer(0, 500)
+        },
+        {
+          id: casual.uuid,
+          key: DEPLOYMENT_PROPERTY_COMPONENT_VERSION,
+          value: "10.0.1"
+        }
+      ]
+    });
+    // Mock up some db functions.
+    const updateDeployment = jest.fn().mockReturnValue({
+      id,
+      releaseName,
+      workspace: {
+        id: workspaceId
+      },
+      config: { executor: AIRFLOW_EXECUTOR_DEFAULT },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    const db = {
+      query: { deployment },
+      mutation: { updateDeployment }
+    };
+
+    // Create mock commander client.
+    const commander = {
+      request: jest.fn()
+    };
+    const user = { id: casual.uuid };
+
+    // Set up our spy.
+    jest.spyOn(validate, "default").mockReturnValue();
+
+    // Vars for the gql mutation.
+    const vars = {
+      deploymentUuid: id,
+      label,
+      sync: true
+    };
+
+    // Run the graphql mutation.
+    const res = await graphql(
+      schema,
+      mutation,
+      null,
+      { db, commander, user },
+      vars
+    );
+
+    expect(res.errors).toBeUndefined();
+    expect(deployment.mock.calls.length).toBe(1);
+    expect(updateDeployment.mock.calls.length).toBe(1);
+    expect(res.data.updateDeployment.id).toBe(id);
+    expect(commander.request.mock.calls.length).toBe(1);
+    expect(commander.request).toHaveBeenCalledWith(
+      "updateDeployment",
+      expect.objectContaining({
+        rawConfig: expect.not.stringContaining('{"secret":')
+      })
+    );
+  });
 });

@@ -6,6 +6,8 @@
     "build": "prisma generate && babel src -d dist --copy-files",
     "start": "prisma generate && yarn migrate && nodemon --exec babel-node -e js,graphql src/index.js",
     "serve": "yarn migrate && node dist/index.js",
+    "worker": "node dist/workers/index.js",
+    "worker:dev": "babel-node src/workers/index.js",
     "test": "prisma generate && jest",
     "coverage": "prisma generate && jest --coverage",
     "lint": "prisma generate && eslint src --ignore-pattern src/lib/generated --ext .js --ext .graphql",
@@ -21,7 +23,7 @@
     "check-platfrom-updates": "prisma generate && babel-node src/scripts/check-platform-updates/index.js"
   },
   "author": "Astronomer",
-  "license": "Astronomer Enterprise License",
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
     "analytics-node": "^3.4.0-beta.1",
@@ -62,7 +64,7 @@
     "nats": "^1.4.9",
     "node-forge": "^0.9.1",
     "node-nats-streaming": "^0.3.2",
-    "openid-client": "^2.5.0",
+    "openid-client": "^3.15.3",
     "pg": "^7.18.2",
     "pg-connection-string": "^2.0.0",
     "prettier": "^1.19.1",

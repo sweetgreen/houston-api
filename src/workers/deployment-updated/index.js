@@ -1,4 +1,4 @@
-import { ncFactory } from "../nc-factory";
+import { pubSub } from "nats-streaming";
 import { prisma } from "generated/client";
 import commander from "commander";
 import log from "logger";
@@ -8,16 +8,23 @@ import {
 } from "deployments/config";
 import { generateNamespace } from "deployments/naming";
 import config from "config";
-import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_UPDATED } from "constants";
+import {
+  DEPLOYMENT_UPDATED,
+  DEPLOYMENT_AIRFLOW,
+  DEPLOYMENT_UPDATED_ID,
+  DEPLOYMENT_UPDATED_STARTED,
+  DEPLOYMENT_UPDATED_DEPLOYED
+} from "constants";
 
-const clusterID = "test-cluster";
-const clientID = "deployment-updated";
-const subject = DEPLOYMENT_UPDATED;
-// Create NATS client.
-const nc = ncFactory(clusterID, clientID, subject, deploymentUpdated);
+/**
+ * NATS Deployment Update Worker
+ */
+const nc = pubSub(DEPLOYMENT_UPDATED_ID, DEPLOYMENT_UPDATED, deploymentUpdated);
+log.info(`NATS ${DEPLOYMENT_UPDATED_ID} Running...`);
 
-/*
+/**
  * Handle a deployment update.
+ * @param {Object} msg contains the NATS Streaming message
  */
 export async function deploymentUpdated(msg) {
   try {
@@ -32,7 +39,7 @@ export async function deploymentUpdated(msg) {
       );
 
     // Notify that we've started the process.
-    nc.publish("houston.deployment.update.started", id);
+    nc.publish(DEPLOYMENT_UPDATED_STARTED, id);
 
     // Grab the releaseName and version of the deployment.
     const { releaseName, version } = deployment;
@@ -53,7 +60,7 @@ export async function deploymentUpdated(msg) {
         rawConfig: JSON.stringify(generateHelmValues(deployment, values))
       });
       // Notify that we've deployed the update
-      nc.publish("houston.deployment.update.deployed", id);
+      nc.publish(DEPLOYMENT_UPDATED_DEPLOYED, id);
       log.info(`Deployment ${releaseName} successfully updated`);
     }
 
@@ -67,3 +74,5 @@ export async function deploymentUpdated(msg) {
     log.error(err);
   }
 }
+
+export default nc;

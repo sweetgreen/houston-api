@@ -1,16 +1,21 @@
-import { ncFactory } from "../nc-factory";
+import { pubSub } from "nats-streaming";
 import { prisma } from "generated/client";
 import commander from "commander";
 import log from "logger";
 import { generateNamespace } from "deployments/naming";
 import config from "config";
-import { DEPLOYMENT_DELETED } from "constants";
+import {
+  DEPLOYMENT_DELETED_ID,
+  DEPLOYMENT_DELETED,
+  DEPLOYMENT_DELETED_DEPLOYED,
+  DEPLOYMENT_DELETED_STARTED
+} from "constants";
 
-const clusterID = "test-cluster";
-const clientID = "deployment-deleted";
-const subject = DEPLOYMENT_DELETED;
-// Create NATS client.
-const nc = ncFactory(clusterID, clientID, subject, deploymentDeleted);
+/**
+ * NATS Deployment Delete Worker
+ */
+const nc = pubSub(DEPLOYMENT_DELETED_ID, DEPLOYMENT_DELETED, deploymentDeleted);
+log.info(`NATS ${DEPLOYMENT_DELETED_ID} Running...`);
 
 /*
  * Handle a deployment deletion.
@@ -18,28 +23,13 @@ const nc = ncFactory(clusterID, clientID, subject, deploymentDeleted);
 export async function deploymentDeleted(msg) {
   try {
     const id = msg.getData();
-    nc.publish("houston.deployment.delete.started", id);
+    nc.publish(DEPLOYMENT_DELETED_STARTED, id);
 
-    const deployment = await prisma
-      .deployment({ id })
-      .$fragment(
-        `{ id, config, releaseName, version, extraAu, workspace { id } }`
-      );
+    const deployment = await getDeploymentByID(id);
     const { releaseName } = deployment;
-    const namespace = generateNamespace(releaseName);
-    const deleteNamespace = !config.get("helm.singleNamespace");
+    await commanderDeleteDeployment(deployment);
 
-    // Delete deployment from helm.
-    await commander.request("deleteDeployment", {
-      releaseName,
-      namespace,
-      deleteNamespace
-    });
-
-    nc.publish("houston.deployment.delete.deployed", id);
-
-    // /// XXX: Remove me, uncomment to simulate an error
-    // // throw new Error("Intentionally throwing for deployment deleted!");
+    nc.publish(DEPLOYMENT_DELETED_DEPLOYED, id);
 
     // Ack the message
     msg.ack();
@@ -48,3 +38,30 @@ export async function deploymentDeleted(msg) {
     log.error(err);
   }
 }
+
+/**
+ * @param  {String} id deployment id
+ * @return {Object} deployment
+ */
+async function getDeploymentByID(id) {
+  return await prisma.deployment({ id }).$fragment(`{ releaseName }`);
+}
+
+/**
+ * Commander Delete Deployment request
+ * @param  {Object} deployment
+ */
+async function commanderDeleteDeployment(deployment) {
+  const { releaseName } = deployment;
+  const namespace = generateNamespace(releaseName);
+  const deleteNamespace = !config.get("helm.singleNamespace");
+
+  // Delete deployment from helm.
+  await commander.request("deleteDeployment", {
+    releaseName,
+    namespace,
+    deleteNamespace
+  });
+}
+
+export default nc;

@@ -1,4 +1,3 @@
-import { mergeEnvVariables } from "./index";
 import resolvers from "resolvers";
 import { generateReleaseName } from "deployments/naming";
 import casual from "casual";
@@ -17,7 +16,7 @@ const mutation = `
   mutation updateDeploymentVariables(
     $deploymentUuid: Uuid!,
     $releaseName: String!,
-    $environmentVariables: [UpdatedEnvironmentVariable!]!
+    $environmentVariables: [InputEnvironmentVariable!]!
   ) {
   updateDeploymentVariables(
     deploymentUuid: $deploymentUuid,
@@ -72,8 +71,7 @@ describe("updateDeploymentVariables", () => {
     );
 
     expect(res.errors).toBeUndefined();
-    expect(deployment.mock.calls.length).toBe(1);
-    expect(commander.request.mock.calls.length).toBe(3);
+    expect(commander.request.mock.calls.length).toBe(1);
     expect(res.data.updateDeploymentVariables[0].key).toBe(
       vars.environmentVariables[0].key
     );
@@ -103,140 +101,7 @@ describe("updateDeploymentVariables", () => {
     );
 
     expect(res.errors).toBeUndefined();
-    expect(deployment.mock.calls.length).toBe(1);
-    expect(commander.request.mock.calls.length).toBe(3);
+    expect(commander.request.mock.calls.length).toBe(1);
     expect(res.data.updateDeploymentVariables[1].isSecret).toBe(true);
-  });
-});
-
-describe("mergeEnvVariables", () => {
-  test("successfully merges old env variable KEY_1 (non secret) with new KEY_2 (non secret)", async () => {
-    const currentVars = [
-      {
-        key: "KEY_1",
-        value: "VAL_1",
-        isSecret: false
-      }
-    ];
-    const newVars = [
-      {
-        key: "KEY_2",
-        value: "VAL_2",
-        isSecret: false
-      }
-    ];
-
-    const mergedVars = [
-      {
-        key: "KEY_2",
-        value: "VAL_2",
-        isSecret: false
-      }
-    ];
-    expect(await mergeEnvVariables(currentVars, newVars)).toEqual(mergedVars);
-  });
-
-  test("successfully merges old env variable KEY_1 (non secret) with new KEY_2 (secret)", async () => {
-    const currentVars = [
-      {
-        key: "KEY_1",
-        value: "VAL_1",
-        isSecret: false
-      }
-    ];
-    const newVars = [
-      {
-        key: "KEY_2",
-        value: "VAL_2",
-        isSecret: true
-      }
-    ];
-
-    const mergedVars = [
-      {
-        key: "KEY_2",
-        value: "VAL_2",
-        isSecret: true
-      }
-    ];
-    expect(await mergeEnvVariables(currentVars, newVars)).toEqual(mergedVars);
-  });
-
-  test("successfully merges old env variable KEY_1 (secret) with new KEY_2 (non secret)", async () => {
-    const currentVars = [
-      {
-        key: "KEY_1",
-        value: "VAL_1",
-        isSecret: true
-      }
-    ];
-    const newVars = [
-      {
-        key: "KEY_2",
-        value: "VAL_2",
-        isSecret: false
-      }
-    ];
-
-    const mergedVars = [
-      {
-        key: "KEY_2",
-        value: "VAL_2",
-        isSecret: false
-      }
-    ];
-    expect(await mergeEnvVariables(currentVars, newVars)).toEqual(mergedVars);
-  });
-
-  test("successfully merges old env variable KEY_1 (secret) with new KEY_2 (non secret) with same value", async () => {
-    const currentVars = [
-      {
-        key: "KEY_1",
-        value: "",
-        isSecret: true
-      }
-    ];
-    const newVars = [
-      {
-        key: "KEY_2",
-        value: "VAL",
-        isSecret: false
-      }
-    ];
-
-    const mergedVars = [
-      {
-        key: "KEY_2",
-        value: "VAL",
-        isSecret: false
-      }
-    ];
-    expect(await mergeEnvVariables(currentVars, newVars)).toEqual(mergedVars);
-  });
-
-  test("successfully merges old env variable KEY_1 (secret) with new KEY_2 (secret) without new value", async () => {
-    const currentVars = [
-      {
-        key: "KEY_1",
-        value: "VAL",
-        isSecret: true
-      }
-    ];
-    const newVars = [
-      {
-        key: "KEY_1",
-        value: "",
-        isSecret: true
-      }
-    ];
-
-    const mergedVars = [
-      {
-        key: "KEY_1",
-        value: "VAL",
-        isSecret: true
-      }
-    ];
-    expect(await mergeEnvVariables(currentVars, newVars)).toEqual(mergedVars);
   });
 });

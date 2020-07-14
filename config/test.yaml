@@ -90,3 +90,6 @@ deployments:
 # Stripe configuration.
 stripe:
   enabled: true
+
+# Test URL to send users to for signup when publicSignups is disabled
+externalSignupUrl: "https://astronomer.io"

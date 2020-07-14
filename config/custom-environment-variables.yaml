@@ -10,6 +10,10 @@ prisma:
     __name: "PRISMA__DEBUG"
     __format: "json"
 
+nats:
+  port: "NATS__PORT"
+  host: "NATS__HOST"
+
 database:
   migrations:
     tableName: "DATABASE__MIGRATIONS__TABLE_NAME"

@@ -203,7 +203,6 @@ describe("POST /registry-events", () => {
       });
 
     expect(prisma.deployment).toHaveBeenCalledTimes(1);
-    expect(prisma.updateDeployment).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
 
@@ -243,6 +242,7 @@ describe("POST /registry-events", () => {
     expect(prisma.updateDeployment).toHaveBeenCalledTimes(0);
     expect(res.statusCode).toBe(200);
   });
+
   test("skip if irrelevent event is sent", async () => {
     const res = await request(app)
       .post("/")

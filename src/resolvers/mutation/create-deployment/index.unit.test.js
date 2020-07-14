@@ -152,9 +152,8 @@ describe("createDeployment", () => {
 
       expect(res.errors).toBeUndefined();
       expect(createDeployment.mock.calls.length).toBe(1);
-      expect(commander.request.mock.calls[0][0]).toBe("createDeployment");
-      expect(commander.request.mock.calls[0][1].namespace).toEqual(
-        expect.stringMatching("^" + currentNamespace + "-")
+      expect(res.data.createDeployment.config.executor).toBe(
+        AIRFLOW_EXECUTOR_DEFAULT
       );
       expect(res.data.createDeployment.id).toBe(deploymentId);
     });
@@ -197,12 +196,10 @@ describe("createDeployment", () => {
         }),
         expect.any(Object)
       );
-
-      expect(commander.request.mock.calls[0][0]).toBe("createDeployment");
-      expect(commander.request.mock.calls[0][1].namespace).toEqual(
-        expect.stringMatching("^" + currentNamespace + "-")
-      );
       expect(res.data.createDeployment.id).toBe(deploymentId);
+      expect(res.data.createDeployment.config.executor).toBe(
+        AIRFLOW_EXECUTOR_DEFAULT
+      );
     });
 
     test("is successful with cloudRole and without serviceAccountAnnotationKey annotation", async () => {
@@ -237,11 +234,6 @@ describe("createDeployment", () => {
           })
         }),
         expect.any(Object)
-      );
-
-      expect(commander.request.mock.calls[0][0]).toBe("createDeployment");
-      expect(commander.request.mock.calls[0][1].namespace).toEqual(
-        expect.stringMatching("^" + currentNamespace + "-")
       );
       expect(res.data.createDeployment.id).toBe(deploymentId);
     });
@@ -279,11 +271,6 @@ describe("createDeployment", () => {
         }),
         expect.any(Object)
       );
-
-      expect(commander.request.mock.calls[0][0]).toBe("createDeployment");
-      expect(commander.request.mock.calls[0][1].namespace).toEqual(
-        expect.stringMatching("^" + currentNamespace + "-")
-      );
       expect(res.data.createDeployment.id).toBe(deploymentId);
     });
     describe("in singleNamespace node", () => {
@@ -309,10 +296,6 @@ describe("createDeployment", () => {
 
         expect(res.errors).toBeUndefined();
         expect(createDeployment.mock.calls.length).toBe(1);
-        expect(commander.request.mock.calls[0][0]).toBe("createDeployment");
-        expect(commander.request.mock.calls[0][1].namespace).toBe(
-          currentNamespace
-        );
         expect(res.data.createDeployment.id).toBe(deploymentId);
       });
     });

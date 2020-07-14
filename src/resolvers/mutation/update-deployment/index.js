@@ -1,16 +1,17 @@
 import { queryFragment, responseFragment } from "./fragments";
+import { publisher } from "nats-streaming";
 import { track } from "analytics";
 import validate from "deployments/validate";
-import { mapPropertiesToDeployment } from "deployments/config";
+import {
+  generateHelmValues,
+  mapPropertiesToDeployment
+} from "deployments/config";
+import { generateNamespace } from "deployments/naming";
 import { TrialError } from "errors";
 import config from "config";
 import { addFragmentToInfo } from "graphql-binding";
 import { get, isEmpty, merge, pick } from "lodash";
-import nats from "node-nats-streaming";
-import { DEPLOYMENT_UPDATED } from "constants";
-
-// Create NATS client.
-const nc = nats.connect("test-cluster", "update-deployment");
+import { DEPLOYMENT_AIRFLOW, DEPLOYMENT_UPDATED } from "constants";
 
 /*
  * Update a deployment.
@@ -85,18 +86,35 @@ export default async function updateDeployment(_, args, ctx, info) {
     addFragmentToInfo(info, responseFragment)
   );
 
+  const nc = publisher("houston-deployment-update");
+  // Send event that a new deployment was created.
+  // An async worker will pick this job up and ensure
+  // the changes are propagated.
+  // Include any new env vars passed in the args
+  nc.publish(DEPLOYMENT_UPDATED, deployment.id);
+  nc.close();
+
+  // TODO: Remove once NATS is tested and works correctly
+  // If we're syncing to kubernetes, fire updates to commander.
+  if (args.sync) {
+    // Update the deployment
+    await ctx.commander.request("updateDeployment", {
+      releaseName: updatedDeployment.releaseName,
+      chart: {
+        name: DEPLOYMENT_AIRFLOW,
+        version: updatedDeployment.version
+      },
+      namespace: generateNamespace(updatedDeployment.releaseName),
+      rawConfig: JSON.stringify(generateHelmValues(updatedDeployment))
+    });
+  }
+
   // Run the analytics track event
   track(ctx.user.id, "Updated Deployment", {
     deploymentId: deploymentUuid,
     config: argsConfig,
     payload
   });
-
-  // Send event that a new deployment was created.
-  // An async worker will pick this job up and ensure
-  // the changes are propagated.
-  // Include any new env vars passed in the args
-  nc.publish(DEPLOYMENT_UPDATED, deployment.id);
 
   // Return the updated deployment object.
   return updatedDeployment;

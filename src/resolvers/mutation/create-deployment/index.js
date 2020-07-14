@@ -1,4 +1,5 @@
 import { deploymentFragment, workspaceFragment } from "./fragment";
+import { publisher } from "nats-streaming";
 import { validateReleaseName, generateReleaseName } from "deployments/naming";
 import {
   defaultAirflowImage,
@@ -11,15 +12,11 @@ import { WorkspaceSuspendedError, TrialError } from "errors";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 import { get, isNull, find, size, merge, isEmpty } from "lodash";
-import nats from "node-nats-streaming";
 import {
+  DEPLOYMENT_PROPERTY_EXTRA_AU,
   AIRFLOW_EXECUTOR_DEFAULT,
-  DEPLOYMENT_CREATED,
-  DEPLOYMENT_PROPERTY_EXTRA_AU
+  DEPLOYMENT_CREATED
 } from "constants";
-
-// Create NATS client.
-const nc = nats.connect("test-cluster", "create-deployment");
 
 /*
  * Create a deployment.
@@ -126,14 +123,15 @@ export default async function createDeployment(parent, args, ctx, info) {
     mutation,
     addFragmentToInfo(info, deploymentFragment)
   );
+  const { id, label, description, createdAt } = deployment;
 
   // Run the analytics track event
   track(ctx.user.id, "Created Deployment", {
-    deploymentId: deployment.id,
-    label: args.label,
-    description: args.description,
+    deploymentId: id,
+    label,
+    description,
     releaseName,
-    createdAt: deployment.createdAt,
+    createdAt,
     config: args.config
   });
 
@@ -152,9 +150,9 @@ export default async function createDeployment(parent, args, ctx, info) {
   // );
 
   // Send event that a new deployment was created.
-  // An async worker will pick this job up and ensure
-  // the changes are propagated.
-  nc.publish(DEPLOYMENT_CREATED, deployment.id);
+  const nc = publisher(`create-deployment-${id}`);
+  nc.publish(DEPLOYMENT_CREATED, id);
+  nc.close();
 
   // Return the deployment.
   return deployment;
