@@ -1,6 +1,22 @@
-import { urls, environmentVariables, properties, deployInfo } from "./index";
+import {
+  urls,
+  environmentVariables,
+  properties,
+  deployInfo,
+  serviceAccounts
+} from "./index";
+import "graphql-binding";
 import { generateReleaseName } from "deployments/naming";
+import casual from "casual";
 import { AIRFLOW_EXECUTOR_DEFAULT } from "constants";
+
+// Mock addFragmentToInfo method for serviceAccounts test
+jest.mock("graphql-binding", () => {
+  return {
+    __esModule: true,
+    addFragmentToInfo: jest.fn().mockName("MockAddFragmentToInfo")
+  };
+});
 
 describe("Deployoment", () => {
   test("urls returns correct urls", () => {
@@ -20,7 +36,7 @@ describe("Deployoment", () => {
     expect(theUrls[1].url).toEqual(expect.stringContaining(releaseName));
   });
 
-  test("environmentVariables correctly returns environmentVariabless", async () => {
+  test("environmentVariables correctly returns environmentVariables", async () => {
     const releaseName = generateReleaseName();
     const parent = { releaseName };
 
@@ -89,5 +105,26 @@ describe("Deployoment", () => {
     expect(nextCli).toEqual("deploy-1");
     expect(db.query.dockerImages.mock.calls).toHaveLength(2);
     expect(db.query.deployment.mock.calls).toHaveLength(0);
+  });
+
+  test("serviceAccounts returns array of serviceAccounts", async () => {
+    const parent = { id: casual.uuid };
+    const saId = casual.uuid;
+    const db = {
+      query: {
+        serviceAccounts: jest.fn().mockReturnValue([{ id: saId }])
+      }
+    };
+
+    const sAs = await serviceAccounts(
+      parent,
+      { deploymentUuid: parent.id },
+      { db },
+      {}
+    );
+
+    expect(db.query.serviceAccounts.mock.calls).toHaveLength(1);
+    expect(sAs).toHaveLength(1);
+    expect(sAs[0]).toHaveProperty("id", saId);
   });
 });

@@ -1,5 +1,4 @@
-import fragment from "./fragment";
-import { addFragmentToInfo } from "graphql-binding";
+import getWorkspaceServiceAccounts from "workspace-service-accounts";
 
 /*
  * Get a list of workspace service accounts
@@ -14,24 +13,5 @@ export default async function workspaceServiceAccounts(
   ctx,
   info
 ) {
-  // Pull out some args.
-  const { workspaceUuid } = args;
-
-  // Build query structure.
-  const query = {
-    where: {
-      roleBinding: {
-        workspace: { id: workspaceUuid }
-      }
-    }
-  };
-
-  // Run final query
-  const serviceAccounts = await ctx.db.query.serviceAccounts(
-    query,
-    addFragmentToInfo(info, fragment)
-  );
-
-  // If we made it here, return the service accounts.
-  return serviceAccounts;
+  return getWorkspaceServiceAccounts(args.workspaceUuid, ctx, info);
 }

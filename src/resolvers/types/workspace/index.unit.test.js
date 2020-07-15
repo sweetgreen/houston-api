@@ -1,5 +1,14 @@
-import { users, deployments, invites } from "./index";
+import { users, deployments, invites, serviceAccounts } from "./index";
 import casual from "casual";
+import "graphql-binding";
+
+// Mock addFragmentToInfo method for serviceAccounts test
+jest.mock("graphql-binding", () => {
+  return {
+    __esModule: true,
+    addFragmentToInfo: jest.fn().mockName("MockAddFragmentToInfo")
+  };
+});
 
 describe("Workspace", () => {
   test("users returns an empty array", () => {
@@ -23,7 +32,7 @@ describe("Workspace", () => {
     expect(deps).toHaveLength(0);
   });
 
-  test("deployments returns  empty array when there is a single deleted deployment", () => {
+  test("deployments returns empty array when there is a single deleted deployment", () => {
     const parent = {
       deployments: [{ id: casual.uuid, deletedAt: new Date() }]
     };
@@ -38,5 +47,26 @@ describe("Workspace", () => {
     };
     invites(parent, {}, { db });
     expect(db.query.inviteTokens.mock.calls).toHaveLength(1);
+  });
+
+  test("serviceAccounts returns array of serviceAccounts", async () => {
+    const parent = { id: casual.uuid };
+    const saId = casual.uuid;
+    const db = {
+      query: {
+        serviceAccounts: jest.fn().mockReturnValue([{ id: saId }])
+      }
+    };
+
+    const sAs = await serviceAccounts(
+      parent,
+      { workspaceUuid: parent.id },
+      { db },
+      {}
+    );
+
+    expect(db.query.serviceAccounts.mock.calls).toHaveLength(1);
+    expect(sAs).toHaveLength(1);
+    expect(sAs[0]).toHaveProperty("id", saId);
   });
 });
