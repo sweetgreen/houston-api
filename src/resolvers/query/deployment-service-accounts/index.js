@@ -1,5 +1,4 @@
-import fragment from "./fragment";
-import { addFragmentToInfo } from "graphql-binding";
+import getDeploymentServiceAccounts from "deployment-service-accounts";
 
 /*
  * Get a list of deployment service accounts
@@ -14,24 +13,5 @@ export default async function deploymentServiceAccounts(
   ctx,
   info
 ) {
-  // Pull out some args.
-  const { deploymentUuid } = args;
-
-  // Build query structure.
-  const query = {
-    where: {
-      roleBinding: {
-        deployment: { id: deploymentUuid }
-      }
-    }
-  };
-
-  // Run final query
-  const serviceAccounts = await ctx.db.query.serviceAccounts(
-    query,
-    addFragmentToInfo(info, fragment)
-  );
-
-  // If we made it here, return the service accounts.
-  return serviceAccounts;
+  return getDeploymentServiceAccounts(args.deploymentUuid, ctx, info);
 }

@@ -1,5 +1,6 @@
 import { userFragment, workspaceFragment } from "./fragment";
 import { hasPermission } from "rbac";
+import getWorkspaceServiceAccounts from "workspace-service-accounts";
 import config from "config";
 import { addFragmentToInfo } from "graphql-binding";
 import { filter, isNull } from "lodash";
@@ -126,11 +127,24 @@ export async function paywallEnabled(parent, args, ctx) {
   return paywallEnabled;
 }
 
+/*
+ * Return a properly formatted list of service accounts.
+ * @param {Object} parent The result of the parent resolver.
+ * @param {Object} args The graphql arguments.
+ * @param {Object} ctx The graphql context.
+ * @param {Object} info The graphql info.
+ * @return {[]Object} The service accounts.
+ */
+export async function serviceAccounts(parent, args, ctx, info) {
+  return getWorkspaceServiceAccounts(parent.id, ctx, info);
+}
+
 export default {
   users,
   deployments,
   invites,
   workspaceCapabilities,
   billingEnabled,
-  paywallEnabled
+  paywallEnabled,
+  serviceAccounts
 };

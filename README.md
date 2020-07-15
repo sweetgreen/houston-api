@@ -52,7 +52,7 @@ Houston API uses node LTS.  Please install [node LTS](https://nodejs.org/en/) or
 
 `nvm use`
 
-We are also using `yarn`.  If you don't already have yarn then run:
+We are also using `yarn`. If you don't already have yarn then run:
 
 `npm install -g yarn`
 
