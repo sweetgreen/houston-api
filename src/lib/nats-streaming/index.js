@@ -1,7 +1,6 @@
 import log from "logger";
 import nats from "node-nats-streaming";
 import config from "config";
-
 /**
  * @param  {String} clientID name of the client to identify requests (unique)
  * @param  {String} subject subject to publish and subscribe (shared)
@@ -14,13 +13,9 @@ export function pubSub(clientID, subject, messageHandler) {
   const nc = createNatsConnection(clusterID, clientID);
 
   // Subscribe after successful connection
-  nc.on("connect", () => {
+  nc.on("connect", async () => {
     logConnected(nc);
-    sub = createSubscriber(nc, clientID, subject);
-
-    // Subscribe and assign event handler
-    sub.on("message", messageHandler);
-    log.info(`Subscribed to: ${subject}`);
+    sub = await createSubscriber(nc, subject, messageHandler);
   });
 
   // Emitted whenever the client reconnects
@@ -88,7 +83,11 @@ export function publisher(clientID) {
   });
 
   nc.on("reconnect", nc => {
+    const { clientID } = nc;
     logReconnected(nc);
+    nc.close();
+
+    return publisher(clientID);
   });
 
   nc.on("reconnecting", () => {
@@ -132,14 +131,34 @@ function getNatsStreamingOptions() {
  * Create Subscriber
  * @return {Object} subscriber
  */
-function createSubscriber(nc, clientID, subject) {
+async function createSubscriber(nc, subject, messageHandler) {
   // Create subscription options
+  const { clientID } = nc;
   const opts = nc.subscriptionOptions();
   opts.setDeliverAllAvailable();
   opts.setManualAckMode(true);
+  opts.setAckWait(opts.connectTimeout);
   opts.setDurableName(`${clientID}-${subject}`);
+  const sub = nc.subscribe(subject, opts);
 
-  return nc.subscribe(subject, opts);
+  await sub.on("ready", async () => {
+    sub.on("message", messageHandler);
+    return Promise.resolve();
+  });
+
+  sub.on("error", err => {
+    log.info(`subscription failed ${err}`);
+  });
+
+  sub.on("timeout", err => {
+    log.error(`subscription timeout ${err}`);
+  });
+
+  sub.on("unsubscribed", () => {
+    log.info("subscription unsubscribed");
+  });
+
+  return sub;
 }
 
 /**
