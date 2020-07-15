@@ -1,51 +1,88 @@
-import { pubSub } from "./";
+import { pubSub, publisher } from "./";
 
 describe("nats-streaming", () => {
-  const clientID = "deployment-updated";
-  const subject = "test-subject";
-  let nc = {};
-
-  beforeEach(() => {
+  describe("pubSub", () => {
+    const clientID = "test-client-id";
+    const subject = "test-subject";
     const testFunc = () => {};
-    nc = pubSub(clientID, subject, testFunc);
+    let nc = {};
+
+    beforeEach(() => {
+      nc = pubSub(clientID, subject, testFunc);
+    });
+
+    afterEach(() => {
+      nc.close();
+    });
+
+    test("correct events exist", () => {
+      const eventNames = nc.eventNames();
+      const expectedEvents = [
+        "close",
+        "error",
+        "disconnect",
+        "reconnecting",
+        "connection_lost",
+        "connect",
+        "reconnect"
+      ];
+
+      expect(nc.on).toBeTruthy();
+      expect(eventNames.sort()).toEqual(expectedEvents.sort());
+    });
+
+    test("error handlers log", () => {
+      nc._events.error("Test Error Message");
+      nc._events.disconnect();
+    });
+
+    test("reconnecting attempt logs", () => {
+      nc._events.reconnecting();
+    });
+
+    test("connection lost logs", () => {
+      nc._events.connection_lost("Test Connection Lost Message");
+    });
+
+    test("Reconnects correctly", () => {
+      const newNc = nc._events.reconnect(nc);
+      // Close the new connection so the test suite does not fail
+      newNc.close();
+    });
   });
 
-  afterEach(() => {
-    nc.close();
-  });
+  describe("publisher", () => {
+    const clientID = "test-client-id";
+    const subject = "test-subject";
+    let nc = {};
 
-  test("correct events exist", () => {
-    const eventNames = nc.eventNames();
-    const expectedEvents = [
-      "close",
-      "error",
-      "disconnect",
-      "reconnecting",
-      "connection_lost",
-      "connect",
-      "reconnect"
-    ];
+    beforeEach(() => {
+      const testFunc = () => {};
+      nc = publisher(clientID, subject, testFunc);
+    });
 
-    expect(nc.on).toBeTruthy();
-    expect(eventNames.sort()).toEqual(expectedEvents.sort());
-  });
+    afterEach(() => {
+      nc.close();
+    });
 
-  test("error handlers log", () => {
-    nc._events.error("Test Error Message");
-    nc._events.disconnect();
-  });
+    test("correct events exist", () => {
+      const eventNames = nc.eventNames();
+      const expectedEvents = [
+        "close",
+        "error",
+        "disconnect",
+        "reconnecting",
+        "connection_lost",
+        "connect",
+        "reconnect"
+      ];
 
-  test("reconnecting attempt logs", () => {
-    nc._events.reconnecting();
-  });
+      expect(nc.on).toBeTruthy();
+      expect(eventNames.sort()).toEqual(expectedEvents.sort());
+    });
 
-  test("connection lost logs", () => {
-    nc._events.connection_lost("Test Connection Lost Message");
-  });
-
-  test("Reconnects correctly", () => {
-    const newNc = nc._events.reconnect(nc);
-    // Close the new connection so the test suite does not fail
-    newNc.close();
+    test("logs for connect", () => {
+      nc._events.connect(nc);
+    });
   });
 });
