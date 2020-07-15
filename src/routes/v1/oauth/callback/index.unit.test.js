@@ -286,4 +286,48 @@ describe("POST /oauth", () => {
 
     expect(res.statusCode).toBe(400);
   });
+
+  test("should lowercase email address coming from idp claims", async () => {
+    const email = "TESTING@google.com";
+    mockGetClient.issuer = {
+      metadata: {
+        claimsMapping: {},
+        fetchUserInfo: true
+      }
+    };
+    mockGetClient.authorizationCallback = () => {
+      return {
+        claims: {
+          email,
+          name: "test name",
+          sub: "test-sub=",
+          access_token: "some-token"
+        }
+      };
+    };
+    mockGetClient.userinfo = () => {
+      return {
+        name: "Testing Name",
+        picture: "http://www.astronomer.io/test.img"
+      };
+    };
+    jest.spyOn(oAuthExports, "getClient").mockImplementation(() => {
+      return mockGetClient;
+    });
+    const state = `{"provider":"google","integration":"google-oauth2","origin":"http://houston.local.astronomer.io:8871/v1/oauth/callback"}`;
+
+    const res = await request(app)
+      .post("/")
+      .send({
+        id_token: idToken,
+        expires_in: expiresIn,
+        state
+      });
+
+    const encodedQueryParams = res.text.split("?")[1];
+    const decodedQueryParams = decodeURIComponent(encodedQueryParams);
+    const extras = decodedQueryParams.split("&")[0];
+    const extrasData = JSON.parse(extras.split("=")[1]);
+    expect(extrasData.email).toBe(email.toLowerCase());
+  });
 });
