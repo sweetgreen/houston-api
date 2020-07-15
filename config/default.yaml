@@ -246,10 +246,14 @@ roles:
   SYSTEM_VIEWER:
     name: System Viewer
     permissions: &PERMS__SYSTEM_VIEWER
+      ? system.airflow.get
+      ? system.deployments.get
+      ? system.invites.get
+      ? system.invite.get
       ? system.monitoring.get
       ? system.serviceAccounts.get
-      ? system.airflow.get
       ? system.updates.get
+      ? system.users.get
       ? system.workspace.get
 
   SYSTEM_EDITOR:
@@ -265,17 +269,13 @@ roles:
     name: System Admin
     permissions:
       <<: *PERMS__SYSTEM_EDITOR
-      ? system.deployments.get
       ? system.deployments.update
       ? system.deployments.delete
       ? system.deployments.logs
       ? system.deployments.metrics
-      ? system.invite.get
-      ? system.monitoring.get
       ? system.serviceAccounts.create
       ? system.serviceAccounts.update
       ? system.serviceAccounts.delete
-      ? system.users.get
       ? system.user.invite
       ? system.user.delete
       ? system.user.verifyEmail
@@ -384,7 +384,7 @@ deployments:
   # Labels specifed here are applied to Airflow deployment namespaces.
   namespaceLabels: {}
 
-  # Enable manual namespace labels 
+  # Enable manual namespace labels
   manualReleaseNames: false
 
   # Log out final helm values whenever they are generated, before deployment.
