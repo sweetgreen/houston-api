@@ -216,6 +216,12 @@ export async function createSchema(
  * @param {Object} The parsed connection object.
  */
 export function parseConnection(conn) {
-  if (isString(conn)) return parse(conn);
+  if (isString(conn)) {
+    return {
+      // TODO: make it configurable
+      ssl: true,
+      ...parse(conn)
+    };
+  }
   return conn;
 }
