@@ -456,4 +456,63 @@ describe("POST /oauth", () => {
       });
     expect(res.statusCode).toBe(400);
   });
+
+  test("unable to parse rawState", async () => {
+    const state = `%7C%22provider%22%3A%22example%22%2C%22integration%22%3A%22example%22%2C%22origin%22%3A%22http%3A%2F%2Fhouston.local.astronomer.io%3A8871%2Fv1%2Foauth%2Fcallback%22%7D`;
+    const res = await request(app)
+      .post("/")
+      .set("Cookie", [`nonce=${nonce}`])
+      .send({
+        id_token: idToken,
+        expires_in: expiresIn,
+        state
+      });
+
+    expect(res.statusCode).toBe(400);
+  });
+
+  test("should lowercase email address coming from idp claims", async () => {
+    const email = "TESTING@google.com";
+    mockGetClient.issuer = {
+      metadata: {
+        claimsMapping: {},
+        fetchUserInfo: true
+      }
+    };
+    mockGetClient.callback = () => {
+      return {
+        claims: jest.fn().mockReturnValue({
+          email,
+          name: "test name",
+          sub: "test-sub=",
+          access_token: "some-token"
+        })
+      };
+    };
+    mockGetClient.userinfo = () => {
+      return {
+        name: "Testing Name",
+        picture: "http://www.astronomer.io/test.img"
+      };
+    };
+    jest.spyOn(oAuthExports, "getClient").mockImplementation(() => {
+      return mockGetClient;
+    });
+    const state = `{"provider":"google","integration":"google-oauth2","origin":"http://houston.local.astronomer.io:8871/v1/oauth/callback"}`;
+
+    const res = await request(app)
+      .post("/")
+      .set("Cookie", [`nonce=${nonce}`])
+      .send({
+        id_token: jwt.sign(idToken, "test"),
+        expires_in: expiresIn,
+        state
+      });
+
+    const encodedQueryParams = res.text.split("?")[1];
+    const decodedQueryParams = decodeURIComponent(encodedQueryParams);
+    const extras = decodedQueryParams.split("&")[0];
+    const extrasData = JSON.parse(extras.split("=")[1]);
+    expect(extrasData.email).toBe(email.toLowerCase());
+  });
 });
