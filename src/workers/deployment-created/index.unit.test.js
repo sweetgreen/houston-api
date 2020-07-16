@@ -57,7 +57,7 @@ describe("deployment created worker", () => {
     expect(eventNames.sort()).toEqual(expectedEvents.sort());
   });
 
-  test.skip("correctly created deployment", async () => {
+  test("correctly created deployment", async () => {
     prisma.deployment = jest
       .fn()
       .mockName("deployment")
