@@ -11,7 +11,7 @@ export function generateKid(crt) {
   let cert = forge.pki.certificateFromPem(crt);
   let asn1 = forge.pki.publicKeyToAsn1(cert.publicKey);
   let der = forge.asn1.toDer(asn1);
-  let buf = new Buffer(der.getBytes(), "binary");
+  let buf = Buffer.from(der.getBytes(), "binary");
   let hash = crypto
     .createHash("sha256")
     .update(buf)

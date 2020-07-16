@@ -123,7 +123,7 @@ export default async function(req, res) {
         rawConfig: JSON.stringify(generateHelmValues(updatedDeployment))
       });
 
-      const { deploymentId, label } = updatedDeployment;
+      const { id: deploymentId, label } = updatedDeployment;
       // Push the deploymentId to the natsIDs array
       // to publish before sending back the 200 status
       natsIDs.push(deploymentId);
@@ -139,21 +139,14 @@ export default async function(req, res) {
   );
 
   // Create NATS client.
-  const nc = publisher("houston-deployment-image-update");
-  await nc.on("connect", async () => {
-    // Send event to fire the helm upgrade.
-    // An async worker will pick this job up and ensure
-    // the changes are propagated.
-    natsIDs.forEach(id => {
-      nc.publish(DEPLOYMENT_IMAGE_UPDATED, id);
-      log.info(
-        `V1 Image Update Deployment publishing to ${DEPLOYMENT_IMAGE_UPDATED} for deploymentId ${id}`
-      );
-    });
-
-    nc.close();
-    return Promise.resolve();
+  const nc = publisher(`houston-deployment-image-update`);
+  natsIDs.forEach(id => {
+    nc.publish(DEPLOYMENT_IMAGE_UPDATED, id);
+    log.info(
+      `V1 Image Update Deployment publishing to ${DEPLOYMENT_IMAGE_UPDATED} for deploymentId ${id}`
+    );
   });
+  nc.close();
 
   res.sendStatus(200);
 }

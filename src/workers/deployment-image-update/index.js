@@ -6,9 +6,9 @@ import { generateHelmValues } from "deployments/config";
 import log from "logger";
 import { pubSub } from "nats-streaming";
 import {
-  DEPLOYMENT_IMAGE_UPDATE,
+  DEPLOYMENT_IMAGE_UPDATED,
   DEPLOYMENT_AIRFLOW,
-  DEPLOYMENT_IMAGE_UPDATE_ID,
+  DEPLOYMENT_IMAGE_UPDATED_ID,
   DEPLOYMENT_IMAGE_UPDATE_DEPLOYED
 } from "constants";
 
@@ -16,11 +16,11 @@ import {
  * NATS Deployment Update Worker
  */
 const nc = pubSub(
-  DEPLOYMENT_IMAGE_UPDATE_ID,
-  DEPLOYMENT_IMAGE_UPDATE,
+  DEPLOYMENT_IMAGE_UPDATED_ID,
+  DEPLOYMENT_IMAGE_UPDATED,
   helmUpdateDeployment
 );
-log.info(`NATS ${DEPLOYMENT_IMAGE_UPDATE_ID} Running...`);
+log.info(`NATS ${DEPLOYMENT_IMAGE_UPDATED_ID} Running...`);
 
 /**
  * @param  {Object} message NATS message

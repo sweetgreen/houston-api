@@ -88,23 +88,20 @@ export default async function updateDeployment(_, args, ctx, info) {
     addFragmentToInfo(info, responseFragment)
   );
 
-  // Send event that a new deployment was created.
-  // An async worker will pick this job up and ensure
-  // the changes are propagated.
-  // Include any new env vars passed in the args
-  const nc = publisher(`houston-deployment-update-${id}`);
-  await nc.on("connect", async () => {
+  // If we're syncing to kubernetes, fire updates to commander.
+  if (args.sync) {
+    // Send event that a new deployment was created.
+    // An async worker will pick this job up and ensure
+    // the changes are propagated.
+    // Include any new env vars passed in the args
+    const nc = publisher(`houston-deployment-update-${id}`);
     nc.publish(DEPLOYMENT_UPDATED, id);
     nc.close();
     log.info(
       `Update Deployment published to ${DEPLOYMENT_UPDATED} with ID: ${id}`
     );
-    return Promise.resolve();
-  });
 
-  // TODO: Remove once NATS is tested and works correctly
-  // If we're syncing to kubernetes, fire updates to commander.
-  if (args.sync) {
+    // TODO: Remove once NATS is tested and works correctly
     // Update the deployment
     await ctx.commander.request("updateDeployment", {
       releaseName: updatedDeployment.releaseName,

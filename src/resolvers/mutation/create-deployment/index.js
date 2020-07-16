@@ -153,16 +153,11 @@ export default async function createDeployment(parent, args, ctx, info) {
   log.info(
     `Create Deployment publishing to ${DEPLOYMENT_CREATED} with ID: ${id}`
   );
-  // Send event that a new deployment was created.
+
   const nc = publisher(`create-deployment-${id}`);
-  await nc.on("connect", async () => {
-    nc.publish(DEPLOYMENT_CREATED, id);
-    nc.close();
-    log.info(
-      `Create Deployment published to ${DEPLOYMENT_CREATED} with ID: ${id}`
-    );
-    return Promise.resolve();
-  });
+  // Send event that a new deployment was created.
+  nc.publish(DEPLOYMENT_CREATED, id);
+  nc.close();
 
   // Return the deployment.
   return deployment;

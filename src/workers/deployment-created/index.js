@@ -68,7 +68,7 @@ export async function deploymentCreated(msg) {
     const data = { metadataConnection, resultBackendConnection };
     const registry = { connection: { pass: registryPassword } };
     const elasticsearch = { connection: { pass: elasticsearchPassword } };
-    const fernetKey = new Buffer(
+    const fernetKey = Buffer.from(
       generatePassword({ length: 32, numbers: true })
     ).toString("base64");
 

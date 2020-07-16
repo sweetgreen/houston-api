@@ -10,12 +10,13 @@ export function pubSub(clientID, subject, messageHandler) {
   const natsConfig = config.get("nats");
   const clusterID = natsConfig.clusterID;
   let sub = {};
+  log.info(`clientID: ${clientID}`);
   const nc = createNatsConnection(clusterID, clientID);
 
   // Subscribe after successful connection
-  nc.on("connect", async () => {
+  nc.on("connect", () => {
     logConnected(nc);
-    sub = await createSubscriber(nc, subject, messageHandler);
+    sub = createSubscriber(nc, subject, messageHandler);
   });
 
   // Emitted whenever the client reconnects
@@ -137,8 +138,9 @@ async function createSubscriber(nc, subject, messageHandler) {
   const opts = nc.subscriptionOptions();
   opts.setDeliverAllAvailable();
   opts.setManualAckMode(true);
-  opts.setAckWait(opts.connectTimeout);
-  opts.setDurableName(`${clientID}-${subject}`);
+  opts.setDurableName(clientID);
+
+  log.info(`${subject} ${opts}`);
   const sub = nc.subscribe(subject, opts);
 
   await sub.on("ready", async () => {

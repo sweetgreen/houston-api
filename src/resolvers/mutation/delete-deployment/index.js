@@ -25,19 +25,17 @@ export default async function deleteDeployment(parent, args, ctx, info) {
     addFragmentToInfo(info, fragment)
   );
   const { label, releaseName } = deployment;
+
   log.info(
     `Delete Deployment publishing to ${DEPLOYMENT_DELETED} with ID: ${id}`
   );
   // Create NATS client.
   const nc = publisher(`delete-deployment-${id}`);
-  await nc.on("connect", async () => {
-    nc.publish(DEPLOYMENT_DELETED, id);
-    nc.close();
-    log.info(
-      `Delete Deployment published to ${DEPLOYMENT_DELETED} with ID: ${id}`
-    );
-    return Promise.resolve();
-  });
+  nc.publish(DEPLOYMENT_DELETED, id);
+  log.info(
+    `Delete Deployment published to ${DEPLOYMENT_DELETED} with ID: ${id}`
+  );
+  nc.close();
 
   // Run the analytics track event
   track(ctx.user.id, "Deleted Deployment", {
