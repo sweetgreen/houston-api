@@ -13,9 +13,9 @@ export function pubSub(clientID, subject, messageHandler) {
   const nc = createNatsConnection(clusterID, clientID);
 
   // Subscribe after successful connection
-  nc.on("connect", async () => {
+  nc.on("connect", () => {
     logConnected(nc);
-    sub = await createSubscriber(nc, subject, messageHandler);
+    sub = createSubscriber(nc, subject, messageHandler);
   });
 
   // Emitted whenever the client reconnects
@@ -137,13 +137,12 @@ async function createSubscriber(nc, subject, messageHandler) {
   const opts = nc.subscriptionOptions();
   opts.setDeliverAllAvailable();
   opts.setManualAckMode(true);
-  opts.setAckWait(opts.connectTimeout);
-  opts.setDurableName(`${clientID}-${subject}`);
+  opts.setDurableName(clientID);
   const sub = nc.subscribe(subject, opts);
 
-  await sub.on("ready", async () => {
+  sub.on("ready", () => {
+    log.info(`subscription ${clientID} is ready`);
     sub.on("message", messageHandler);
-    return Promise.resolve();
   });
 
   sub.on("error", err => {
@@ -155,7 +154,7 @@ async function createSubscriber(nc, subject, messageHandler) {
   });
 
   sub.on("unsubscribed", () => {
-    log.info("subscription unsubscribed");
+    log.info(`subscription ${clientID} unsubscribed`);
   });
 
   return sub;

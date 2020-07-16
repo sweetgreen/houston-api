@@ -29,7 +29,7 @@ services:
   nats:
     image: nats-streaming:0.17.0
     restart: always
-    command: "-DV -m 8222 --cluster_id development-cluster"
+    command: "-DV -m 8222 --cluster_id houston"
     ports:
     - 4222:4222
     - 8222:8222
