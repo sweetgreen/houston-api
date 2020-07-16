@@ -58,7 +58,6 @@ export async function createDatabaseForDeployment(deployment) {
   // Create schema for airflow metadata.
   await ensureUserAndSchema(
     deploymentDb,
-    dbName,
     airflowSchemaName,
     airflowUserName,
     airflowPassword,
@@ -69,7 +68,6 @@ export async function createDatabaseForDeployment(deployment) {
   // Create schema for celery result backend.
   await ensureUserAndSchema(
     deploymentDb,
-    dbName,
     celerySchemaName,
     celeryUserName,
     celeryPassword,
@@ -205,7 +203,6 @@ export async function ensureSchema(conn, schema, user) {
 /*
  * Create a schema with new user/role, if they do not exist.
  * @param {Object} conn An existing database connection.
- * @param {String} database Name of the deployments database.
  * @param {String} schema Name of the schema to create.
  * @param {String} user The name of the user for this schema.
  * @param {String} password The password for the new user.
@@ -213,7 +210,6 @@ export async function ensureSchema(conn, schema, user) {
  */
 export async function ensureUserAndSchema(
   conn,
-  database,
   schema,
   user,
   password,
