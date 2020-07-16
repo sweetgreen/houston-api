@@ -41,10 +41,10 @@ export async function deploymentCreated(msg) {
     // Notify that we've started the process.
     nc.publish(DEPLOYMENT_CREATED_STARTED, id);
 
-    // Grab the releaseName and version of the deployment.
+    // // Grab the releaseName and version of the deployment.
     const { releaseName, version } = deployment;
 
-    // Create the database for this deployment.
+    // // Create the database for this deployment.
     const {
       metadataConnection,
       resultBackendConnection
@@ -53,14 +53,11 @@ export async function deploymentCreated(msg) {
     const options = { length: 32, numbers: true };
     // Generate a unique registry password for this deployment.
     const registryPassword = generatePassword(options);
-    const hashedRegistryPassword = await bcrypt.hash(registryPassword, 10);
+    const hashedRegistryPassword = bcrypt.hash(registryPassword, 10);
 
     // Generate a unique elasticsearch password for this deployment
     const elasticsearchPassword = generatePassword(options);
-    const hashedElasticsearchPassword = await bcrypt.hash(
-      elasticsearchPassword,
-      10
-    );
+    const hashedElasticsearchPassword = bcrypt.hash(elasticsearchPassword, 10);
 
     // Create some ad-hoc values to get passed into helm.
     // These won't be changing so just pass them in on create,
@@ -104,6 +101,7 @@ export async function deploymentCreated(msg) {
       }
     });
 
+    log.info(`NATS publishing with ${DEPLOYMENT_CREATED_DEPLOYED} and ${id}.`);
     // Notify that we've deployed the rollout
     nc.publish(DEPLOYMENT_CREATED_DEPLOYED, `${id}`);
     // Ack the message
