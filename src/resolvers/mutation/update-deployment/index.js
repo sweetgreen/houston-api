@@ -74,11 +74,13 @@ export default async function updateDeployment(parent, args, ctx, info) {
 
   // Validate our args.
   await validate(deployment.workspace.id, mungedArgs, deployment);
-
+  // Always update charts to the version configured
+  const airflowChartVersion = config.get("deployments.chart.version");
   // Create the update statement.
   const where = { id: args.deploymentUuid };
   const data = merge({}, updatablePayload, {
     config: mungedArgs.config,
+    version: airflowChartVersion,
     ...mapPropertiesToDeployment(mungedArgs.properties)
   });
 

@@ -73,6 +73,9 @@ jwt:
 
 # Deployment configuration.
 deployments:
+  chart:
+    version: 1.2.3
+
   database:
     enabled: false
 

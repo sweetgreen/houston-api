@@ -200,6 +200,7 @@ describe("updateDeployment", () => {
         where: { id },
         data: {
           extraAu: 0,
+          version: "1.2.3",
           config: {
             executor: AIRFLOW_EXECUTOR_DEFAULT,
             serviceAccountAnnotations: {
@@ -282,6 +283,7 @@ describe("updateDeployment", () => {
         where: { id },
         data: {
           extraAu: 0,
+          version: "1.2.3",
           config: {
             executor: AIRFLOW_EXECUTOR_DEFAULT,
             serviceAccountAnnotations: {
@@ -365,6 +367,7 @@ describe("updateDeployment", () => {
         where: { id },
         data: {
           extraAu: 0,
+          version: "1.2.3",
           config: {
             executor: "CeleryExecutor",
             serviceAccountAnnotations: {
