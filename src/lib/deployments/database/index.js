@@ -189,15 +189,8 @@ export async function ensureUser(conn, user, password) {
  * @param {String} user The user authorized to this schema.
  */
 export async function ensureSchema(conn, schema, user) {
-  // Check if schema exists
-  const result = await conn.raw(
-    `SELECT EXISTS(SELECT schema_name FROM information_schema.schemata WHERE schema_name = '${schema}')`
-  );
-  const exists = first(result.rows).exists;
-  if (!exists) {
-    // Create a new schema, granting the new user access.
-    await conn.raw(`CREATE SCHEMA ${schema} AUTHORIZATION ${user}`);
-  }
+  // Check if schema does not exist if not, then create a new schema, granting the new user access.
+  await conn.raw(`CREATE SCHEMA IF NOT EXISTS ${schema} AUTHORIZATION ${user}`);
 }
 
 /*

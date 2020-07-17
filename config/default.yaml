@@ -18,8 +18,7 @@ prisma:
 
 # NATS configuration.
 nats:
-  host: nats://localhost
-  port: 4222
+  url: nats://localhost:4222
   clusterID: houston
   ackTimeout: 30000
   connectTimeout: 3000

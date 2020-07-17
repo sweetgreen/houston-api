@@ -11,10 +11,17 @@ jobs:
         environment:
           PRISMA__ENDPOINT: "http://prisma:4466/houston"
           PRISMA__DEBUG: "false"
-          NATS__HOST: "nats://nats"
-          NATS__PORT: 4222
+          NATS__URL: "nats://nats:4222"
+          DATABASE__CONNECTION: "postgres://postgres:postgres@postgres:5432/postgres"
       - image: nats-streaming:0.17.0
         name: nats
+      - image: postgres:12.3-alpine
+        name: postgres
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_PORT: 5432
     steps:
       - test
   scan:
@@ -144,6 +151,9 @@ commands:
       - run:
           name: Wait for NATs
           command: dockerize -wait tcp://nats:4222 -timeout 1m
+      - run:
+          name: Wait for postgres
+          command: dockerize -wait tcp://postgres:5432 -timeout 1m
       - run:
           name: Install Dependencies
           command: |

@@ -120,11 +120,7 @@ function createNatsConnection(clusterID, clientID) {
  * @return {Object} NATS Streaming opts - https://github.com/nats-io/stan.js#connect-options
  */
 function getNatsStreamingOptions() {
-  const natsConfig = config.get("nats");
-  const { host, port } = natsConfig;
-  const url = `${host}:${port}`;
-
-  return { ...natsConfig, url };
+  return config.get("nats");
 }
 
 /**
