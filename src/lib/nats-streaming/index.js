@@ -121,11 +121,7 @@ function createNatsConnection(clusterID, clientID) {
  * @return {Object} NATS Streaming opts - https://github.com/nats-io/stan.js#connect-options
  */
 function getNatsStreamingOptions() {
-  const natsConfig = config.get("nats");
-  const { host, port } = natsConfig;
-  const url = `${host}:${port}`;
-
-  return { ...natsConfig, url };
+  return config.get("nats");
 }
 
 /**
@@ -139,13 +135,11 @@ async function createSubscriber(nc, subject, messageHandler) {
   opts.setDeliverAllAvailable();
   opts.setManualAckMode(true);
   opts.setDurableName(clientID);
-
-  log.info(`${subject} ${opts}`);
   const sub = nc.subscribe(subject, opts);
 
-  await sub.on("ready", async () => {
+  sub.on("ready", () => {
+    log.info(`subscription ${clientID} is ready`);
     sub.on("message", messageHandler);
-    return Promise.resolve();
   });
 
   sub.on("error", err => {
@@ -157,7 +151,7 @@ async function createSubscriber(nc, subject, messageHandler) {
   });
 
   sub.on("unsubscribed", () => {
-    log.info("subscription unsubscribed");
+    log.info(`subscription ${clientID} unsubscribed`);
   });
 
   return sub;
