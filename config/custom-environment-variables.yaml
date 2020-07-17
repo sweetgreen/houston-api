@@ -11,8 +11,7 @@ prisma:
     __format: "json"
 
 nats:
-  port: "NATS__PORT"
-  host: "NATS__HOST"
+  url: "NATS__URL"
 
 database:
   migrations:
