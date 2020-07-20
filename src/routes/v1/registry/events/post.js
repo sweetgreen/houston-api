@@ -9,6 +9,7 @@ import commander from "commander";
 import { version } from "utilities";
 import { track } from "analytics";
 import { merge, get } from "lodash";
+import { v4 as uuidv4 } from "uuid";
 import got from "got";
 import {
   MEDIATYPE_DOCKER_MANIFEST_V2,
@@ -23,7 +24,9 @@ import {
  */
 export default async function(req, res) {
   const { events = [] } = req.body;
-  const natsIDs = [];
+  const uuid = uuidv4();
+  // Create NATS client.
+  const nc = publisher(`houston-deployment-image-update-${uuid}`);
 
   await Promise.all(
     events.map(async ev => {
@@ -126,7 +129,10 @@ export default async function(req, res) {
       const { id: deploymentId, label } = updatedDeployment;
       // Push the deploymentId to the natsIDs array
       // to publish before sending back the 200 status
-      natsIDs.push(deploymentId);
+      nc.publish(DEPLOYMENT_IMAGE_UPDATED, deploymentId);
+      log.info(
+        `V1 Image Update Deployment publishing to ${DEPLOYMENT_IMAGE_UPDATED} for deploymentId ${deploymentId}`
+      );
 
       // Run the analytics track event
       track(get(ev, "actor.name"), "Deployed Code", {
@@ -138,14 +144,6 @@ export default async function(req, res) {
     })
   );
 
-  // Create NATS client.
-  const nc = publisher(`houston-deployment-image-update`);
-  natsIDs.forEach(id => {
-    nc.publish(DEPLOYMENT_IMAGE_UPDATED, id);
-    log.info(
-      `V1 Image Update Deployment publishing to ${DEPLOYMENT_IMAGE_UPDATED} for deploymentId ${id}`
-    );
-  });
   nc.close();
 
   res.sendStatus(200);

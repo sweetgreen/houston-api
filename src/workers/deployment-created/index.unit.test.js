@@ -1,6 +1,7 @@
 import nc, { deploymentCreated } from "./index";
 import { prisma } from "generated/client";
 import { generateReleaseName } from "deployments/naming";
+import bcrypt from "bcryptjs";
 import casual from "casual";
 import { DEPLOYMENT_CREATED_ID } from "constants";
 
@@ -8,6 +9,14 @@ jest.mock("generated/client", () => {
   return {
     __esModule: true,
     prisma: jest.fn().mockName("MockPrisma")
+  };
+});
+
+jest.mock("bcryptjs", () => {
+  return {
+    bcrypt: {
+      hash: jest.fn().mockName("MockBcryptHash")
+    }
   };
 });
 
@@ -81,6 +90,10 @@ describe("deployment created worker", () => {
           };
         }
       });
+
+    bcrypt.hash = jest.fn().mockReturnValue(() => {
+      return "hashed string";
+    });
 
     await deploymentCreated(message);
 

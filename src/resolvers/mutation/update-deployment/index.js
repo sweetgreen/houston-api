@@ -29,6 +29,7 @@ export default async function updateDeployment(_, args, ctx, info) {
     queryFragment
   );
   const { id } = deployment;
+  const nc = publisher(`houston-deployment-update-${id}`);
 
   // Block config changes if the user is in a trial
   const stripeEnabled = config.get("stripe.enabled");
@@ -94,9 +95,7 @@ export default async function updateDeployment(_, args, ctx, info) {
     // An async worker will pick this job up and ensure
     // the changes are propagated.
     // Include any new env vars passed in the args
-    const nc = publisher(`houston-deployment-update-${id}`);
     nc.publish(DEPLOYMENT_UPDATED, id);
-    nc.close();
     log.info(
       `Update Deployment published to ${DEPLOYMENT_UPDATED} with ID: ${id}`
     );
@@ -113,6 +112,8 @@ export default async function updateDeployment(_, args, ctx, info) {
       rawConfig: JSON.stringify(generateHelmValues(updatedDeployment))
     });
   }
+
+  nc.close();
 
   // Run the analytics track event
   track(ctx.user.id, "Updated Deployment", {

@@ -16,6 +16,8 @@ import { DEPLOYMENT_DELETED } from "constants";
  */
 export default async function deleteDeployment(parent, args, ctx, info) {
   const { deploymentUuid: id } = args;
+  // Create NATS client.
+  const nc = publisher(`delete-deployment-${id}`);
   // Soft delete the record from the database.
   const deployment = await ctx.db.mutation.updateDeployment(
     {
@@ -29,8 +31,6 @@ export default async function deleteDeployment(parent, args, ctx, info) {
   log.info(
     `Delete Deployment publishing to ${DEPLOYMENT_DELETED} with ID: ${id}`
   );
-  // Create NATS client.
-  const nc = publisher(`delete-deployment-${id}`);
   nc.publish(DEPLOYMENT_DELETED, id);
   log.info(
     `Delete Deployment published to ${DEPLOYMENT_DELETED} with ID: ${id}`

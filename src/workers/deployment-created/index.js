@@ -33,13 +33,16 @@ export async function deploymentCreated(msg) {
     // Grab the deploymentId from the message.
     const id = msg.getData();
 
+    log.info(
+      `NATS publishing message ${DEPLOYMENT_CREATED_STARTED} for ${id}.`
+    );
+    // Notify that we've started the process.
+    nc.publish(DEPLOYMENT_CREATED_STARTED, id);
+
     // Update the status in the database and grab some information.
     const deployment = await prisma
       .deployment({ id })
       .$fragment(`{ id, releaseName, extraAu, version, workspace { id } }`);
-
-    // Notify that we've started the process.
-    nc.publish(DEPLOYMENT_CREATED_STARTED, id);
 
     // // Grab the releaseName and version of the deployment.
     const { releaseName, version } = deployment;
@@ -53,11 +56,14 @@ export async function deploymentCreated(msg) {
     const options = { length: 32, numbers: true };
     // Generate a unique registry password for this deployment.
     const registryPassword = generatePassword(options);
-    const hashedRegistryPassword = bcrypt.hash(registryPassword, 10);
+    const hashedRegistryPassword = await bcrypt.hash(registryPassword, 10);
 
     // Generate a unique elasticsearch password for this deployment
     const elasticsearchPassword = generatePassword(options);
-    const hashedElasticsearchPassword = bcrypt.hash(elasticsearchPassword, 10);
+    const hashedElasticsearchPassword = await bcrypt.hash(
+      elasticsearchPassword,
+      10
+    );
 
     // Create some ad-hoc values to get passed into helm.
     // These won't be changing so just pass them in on create,
@@ -101,12 +107,11 @@ export async function deploymentCreated(msg) {
       }
     });
 
-    log.info(`NATS publishing with ${DEPLOYMENT_CREATED_DEPLOYED} and ${id}.`);
     // Notify that we've deployed the rollout
-    nc.publish(DEPLOYMENT_CREATED_DEPLOYED, `${id}`);
+    nc.publish(DEPLOYMENT_CREATED_DEPLOYED, id);
     // Ack the message
     msg.ack();
-    log.info(`Deployment ${releaseName} successfully created`);
+    log.info(`Created Deployment ${releaseName}`);
   } catch (err) {
     log.error(err);
   }

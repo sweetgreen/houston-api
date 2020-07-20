@@ -10,6 +10,7 @@ import validate from "deployments/validate";
 import { track } from "analytics";
 import { WorkspaceSuspendedError, TrialError } from "errors";
 import log from "logger";
+import { v4 as uuidv4 } from "uuid";
 import { addFragmentToInfo } from "graphql-binding";
 import config from "config";
 import { get, isNull, find, size, merge, isEmpty } from "lodash";
@@ -27,6 +28,10 @@ import {
  * @return {Deployment} The newly created Deployment.
  */
 export default async function createDeployment(parent, args, ctx, info) {
+  // Generate UUID for NATS
+  const uuid = uuidv4();
+  // Create NATS Client
+  const nc = publisher(`create-deployment-${uuid}`);
   // Grab default chart
   const defaultChartVersion = config.get("deployments.chart.version");
   const defaultAirflowVersion = defaultAirflowImage().version;
@@ -153,8 +158,6 @@ export default async function createDeployment(parent, args, ctx, info) {
   log.info(
     `Create Deployment publishing to ${DEPLOYMENT_CREATED} with ID: ${id}`
   );
-
-  const nc = publisher(`create-deployment-${id}`);
   // Send event that a new deployment was created.
   nc.publish(DEPLOYMENT_CREATED, id);
   nc.close();
