@@ -389,17 +389,17 @@ type Query {
   workspaceInvites(
     workspaceUuid: Uuid!
     invite: InviteSearch
-  ): [Invite] @auth(permissions:["workspace.invites.get"])
+  ): [Invite] @auth(permissions: ["workspace.invites.get", "system.invites.get"], op: OR)
 
   workspaceUsers(
     workspaceUuid: Uuid!
     user: UserSearch
-  ): [User] @auth(permissions: ["workspace.users.get"])
+  ): [User] @auth(permissions: ["workspace.users.get", "system.users.get"], op: OR)
 
   workspaceUser(
     workspaceUuid: Uuid!
     user: UserSearch!
-  ): User @auth(permissions: ["workspace.users.get"])
+  ): User @auth(permissions: ["workspace.users.get", "system.users.get"], op: OR)
 
   users(
     user: UserSearch
@@ -407,7 +407,7 @@ type Query {
 
   invites(
     invite: InviteSearch
-  ): [Invite] @auth(permissions:["system.users.get"])
+  ): [Invite] @auth(permissions:["system.invites.get"])
 
   logs(
     deploymentUuid: Uuid!

@@ -5,6 +5,7 @@ import {
   generateNextTag
 } from "deployments/config";
 import { extractVariables } from "deployments/environment-variables";
+import getDeploymentServiceAccounts from "deployment-service-accounts";
 import { first, map } from "lodash";
 import config from "config";
 import {
@@ -148,11 +149,24 @@ export function deploymentCapabilities(parent, args, ctx) {
   return capabilities;
 }
 
+/*
+ * Return a properly formatted list of service accounts.
+ * @param {Object} parent The result of the parent resolver.
+ * @param {Object} args The graphql arguments.
+ * @param {Object} ctx The graphql context.
+ * @param {Object} info The graphql info.
+ * @return {[]Object} The service accounts.
+ */
+export async function serviceAccounts(parent, args, ctx, info) {
+  return getDeploymentServiceAccounts(parent.id, ctx, info);
+}
+
 export default {
   urls,
   environmentVariables,
   type,
   properties,
   deployInfo,
-  deploymentCapabilities
+  deploymentCapabilities,
+  serviceAccounts
 };
