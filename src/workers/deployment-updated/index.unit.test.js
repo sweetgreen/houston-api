@@ -14,6 +14,7 @@ jest.mock("generated/client", () => {
 
 describe("deployment updated worker", () => {
   const id = casual.uuid;
+  const sync = true;
   const workspace = { id };
   const version = "0.16.1";
   const config = { executor: AIRFLOW_EXECUTOR_DEFAULT };
@@ -28,7 +29,12 @@ describe("deployment updated worker", () => {
     workspace
   };
   const message = {
-    getData: () => id,
+    getData: () => {
+      return {
+        id,
+        sync
+      };
+    },
     ack: jest
       .fn()
       .mockName("ack")
@@ -73,6 +79,33 @@ describe("deployment updated worker", () => {
     await deploymentUpdated(message);
 
     expect(message.ack).toHaveBeenCalledTimes(1);
+  });
+
+  test("correctly deploys and updates without syncing", async () => {
+    const noSyncMessage = {
+      getData: () => {
+        return {
+          id,
+          sync: false
+        };
+      },
+      ack: jest
+        .fn()
+        .mockName("ack")
+        .mockReturnValue(true)
+    };
+    prisma.deployment = jest
+      .fn()
+      .mockName("deployment")
+      .mockReturnValue({
+        $fragment: () => {
+          return fragment;
+        }
+      });
+
+    await deploymentUpdated(noSyncMessage);
+
+    expect(noSyncMessage.ack).toHaveBeenCalledTimes(1);
   });
 
   test("correctly throw error when database is down", async () => {

@@ -8,7 +8,6 @@ import {
   mapCustomEnvironmentVariables
 } from "deployments/config";
 import { generateNamespace } from "deployments/naming";
-import config from "config";
 import {
   DEPLOYMENT_UPDATED,
   DEPLOYMENT_AIRFLOW,
@@ -30,7 +29,7 @@ log.info(`NATS ${DEPLOYMENT_UPDATED_ID} Running...`);
 export async function deploymentUpdated(msg) {
   try {
     // Grab the deploymentId from the message.
-    const id = msg.getData();
+    const { id, sync } = msg.getData();
 
     // Update the status in the database and grab some information.
     const deployment = await prisma
@@ -41,7 +40,7 @@ export async function deploymentUpdated(msg) {
     const { releaseName, version } = deployment;
 
     // If we're syncing to kubernetes, fire updates to commander.
-    if (config.sync) {
+    if (sync) {
       // TODO: Edge case - check to see if we need to await for nc.connect before publishing
       // Notify that we've started the process.
       nc.publish(DEPLOYMENT_UPDATED_STARTED, id);
