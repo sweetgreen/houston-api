@@ -19,7 +19,7 @@ export default async function validate(workspaceId, args, deployment = {}) {
   const { executors } = config.get("deployments");
 
   // Get the executor on this deployment.
-  const executor = get(deployment, "config.executor", AIRFLOW_EXECUTOR_DEFAULT);
+  const executor = get(deployment, "executor", AIRFLOW_EXECUTOR_DEFAULT);
 
   // Get the configuration for that executor.
   const executorConfig = find(executors, ["name", executor]);
