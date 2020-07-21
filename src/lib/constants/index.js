@@ -56,3 +56,30 @@ export const MEDIATYPE_DOCKER_MANIFEST_V2 =
 export const RELEASE_NAME_PATTERN = /^(?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63}$/;
 export const RELEASE_NAME_AIRFLOW_PATTERN = /^\/((?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63})\/(airflow|flower)/;
 export const VALID_DOCKER_IMAGE_NAME = /^(?<releaseName>(?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63})\/airflow$/;
+
+// NATS related constants
+
+export const DEPLOYMENT_IMAGE_UPDATED = "houston.deployment.image.updated";
+export const DEPLOYMENT_IMAGE_UPDATED_ID =
+  "houston-deployment-image-updated-worker";
+export const DEPLOYMENT_IMAGE_UPDATE_DEPLOYED = `${DEPLOYMENT_IMAGE_UPDATED}.deployed`;
+
+export const DEPLOYMENT_CREATED = "houston.deployment.created";
+export const DEPLOYMENT_CREATED_ID = "houston-deployment-created-worker";
+export const DEPLOYMENT_CREATED_STARTED = `${DEPLOYMENT_CREATED}.started`;
+export const DEPLOYMENT_CREATED_DEPLOYED = `${DEPLOYMENT_CREATED}.deployed`;
+
+export const DEPLOYMENT_UPDATED = "houston.deployment.updated";
+export const DEPLOYMENT_UPDATED_ID = "houston-deployment-updated-worker";
+export const DEPLOYMENT_UPDATE_STARTED = `${DEPLOYMENT_UPDATED}.started`;
+export const DEPLOYMENT_UPDATED_DEPLOYED = `${DEPLOYMENT_UPDATED}.deployed`;
+
+export const DEPLOYMENT_DELETED = "houston.deployment.deleted";
+export const DEPLOYMENT_DELETED_ID = "houston-deployment-deleted-worker";
+export const DEPLOYMENT_DELETED_STARTED = `${DEPLOYMENT_DELETED}.started`;
+export const DEPLOYMENT_DELETED_DEPLOYED = `${DEPLOYMENT_DELETED}.deployed`;
+
+export const DEPLOYMENT_VARS_UPDATED = "houston.deployment.variables.updated";
+export const DEPLOYMENT_VARS_UPDATED_ID =
+  "houston-deployment-variables-updated-worker";
+export const DEPLOYMENT_VARS_UPDATED_DEPLOYED = `${DEPLOYMENT_VARS_UPDATED}.deployed`;
