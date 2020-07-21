@@ -2,6 +2,7 @@ import log from "logger";
 import nats from "node-nats-streaming";
 import config from "config";
 /**
+ * Creates a pub sub connection for NATS to be used with the Houston Workers
  * @param  {String} clientID name of the client to identify requests (unique)
  * @param  {String} subject subject to publish and subscribe (shared)
  * @param  {Function} messageHandler to accept the NATS message
@@ -56,6 +57,8 @@ export function pubSub(clientID, subject, messageHandler) {
 }
 
 /**
+ * Creates a publish only connection for NATS to be used to
+ * pass messages and offload tasks to the workers
  * @param  {String} clientID name of the client to identify requests (unique)
  */
 export function publisher(clientID) {
@@ -99,6 +102,7 @@ export function publisher(clientID) {
 }
 
 /**
+ * Setup the NATS connection for publishers or PubSub connections
  * @param  {String} clusterID given from the NATS configuration
  * @param  {String} clientID unique for every NATS connection
  * @param  {Object} opts NATS options
