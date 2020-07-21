@@ -39,6 +39,11 @@ enum MetricType {
   DEPLOYMENT_USAGE
 }
 
+enum ExecutorType {
+  LocalExecutor
+  CeleryExecutor
+  KubernetesExecutor
+}
 
 enum Operator {
   AND
@@ -225,10 +230,37 @@ type EnvironmentVariable {
   isSecret: Boolean,
 }
 
+type LimitsType {
+  cpu: Int,
+  memory: Int
+}
+
+type ResourcesType {
+  limits: LimitsType
+}
+
+type WebserverType {
+  resources: ResourcesType
+}
+
+type SchedulerType {
+  resources: ResourcesType
+}
+
+type WorkersType {
+  replicas: Int,
+  terminationGraceSeconds: Int,
+  resources: ResourcesType
+}
+
 # Deployment properties are only to support the legacy API.
 # Properties have been moved to top-level fields on Deployment internally.
 type Deployment {
   id: ID!
+  executor: ExecutorType
+  workers: WorkersType
+  webserver: WebserverType
+  scheduler: SchedulerType
   config: JSON
   environmentVariables: [EnvironmentVariable!]
   properties: JSON
@@ -468,6 +500,10 @@ type Mutation {
     description: String
     version: String
     airflowVersion: String
+    executor: ExecutorType
+    workers: JSON
+    webserver: JSON
+    scheduler: JSON
     config: JSON
     properties: JSON
     cloudRole: String
@@ -476,6 +512,10 @@ type Mutation {
   updateDeployment(
     deploymentUuid: Uuid!
     payload: JSON
+    executor: ExecutorType
+    workers: JSON
+    webserver: JSON
+    scheduler: JSON
     config: JSON
     sync: Boolean
     cloudRole: String

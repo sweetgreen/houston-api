@@ -3,7 +3,8 @@ import { track } from "analytics";
 import validate from "deployments/validate";
 import {
   generateHelmValues,
-  mapPropertiesToDeployment
+  mapPropertiesToDeployment,
+  generateDeploymentConfig
 } from "deployments/config";
 import { generateNamespace } from "deployments/naming";
 import { TrialError } from "errors";
@@ -55,6 +56,8 @@ export default async function updateDeployment(parent, args, ctx, info) {
   if (args.cloudRole && serviceAccountAnnotationKey) {
     serviceAccountAnnotations[serviceAccountAnnotationKey] = args.cloudRole;
   }
+
+  args.config = await generateDeploymentConfig(args);
 
   const deploymentConfig = merge(
     {},

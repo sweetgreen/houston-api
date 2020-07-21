@@ -10,7 +10,8 @@ import {
   defaultAirflowImage,
   generateHelmValues,
   mapPropertiesToDeployment,
-  generateDefaultDeploymentConfig
+  generateDefaultDeploymentConfig,
+  generateDeploymentConfig
 } from "deployments/config";
 import validate from "deployments/validate";
 import { track } from "analytics";
@@ -40,7 +41,7 @@ export default async function createDeployment(parent, args, ctx, info) {
 
   // Get executor config
   const { executors } = config.get("deployments");
-  const executor = get(args, "config.executor", AIRFLOW_EXECUTOR_DEFAULT);
+  const executor = get(args, "executor", AIRFLOW_EXECUTOR_DEFAULT);
   const executorConfig = find(executors, ["name", executor]);
 
   const where = { id: args.workspaceUuid };
@@ -116,6 +117,8 @@ export default async function createDeployment(parent, args, ctx, info) {
   if (args.cloudRole && serviceAccountAnnotationKey) {
     serviceAccountAnnotations[serviceAccountAnnotationKey] = args.cloudRole;
   }
+
+  args.config = await generateDeploymentConfig(args);
 
   const deploymentConfig = merge(
     {},

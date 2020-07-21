@@ -27,6 +27,10 @@ const mutation = `
     $label: String!
     $description: String
     $version: String
+    $executor: ExecutorType
+    $workers: JSON
+    $webserver: JSON
+    $scheduler: JSON
     $config: JSON
     $properties: JSON
     $cloudRole: String
@@ -37,6 +41,10 @@ const mutation = `
       label: $label
       description: $description
       version: $version
+      executor: $executor
+      workers: $workers
+      webserver: $webserver
+      scheduler: $scheduler
       config: $config
       properties: $properties
       cloudRole: $cloudRole
@@ -216,7 +224,8 @@ describe("createDeployment", () => {
         workspaceUuid: casual.uuid,
         type: DEPLOYMENT_AIRFLOW,
         label: casual.word,
-        cloudRole: "test"
+        cloudRole: "test",
+        executor: "CeleryExecutor"
       };
 
       // Run the graphql mutation.
@@ -257,7 +266,8 @@ describe("createDeployment", () => {
       vars = {
         workspaceUuid: casual.uuid,
         type: DEPLOYMENT_AIRFLOW,
-        label: casual.word
+        label: casual.word,
+        executor: "CeleryExecutor"
       };
 
       // Run the graphql mutation.

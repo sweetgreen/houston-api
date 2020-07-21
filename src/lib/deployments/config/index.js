@@ -182,7 +182,7 @@ export function constraints(deployment) {
   const elasticsearchEnabled = config.get("elasticsearch.enabled");
 
   // Get the executor on this deployment.
-  const executor = get(deployment, "config.executor", AIRFLOW_EXECUTOR_DEFAULT);
+  const executor = get(deployment, "executor", AIRFLOW_EXECUTOR_DEFAULT);
 
   // Get the configuration for that executor.
   const executorConfig = find(executors, ["name", executor]);
@@ -557,6 +557,23 @@ export function generateDefaultTag() {
  */
 export function generateDefaultDeploymentConfig() {
   return { executor: AIRFLOW_EXECUTOR_DEFAULT };
+}
+
+/*
+ * Generate the `config` object for a deployment
+ * @return {Object} The deployment config.
+ */
+export function generateDeploymentConfig(args) {
+  const deploymentConfig = {};
+  const config = ["executor", "workers", "webserver", "scheduler"];
+
+  Object.keys(args).map(item => {
+    if (config.includes(item)) {
+      deploymentConfig[item] = args[item];
+    }
+  });
+
+  return deploymentConfig;
 }
 
 /*

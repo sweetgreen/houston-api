@@ -16,7 +16,10 @@ import {
   mapCustomEnvironmentVariables,
   airflowImages,
   platform,
-  defaultAirflowTag
+  defaultAirflowTag,
+  generateDefaultDeploymentConfig,
+  generateDeploymentConfig,
+  airflowVersions
 } from "./index";
 import { generateReleaseName } from "deployments/naming";
 import casual from "casual";
@@ -25,7 +28,8 @@ import {
   AIRFLOW_EXECUTOR_LOCAL,
   DEPLOYMENT_PROPERTY_EXTRA_AU,
   DEPLOYMENT_PROPERTY_COMPONENT_VERSION,
-  DEPLOYMENT_PROPERTY_ALERT_EMAILS
+  DEPLOYMENT_PROPERTY_ALERT_EMAILS,
+  DEPLOYMENT_AIRFLOW
 } from "constants";
 
 describe("generateHelmValues", () => {
@@ -115,7 +119,7 @@ describe("constraints", () => {
   test("correctly applies constraints for LocalExecutor config", () => {
     const deployment = {
       id: casual.uuid,
-      config: { executor: AIRFLOW_EXECUTOR_LOCAL }
+      executor: AIRFLOW_EXECUTOR_LOCAL
     };
     const config = constraints(deployment);
     expect(config.quotas.pods).toBe(8); // Local (4 pods), doubled.
@@ -348,6 +352,35 @@ describe("generateNextTag", () => {
   });
 });
 
+describe("generateDefaultDeploymentConfig", () => {
+  test("should return deployment config object back", () => {
+    const res = generateDefaultDeploymentConfig();
+    expect(res.executor).toBe("CeleryExecutor");
+  });
+});
+
+describe("generateDeploymentConfig", () => {
+  test("should return deployment config object back", () => {
+    const args = {
+      workspaceUuid: casual.uuid,
+      type: DEPLOYMENT_AIRFLOW,
+      label: casual.word,
+      cloudRole: "test",
+      executor: "CeleryExecutor"
+    };
+
+    const res = generateDeploymentConfig(args);
+    expect(res.executor).toBe("CeleryExecutor");
+  });
+});
+
+describe("airflowVersions", () => {
+  test("list of supported Airflow versions.", () => {
+    const res = airflowVersions();
+    expect(res.length).toBeGreaterThan(1);
+  });
+});
+
 describe("deploymentOverrides", () => {
   test("adds resource units to numeric inputs", () => {
     const deployment = {
@@ -377,6 +410,37 @@ describe("deploymentOverrides", () => {
     const res = deploymentOverrides(deployment);
     expect(res.scheduler.resources.limits.cpu).toEqual("500m");
     expect(res.scheduler.resources.limits.memory).toEqual("1920Mi");
+    expect(res.webserver.resources.requests.cpu).toEqual("100m");
+    expect(res.webserver.resources.requests.memory).toEqual("384Mi");
+    expect(res.workers.replicas).toEqual(1);
+  });
+
+  test("no resource units", () => {
+    const deployment = {
+      config: {
+        scheduler: {
+          resources: {
+            limits: {
+              test: 0
+            }
+          }
+        },
+        webserver: {
+          resources: {
+            requests: {
+              cpu: 100,
+              memory: 384
+            }
+          }
+        },
+        workers: {
+          replicas: 1
+        }
+      }
+    };
+
+    const res = deploymentOverrides(deployment);
+    expect(res.scheduler.resources.limits.test).toEqual(0);
     expect(res.webserver.resources.requests.cpu).toEqual("100m");
     expect(res.webserver.resources.requests.memory).toEqual("384Mi");
     expect(res.workers.replicas).toEqual(1);
