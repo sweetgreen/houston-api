@@ -5,7 +5,7 @@ import {
 } from "deployments/naming";
 import log from "logger";
 import knex from "knex";
-import { clone, isString, merge } from "lodash";
+import { clone, first, isString, merge } from "lodash";
 import config from "config";
 import passwordGenerator from "generate-password";
 import { parse } from "pg-connection-string";
@@ -49,16 +49,15 @@ export async function createDatabaseForDeployment(deployment) {
   log.info(`Creating database ${dbName}`);
 
   // Create the new deployment database.
-  await createDatabase(rootConn, dbName);
+  await ensureDatabase(rootConn, dbName);
 
   // Connect to the newly created database.
   const deploymentCfg = merge(clone(parsedConn), { database: dbName });
   const deploymentDb = createConnection(deploymentCfg);
 
   // Create schema for airflow metadata.
-  await createSchema(
+  await ensureUserAndSchema(
     deploymentDb,
-    dbName,
     airflowSchemaName,
     airflowUserName,
     airflowPassword,
@@ -67,9 +66,8 @@ export async function createDatabaseForDeployment(deployment) {
   );
 
   // Create schema for celery result backend.
-  await createSchema(
+  await ensureUserAndSchema(
     deploymentDb,
-    dbName,
     celerySchemaName,
     celeryUserName,
     celeryPassword,
@@ -155,38 +153,70 @@ export function createConnection(config) {
  * @param {Object} conn An existing database connection.
  * @param {String} name Name for the new database.
  */
-export function createDatabase(conn, name) {
-  return conn.raw(`CREATE DATABASE ${name}`);
+export async function ensureDatabase(conn, name) {
+  const results = await conn.raw(
+    `SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname = '${name}')`
+  );
+  const exists = first(results.rows).exists;
+  if (!exists) {
+    await conn.raw(`CREATE DATABASE ${name}`);
+  }
 }
 
 /*
- * Create a schema with new user/role.
+ * Create a new user in the database if it does not already exist.
  * @param {Object} conn An existing database connection.
- * @param {String} database Name of the deployments database.
+ * @param {String} name Name for the new user.
+ * @param {String} password The users new password.
+ */
+export async function ensureUser(conn, user, password) {
+  // Check if user exists
+  const result = await conn.raw(
+    `SELECT EXISTS(SELECT usename FROM pg_user WHERE usename = '${user}')`
+  );
+  const exists = first(result.rows).exists;
+  if (!exists) {
+    await conn.raw(
+      `CREATE USER ${user} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION CONNECTION LIMIT -1 ENCRYPTED PASSWORD '${password}';`
+    );
+  }
+}
+
+/*
+ * Create a new schema if it does not already exist.
+ * @param {Object} conn An existing database connection.
+ * @param {String} schema The name of the desired schema.
+ * @param {String} user The user authorized to this schema.
+ */
+export async function ensureSchema(conn, schema, user) {
+  // Check if schema does not exist if not, then create a new schema, granting the new user access.
+  await conn.raw(`CREATE SCHEMA IF NOT EXISTS ${schema} AUTHORIZATION ${user}`);
+}
+
+/*
+ * Create a schema with new user/role, if they do not exist.
+ * @param {Object} conn An existing database connection.
  * @param {String} schema Name of the schema to create.
  * @param {String} user The name of the user for this schema.
  * @param {String} password The password for the new user.
  * @param {String} creator The root user.
  */
-export async function createSchema(
+export async function ensureUserAndSchema(
   conn,
-  database,
   schema,
   user,
   password,
   creator,
   allowRootAccess
 ) {
-  // Create a new limited access user, with random password.
-  await conn.raw(
-    `CREATE USER ${user} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION CONNECTION LIMIT -1 ENCRYPTED PASSWORD '${password}';`
-  );
+  // Create the database user.
+  await ensureUser(conn, user, password);
 
   // Grant the privleges of the new user to our root user (the one running these commands).
   await conn.raw(`GRANT ${user} TO ${creator}`);
 
-  // Create a new schema, granting the new user access.
-  await conn.raw(`CREATE SCHEMA ${schema} AUTHORIZATION ${user}`);
+  // Ensure the schmea is created.
+  await ensureSchema(conn, schema, user);
 
   // Assign privleges to the new user.
   await conn.raw(

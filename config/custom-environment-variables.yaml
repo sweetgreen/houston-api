@@ -10,6 +10,9 @@ prisma:
     __name: "PRISMA__DEBUG"
     __format: "json"
 
+nats:
+  url: "NATS__URL"
+
 database:
   migrations:
     tableName: "DATABASE__MIGRATIONS__TABLE_NAME"
@@ -161,6 +164,8 @@ deployments:
       __name: "DEPLOYMENTS__DATABASE__ALLOW_ROOT_ACCESS"
       __format: "json"
     connection: "DEPLOYMENTS__DATABASE__CONNECTION"
+  chart:
+    version: "DEPLOYMENTS__CHART__VERSION"
 
 analytics:
   writeKey: "ANALYTICS__WRITE_KEY"

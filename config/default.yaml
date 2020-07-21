@@ -16,6 +16,22 @@ prisma:
   secret: ~
   debug: false
 
+# NATS configuration.
+nats:
+  url: nats://localhost:4222
+  clusterID: houston
+  ackTimeout: 30000
+  connectTimeout: 3000
+  maxPubAcksInflight: 16384
+  maxReconnectAttempts: 25
+  stanMaxPingOut: 20
+  stanPingInterval: 5000
+  reconnect: true
+  reconnectTimeWait: 5000
+  reconnectJitter: 150
+  reconnectJitterTLS: 1000
+  waitOnFirstConnect: true
+
 # Logging configuration.
 logging:
   level: "debug"
