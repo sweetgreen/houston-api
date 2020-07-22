@@ -7,6 +7,7 @@ import log from "logger";
 import commander from "commander";
 import { version } from "utilities";
 import { track } from "analytics";
+import config from "config";
 import { merge, get } from "lodash";
 import got from "got";
 import { DEPLOYMENT_AIRFLOW, MEDIATYPE_DOCKER_MANIFEST_V2 } from "constants";
@@ -46,8 +47,8 @@ export default async function(req, res) {
         return res.sendStatus(200);
       }
 
-      const config = deployment.config;
-      if (!config) {
+      const deploymentConfig = deployment.config;
+      if (!deploymentConfig) {
         log.info(`Deployment config not found for ${releaseName}`);
         return res.sendStatus(200);
       }
@@ -91,15 +92,21 @@ export default async function(req, res) {
         return;
       }
       // Merge the new image tag in.
-      const updatedConfig = merge({}, config, {
+      const updatedConfig = merge({}, deploymentConfig, {
         images: { airflow: { repository, tag } }
       });
 
+      const airflowChartVersion = config.get("deployments.chart.version");
+      const data = {
+        config: updatedConfig,
+        version: airflowChartVersion,
+        airflowVersion
+      };
       // Update the deployment.
       const updatedDeployment = await prisma
         .updateDeployment({
           where: { releaseName },
-          data: { config: updatedConfig, airflowVersion }
+          data: data
         })
         .$fragment(
           `{ id config label releaseName extraAu airflowVersion version workspace { id } }`

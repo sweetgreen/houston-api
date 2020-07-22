@@ -106,7 +106,8 @@ describe("POST /registry-events", () => {
     expect(prisma.updateDeployment).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          airflowVersion: "1.10.10"
+          airflowVersion: "1.10.10",
+          version: "1.2.3"
         })
       })
     );
