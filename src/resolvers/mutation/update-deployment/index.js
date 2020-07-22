@@ -80,7 +80,7 @@ export default async function updateDeployment(parent, args, ctx, info) {
   const where = { id: args.deploymentUuid };
   const data = merge({}, updatablePayload, {
     config: mungedArgs.config,
-    version: airflowChartVersion,
+    version,
     ...mapPropertiesToDeployment(mungedArgs.properties)
   });
 
