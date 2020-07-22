@@ -27,11 +27,24 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
   nats:
+    image: nats
+    restart: always
+    command: "-c nats-server.conf --routes=nats-route://ruser:T0pS3cr3t@nats:6222"
+    ports:
+    - 4222:4222
+    - 6222:6222
+    - 8222:8222
+  nats-2:
+    image: nats
+    restart: always
+    command: "-c nats-server.conf --routes=nats-route://ruser:T0pS3cr3t@nats:6222"
+    ports:
+    - 4222
+    - 6222
+    - 8222
+  nats-streaming:
     image: nats-streaming:0.17.0
     restart: always
     command: "-DV -m 8222 --cluster_id houston"
-    ports:
-    - 4222:4222
-    - 8222:8222
 volumes:
   postgres:
