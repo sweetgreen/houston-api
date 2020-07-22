@@ -360,7 +360,7 @@ describe("generateDefaultDeploymentConfig", () => {
 });
 
 describe("generateDeploymentConfig", () => {
-  test("should return deployment config object back", () => {
+  test("should return deployment config object with executor", () => {
     const args = {
       workspaceUuid: casual.uuid,
       type: DEPLOYMENT_AIRFLOW,
@@ -370,7 +370,90 @@ describe("generateDeploymentConfig", () => {
     };
 
     const res = generateDeploymentConfig(args);
+    expect(res).toHaveProperty("executor");
     expect(res.executor).toBe("CeleryExecutor");
+    expect(res).not.toHaveProperty("webserver");
+    expect(res).not.toHaveProperty("scheduler");
+    expect(res).not.toHaveProperty("workers");
+  });
+
+  test("should return deployment config object with webserver", () => {
+    const args = {
+      workspaceUuid: casual.uuid,
+      type: DEPLOYMENT_AIRFLOW,
+      label: casual.word,
+      cloudRole: "test",
+      webserver: {
+        resources: {
+          limits: {
+            cpu: 200,
+            memory: 200
+          }
+        }
+      }
+    };
+
+    const res = generateDeploymentConfig(args);
+    expect(res).toHaveProperty("webserver");
+    expect(res.webserver.resources.limits.cpu).toEqual(200);
+    expect(res.webserver.resources.limits.memory).toEqual(200);
+    expect(res).not.toHaveProperty("executor");
+    expect(res).not.toHaveProperty("scheduler");
+    expect(res).not.toHaveProperty("workers");
+  });
+
+  test("should return deployment config object with scheduler", () => {
+    const args = {
+      workspaceUuid: casual.uuid,
+      type: DEPLOYMENT_AIRFLOW,
+      label: casual.word,
+      cloudRole: "test",
+      scheduler: {
+        resources: {
+          limits: {
+            cpu: 200,
+            memory: 200
+          }
+        }
+      }
+    };
+
+    const res = generateDeploymentConfig(args);
+    expect(res).toHaveProperty("scheduler");
+    expect(res.scheduler.resources.limits.cpu).toEqual(200);
+    expect(res.scheduler.resources.limits.memory).toEqual(200);
+    expect(res).not.toHaveProperty("executor");
+    expect(res).not.toHaveProperty("webserver");
+    expect(res).not.toHaveProperty("workers");
+  });
+
+  test("should return deployment config object with workers", () => {
+    const args = {
+      workspaceUuid: casual.uuid,
+      type: DEPLOYMENT_AIRFLOW,
+      label: casual.word,
+      cloudRole: "test",
+      workers: {
+        replicas: 1,
+        terminationGraceSeconds: 600,
+        resources: {
+          limits: {
+            cpu: 200,
+            memory: 200
+          }
+        }
+      }
+    };
+
+    const res = generateDeploymentConfig(args);
+    expect(res).toHaveProperty("workers");
+    expect(res.workers.replicas).toEqual(1);
+    expect(res.workers.terminationGraceSeconds).toEqual(600);
+    expect(res.workers.resources.limits.cpu).toEqual(200);
+    expect(res.workers.resources.limits.memory).toEqual(200);
+    expect(res).not.toHaveProperty("executor");
+    expect(res).not.toHaveProperty("webserver");
+    expect(res).not.toHaveProperty("scheduler");
   });
 });
 
