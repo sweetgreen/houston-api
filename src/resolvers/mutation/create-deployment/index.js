@@ -71,6 +71,8 @@ export default async function createDeployment(parent, args, ctx, info) {
     throw new WorkspaceSuspendedError();
   }
 
+  args.config = await generateDeploymentConfig(args);
+
   // Validate deployment args.
   await validate(args.workspaceUuid, args);
 
@@ -117,8 +119,6 @@ export default async function createDeployment(parent, args, ctx, info) {
   if (args.cloudRole && serviceAccountAnnotationKey) {
     serviceAccountAnnotations[serviceAccountAnnotationKey] = args.cloudRole;
   }
-
-  args.config = await generateDeploymentConfig(args);
 
   const deploymentConfig = merge(
     {},

@@ -402,6 +402,26 @@ describe("generateDeploymentConfig", () => {
     expect(res).not.toHaveProperty("workers");
   });
 
+  test("should return deployment config object with default webserver resources", () => {
+    const args = {
+      workspaceUuid: casual.uuid,
+      type: DEPLOYMENT_AIRFLOW,
+      label: casual.word,
+      cloudRole: "test",
+      webserver: {}
+    };
+
+    const res = generateDeploymentConfig(args);
+    expect(res).toHaveProperty("webserver");
+    expect(res.webserver.resources.requests.cpu).toEqual(500);
+    expect(res.webserver.resources.requests.memory).toEqual(1920);
+    expect(res.webserver.resources.limits.cpu).toEqual(500);
+    expect(res.webserver.resources.limits.memory).toEqual(1920);
+    expect(res).not.toHaveProperty("executor");
+    expect(res).not.toHaveProperty("scheduler");
+    expect(res).not.toHaveProperty("workers");
+  });
+
   test("should return deployment config object with scheduler", () => {
     const args = {
       workspaceUuid: casual.uuid,

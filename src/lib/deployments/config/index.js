@@ -573,7 +573,7 @@ export function generateDeploymentConfig(args) {
 
   Object.keys(args).map(item => {
     if (config.includes(item)) {
-      if(_.isEmpty(args[item])) {
+      if (_.isEmpty(args[item])) {
         deploymentConfig[item] = defaults[item];
       } else {
         deploymentConfig[item] = args[item];
