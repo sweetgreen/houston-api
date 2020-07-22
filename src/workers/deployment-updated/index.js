@@ -11,9 +11,7 @@ import { generateNamespace } from "deployments/naming";
 import {
   DEPLOYMENT_UPDATED,
   DEPLOYMENT_AIRFLOW,
-  DEPLOYMENT_UPDATED_ID,
-  DEPLOYMENT_UPDATED_STARTED,
-  DEPLOYMENT_UPDATED_DEPLOYED
+  DEPLOYMENT_UPDATED_ID
 } from "constants";
 
 /**
@@ -29,7 +27,7 @@ log.info(`NATS ${DEPLOYMENT_UPDATED_ID} Running...`);
 export async function deploymentUpdated(msg) {
   try {
     // Grab the deploymentId from the message.
-    const { id, sync } = msg.getData();
+    const id = msg.getData();
 
     // Update the status in the database and grab some information.
     const deployment = await prisma
@@ -39,26 +37,19 @@ export async function deploymentUpdated(msg) {
     // Grab the releaseName and version of the deployment.
     const { releaseName, version } = deployment;
 
-    // If we're syncing to kubernetes, fire updates to commander.
-    if (sync) {
-      // Notify that we've started the process.
-      nc.publish(DEPLOYMENT_UPDATED_STARTED, id);
-      // Map the user input env vars to a format that the helm chart expects.
-      const values = mapCustomEnvironmentVariables(deployment);
+    // Map the user input env vars to a format that the helm chart expects.
+    const values = mapCustomEnvironmentVariables(deployment);
 
-      // Update the deployment, passing in our custom env vars.
-      await commander.request("updateDeployment", {
-        releaseName,
-        chart: {
-          name: DEPLOYMENT_AIRFLOW,
-          version
-        },
-        namespace: generateNamespace(releaseName),
-        rawConfig: JSON.stringify(generateHelmValues(deployment, values))
-      });
-      // Notify that we've deployed the update
-      nc.publish(DEPLOYMENT_UPDATED_DEPLOYED, id);
-    }
+    // Update the deployment, passing in our custom env vars.
+    await commander.request("updateDeployment", {
+      releaseName,
+      chart: {
+        name: DEPLOYMENT_AIRFLOW,
+        version
+      },
+      namespace: generateNamespace(releaseName),
+      rawConfig: JSON.stringify(generateHelmValues(deployment, values))
+    });
 
     // Ack the message
     msg.ack();

@@ -71,8 +71,6 @@ export const DEPLOYMENT_CREATED_DEPLOYED = `${DEPLOYMENT_CREATED}.deployed`;
 
 export const DEPLOYMENT_UPDATED = "houston.deployment.updated";
 export const DEPLOYMENT_UPDATED_ID = "houston-deployment-updated-worker";
-export const DEPLOYMENT_UPDATE_STARTED = `${DEPLOYMENT_UPDATED}.started`;
-export const DEPLOYMENT_UPDATED_DEPLOYED = `${DEPLOYMENT_UPDATED}.deployed`;
 
 export const DEPLOYMENT_DELETED = "houston.deployment.deleted";
 export const DEPLOYMENT_DELETED_ID = "houston-deployment-deleted-worker";

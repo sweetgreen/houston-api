@@ -477,7 +477,7 @@ type Mutation {
     deploymentUuid: Uuid!
     payload: JSON
     config: JSON
-    sync: Boolean
+    sync: Boolean # Deprecated
     cloudRole: String
   ): Deployment @auth(permissions: ["deployment.config.update", "system.deployments.update"], op: OR)
 
