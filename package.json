@@ -6,6 +6,8 @@
     "build": "prisma generate && babel src -d dist --copy-files",
     "start": "prisma generate && yarn migrate && nodemon --exec babel-node -e js,graphql src/index.js",
     "serve": "yarn migrate && node dist/index.js",
+    "worker": "node dist/workers/index.js",
+    "worker:dev": "babel-node src/workers/index.js",
     "test": "prisma generate && jest",
     "coverage": "prisma generate && jest --coverage",
     "lint": "prisma generate && eslint src --ignore-pattern src/lib/generated --ext .js --ext .graphql",
