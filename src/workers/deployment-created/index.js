@@ -1,4 +1,5 @@
 import "dotenv/config";
+import createDeploymentFragment from "./fragment";
 import { prisma } from "generated/client";
 import commander from "commander";
 import {
@@ -42,7 +43,7 @@ export async function deploymentCreated(msg) {
     // Update the status in the database and grab some information.
     const deployment = await prisma
       .deployment({ id })
-      .$fragment(`{ id, releaseName, extraAu, version, workspace { id } }`);
+      .$fragment(createDeploymentFragment);
 
     // // Grab the releaseName and version of the deployment.
     const { releaseName, version } = deployment;
