@@ -112,9 +112,7 @@ function createNatsConnection(clusterID, clientID) {
   const opts = getNatsStreamingOptions();
 
   log.info(
-    `Connecting to NATS clusterID: ${clusterID} clientID: ${clientID} options: ${JSON.stringify(
-      opts
-    )}`
+    `Connecting to NATS cluster ${clusterID} using client ${clientID} and the url ${opts.url}`
   );
 
   return nats.connect(clusterID, clientID, opts);
@@ -231,5 +229,5 @@ function logConnectionLost(nc, err) {
  */
 function getConnectionMessage(nc) {
   const { clusterID, clientID, options } = nc;
-  return `clusterID: ${clusterID} clientID: ${clientID} url: ${options.url}`;
+  return `cluster ${clusterID} using client ${clientID} and url ${options.url}`;
 }
