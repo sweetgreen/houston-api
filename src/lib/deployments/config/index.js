@@ -23,7 +23,8 @@ import {
   merge,
   set,
   split,
-  uniq
+  uniq,
+  _
 } from "lodash";
 import config from "config";
 import yaml from "yamljs";
@@ -564,12 +565,19 @@ export function generateDefaultDeploymentConfig() {
  * @return {Object} The deployment config.
  */
 export function generateDeploymentConfig(args) {
+  // Generate defaults.
+  const defaults = defaultResources("default", false);
+
   const deploymentConfig = {};
   const config = ["executor", "workers", "webserver", "scheduler"];
 
   Object.keys(args).map(item => {
     if (config.includes(item)) {
-      deploymentConfig[item] = args[item];
+      if(_.isEmpty(args[item])) {
+        deploymentConfig[item] = defaults[item];
+      } else {
+        deploymentConfig[item] = args[item];
+      }
     }
   });
 
