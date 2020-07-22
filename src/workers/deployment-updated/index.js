@@ -41,7 +41,6 @@ export async function deploymentUpdated(msg) {
 
     // If we're syncing to kubernetes, fire updates to commander.
     if (sync) {
-      // TODO: Edge case - check to see if we need to await for nc.connect before publishing
       // Notify that we've started the process.
       nc.publish(DEPLOYMENT_UPDATED_STARTED, id);
       // Map the user input env vars to a format that the helm chart expects.
@@ -57,7 +56,6 @@ export async function deploymentUpdated(msg) {
         namespace: generateNamespace(releaseName),
         rawConfig: JSON.stringify(generateHelmValues(deployment, values))
       });
-      // TODO: Edge case - check to see if we need to await for nc.connect before publishing
       // Notify that we've deployed the update
       nc.publish(DEPLOYMENT_UPDATED_DEPLOYED, id);
     }
