@@ -12,6 +12,7 @@ prisma:
 
 nats:
   url: "NATS__URL"
+  clusterID: "NATS__CLUSTER_ID"
 
 database:
   migrations:
