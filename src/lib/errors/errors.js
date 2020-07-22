@@ -92,6 +92,12 @@ export class DuplicateDeploymentLabelError extends UserInputError {
   }
 }
 
+export class DuplicateServiceAccountLabelError extends UserInputError {
+  constructor(label) {
+    super(`Service Account already exists with the name ${label}`);
+  }
+}
+
 export class InvalidDeploymentError extends Error {
   message = this.message || "Invalid deployment";
 }

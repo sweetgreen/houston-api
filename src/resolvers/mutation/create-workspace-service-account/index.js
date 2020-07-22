@@ -1,4 +1,5 @@
 import fragment from "./fragment";
+import validateExistence from "service-accounts/existence";
 import { addFragmentToInfo } from "graphql-binding";
 import crypto from "crypto";
 
@@ -17,6 +18,9 @@ export default async function createWorkspaceServiceAccount(
 ) {
   // Pull out some variables.
   const { label, category, workspaceUuid, role } = args;
+
+  // Validate if service account label exists or not
+  await validateExistence({ label, workspaceUuid });
 
   // Create the base mutation.
   const mutation = {

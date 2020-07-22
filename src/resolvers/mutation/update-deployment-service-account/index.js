@@ -1,4 +1,5 @@
 import serviceAccountFragment from "rbac/service-account-fragment";
+import validateExistence from "service-accounts/existence";
 import { addFragmentToInfo } from "graphql-binding";
 import { pick } from "lodash";
 
@@ -20,6 +21,12 @@ export default async function updateDeploymentServiceAccount(
   const data = pick(args.payload, ["category", "label"]);
   const where = { id: args.serviceAccountUuid };
   const role = args.payload.role;
+
+  // Validate if service account label exists or not
+  await validateExistence({
+    label: data.label,
+    deploymentUuid: args.deploymentUuid
+  });
 
   // Get role bindings
   if (role) {

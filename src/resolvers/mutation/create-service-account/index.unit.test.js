@@ -1,4 +1,5 @@
 import resolvers from "resolvers";
+import * as validate from "service-accounts/existence";
 import casual from "casual";
 import { graphql } from "graphql";
 import { makeExecutableSchema } from "graphql-tools";
@@ -43,6 +44,8 @@ const mutation = `
 
 describe("createServiceAccount", () => {
   test("typical request is successful", async () => {
+    jest.spyOn(validate, "default").mockReturnValue();
+
     const workspaceId = casual.uuid;
 
     // Create mock user.
@@ -82,6 +85,8 @@ describe("createServiceAccount", () => {
   });
 
   test("error is thrown if passing entityUuid and does not have access", async () => {
+    jest.spyOn(validate, "default").mockReturnValue();
+
     // Create mock user.
     const user = {
       id: casual.uuid,

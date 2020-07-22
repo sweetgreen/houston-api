@@ -1,4 +1,5 @@
 import resolvers from "resolvers";
+import * as validate from "service-accounts/existence";
 import casual from "casual";
 import { graphql } from "graphql";
 import { makeExecutableSchema } from "graphql-tools";
@@ -37,6 +38,8 @@ const mutation = `
 
 describe("updateServiceAccount", () => {
   test("typical request is successful", async () => {
+    jest.spyOn(validate, "default").mockReturnValue();
+
     const workspaceId = casual.uuid;
     const serviceAccountId = casual.uuid;
     const label = casual.title;
@@ -82,6 +85,8 @@ describe("updateServiceAccount", () => {
   });
 
   test("invalid fields are ignored", async () => {
+    jest.spyOn(validate, "default").mockReturnValue();
+
     const workspaceId = casual.uuid;
     const serviceAccountId = casual.uuid;
     const label = casual.title;

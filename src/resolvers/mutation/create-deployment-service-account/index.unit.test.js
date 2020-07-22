@@ -1,4 +1,5 @@
 import resolvers from "resolvers";
+import * as validate from "service-accounts/existence";
 import casual from "casual";
 import { graphql } from "graphql";
 import { makeExecutableSchema } from "graphql-tools";
@@ -41,6 +42,8 @@ const mutation = `
 
 describe("createDeploymentServiceAccount", () => {
   test("typical request is successful", async () => {
+    jest.spyOn(validate, "default").mockReturnValue();
+
     const deploymentId = casual.uuid;
 
     // Create mock user.
